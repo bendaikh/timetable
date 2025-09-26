@@ -46,6 +46,12 @@ class TimetableController extends Controller
             'announcement_scroll_speed' => Setting::get('announcement_scroll_speed', '3'),
             'hadeeth_display_duration' => Setting::get('hadeeth_display_duration', '30'),
             'auto_refresh_interval' => Setting::get('auto_refresh_interval', '60'),
+            'logo_path' => Setting::get('logo_path'),
+            'fajr_jamaat_offset' => Setting::get('fajr_jamaat_offset', '10'),
+            'zohar_jamaat_offset' => Setting::get('zohar_jamaat_offset', '15'),
+            'asr_jamaat_offset' => Setting::get('asr_jamaat_offset', '20'),
+            'maghrib_jamaat_offset' => Setting::get('maghrib_jamaat_offset', '0'),
+            'isha_jamaat_offset' => Setting::get('isha_jamaat_offset', '10'),
         ];
         
         // Get Islamic date (you may want to integrate with a proper Islamic calendar API)

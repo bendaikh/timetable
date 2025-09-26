@@ -94,16 +94,58 @@ class SettingController extends Controller
      */
     public function updateBatch(Request $request)
     {
-        $settings = $request->input('settings', []);
-        
-        foreach ($settings as $key => $value) {
-            Setting::updateOrCreate(
-                ['key' => $key],
-                ['value' => $value]
-            );
-        }
+        try {
+            \Log::info('Settings updateBatch called', [
+                'request_data' => $request->all(),
+                'has_file' => $request->hasFile('logo')
+            ]);
+            
+            $settings = $request->input('settings', []);
+            
+            // Handle logo upload
+            if ($request->hasFile('logo')) {
+                $request->validate([
+                    'logo' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+                ]);
+                
+                $logo = $request->file('logo');
+                $logoName = 'logo_' . time() . '.' . $logo->getClientOriginalExtension();
+                
+                \Log::info('Attempting to store logo', [
+                    'original_name' => $logo->getClientOriginalName(),
+                    'size' => $logo->getSize(),
+                    'mime_type' => $logo->getMimeType(),
+                    'target_name' => $logoName
+                ]);
+                
+                // Store the file in public disk
+                $logoPath = $logo->storeAs('logos', $logoName, 'public');
+                
+                \Log::info('Logo stored successfully', [
+                    'path' => $logoPath,
+                    'full_path' => storage_path('app/public/' . $logoPath)
+                ]);
+                
+                $settings['logo_path'] = $logoPath;
+            }
+            
+            \Log::info('Settings to update', ['settings' => $settings]);
+            
+            foreach ($settings as $key => $value) {
+                Setting::updateOrCreate(
+                    ['key' => $key],
+                    ['value' => $value, 'type' => 'string']
+                );
+            }
 
-        return redirect()->route('admin.settings.index')
-            ->with('success', 'Settings updated successfully.');
+            \Log::info('Settings updated successfully');
+            return redirect()->route('admin.settings.index')
+                ->with('success', 'Settings updated successfully.');
+                
+        } catch (\Exception $e) {
+            \Log::error('Settings update failed: ' . $e->getMessage());
+            return redirect()->route('admin.settings.index')
+                ->with('error', 'Failed to update settings: ' . $e->getMessage());
+        }
     }
 }

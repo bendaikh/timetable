@@ -3,29 +3,33 @@
 @section('title', $settings['masjid_name'] . ' - Prayer Timetable')
 
 @section('content')
-<!-- Fullscreen Controls (only visible in fullscreen mode) -->
-<div class="fullscreen-controls">
-    <button onclick="toggleFullscreen()" class="btn btn-light btn-sm" id="fullscreenControlBtn">
-        <i class="bi bi-fullscreen-exit"></i> Exit Fullscreen
-    </button>
-</div>
 
-<!-- TV-Optimized Layout -->
-<div class="container-fluid tv-layout">
-    <!-- Compact Header Section -->
-    <div class="tv-header">
+<!-- Digital Information Board Layout -->
+<div class="container-fluid digital-board">
+    <!-- Top Header Row -->
+    <div class="board-header">
         <div class="row align-items-center">
+            <!-- Current Time -->
             <div class="col-md-4">
-                <h2 class="mb-1">{{ $settings['masjid_name'] }}</h2>
-                <p class="mb-0 small">{{ $settings['location'] }}</p>
+                <div class="current-time-display">
+                    <div class="time-large" id="current-time">{{ $now->format('h:i') }}</div>
+                    <div class="time-seconds">{{ $now->format('s') }}</div>
+                    <div class="time-period">{{ $now->format('A') }}</div>
+                </div>
             </div>
+            
+            <!-- Gregorian Date -->
             <div class="col-md-4 text-center">
-                <h3 id="current-time" class="mb-1">{{ $now->format('h:i:s A') }}</h3>
-                <p class="mb-0 small">{{ $now->format('l, F j, Y') }}</p>
+                <div class="date-display">
+                    <div class="gregorian-date">{{ $now->format('D j M Y') }}</div>
+                </div>
             </div>
+            
+            <!-- Islamic Date -->
             <div class="col-md-4 text-end">
-                <h3 class="mb-1">{{ $islamicDate['day'] }} {{ $islamicDate['month'] }} {{ $islamicDate['year'] }}</h3>
-                <p class="mb-0 small">Islamic Date</p>
+                <div class="islamic-date-display">
+                    <div class="islamic-date">{{ $islamicDate['day'] }} {{ $islamicDate['month'] }} {{ $islamicDate['year'] }}</div>
+                </div>
                 <button onclick="toggleFullscreen()" class="btn btn-light btn-sm mt-1" id="fullscreenBtn">
                     <i class="bi bi-arrows-fullscreen"></i>
                 </button>
@@ -33,114 +37,156 @@
         </div>
     </div>
 
-    <!-- Main Content Grid -->
-    <div class="tv-main-content">
-        <div class="row">
-            <!-- Prayer Times Section -->
-            <div class="col-lg-8">
-                <div class="prayer-times-tv">
-                    <h3 class="section-title text-center mb-3">Today's Prayer Times</h3>
+    <!-- Main Content Area -->
+    <div class="board-main-content">
+        <div class="row h-100">
+            <!-- Left Column - Prayer Times -->
+            <div class="col-md-4">
+                <div class="prayer-times-section" @if($settings['logo_path'] ?? false) style="--logo-bg-image: url('{{ asset('storage/' . $settings['logo_path']) }}')" @endif>
+                    <div class="prayer-header">
+                        <div class="prayer-col-header">Beginning</div>
+                        <div class="prayer-col-header">Jamaat Time</div>
+                    </div>
+                    
                     @if($prayerTimes)
-                        <div class="prayer-grid">
-                            <div class="prayer-time-tv fajr">
+                        <div class="prayer-list">
+                            <div class="prayer-row">
                                 <div class="prayer-name">Fajr</div>
-                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i A') }}</div>
+                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
+                                <div class="prayer-jamaat">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
-                            <div class="prayer-time-tv sunrise">
-                                <div class="prayer-name">Sunrise</div>
-                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->sun_rise)->format('h:i A') }}</div>
-                            </div>
-                            <div class="prayer-time-tv zohar">
+                            <div class="prayer-row">
                                 <div class="prayer-name">Zohar</div>
-                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i A') }}</div>
+                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
+                                <div class="prayer-jamaat">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
                             </div>
-                            <div class="prayer-time-tv asr">
+                            <div class="prayer-row">
                                 <div class="prayer-name">Asr</div>
-                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i A') }}</div>
+                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
+                                <div class="prayer-jamaat">{{ \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
-                            <div class="prayer-time-tv maghrib">
+                            <div class="prayer-row">
                                 <div class="prayer-name">Maghrib</div>
-                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i A') }}</div>
+                                <div class="prayer-time">--:--</div>
+                                <div class="prayer-jamaat">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
                             </div>
-                            <div class="prayer-time-tv isha">
+                            <div class="prayer-row">
                                 <div class="prayer-name">Isha</div>
-                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i A') }}</div>
+                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
+                                <div class="prayer-jamaat">{{ \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                         </div>
                         
-                        @if($prayerTimes->jumah_1)
-                        <div class="jumah-times text-center mt-3">
-                            <strong>Jumah Prayer:</strong> 
-                            {{ \Carbon\Carbon::parse($prayerTimes->jumah_1)->format('h:i A') }}
-                            @if($prayerTimes->jumah_2)
-                                & {{ \Carbon\Carbon::parse($prayerTimes->jumah_2)->format('h:i A') }}
-                            @endif
+                        <div class="next-prayer-info">
+                            <div class="next-prayer-text">Next prayer in:</div>
                         </div>
-                        @endif
                     @else
-                        <div class="alert alert-warning text-center">
-                            <h5>No prayer times available for today</h5>
+                        <div class="no-prayer-times">
+                            <p>No prayer times available for today</p>
                         </div>
                     @endif
                 </div>
+                </div>
 
-                <!-- Compact Hadeeth Section -->
+            <!-- Middle Column - Hadeeth of the Day -->
+            <div class="col-md-4">
+                <div class="hadeeth-section">
+                    <div class="hadeeth-header">Hadeeth Of The Day</div>
+                    <div class="hadeeth-content">
                 @if($hadeeth)
-                <div class="hadeeth-tv mt-4">
-                    <h4 class="text-center mb-2" style="color: #d4af37;">Hadeeth of the Day</h4>
-                    <div class="text-center">
-                        <p class="arabic-text" style="font-family: 'Amiri', serif; direction: rtl; font-size: 1.1rem;">{{ $hadeeth->arabic_text }}</p>
-                        <p class="english-text">{{ $hadeeth->english_translation }}</p>
-                        <small class="reference text-muted">{{ $hadeeth->reference }}</small>
-                    </div>
-                </div>
-                @endif
-            </div>
-
-            <!-- Right Sidebar -->
-            <div class="col-lg-4">
-                <!-- Next Prayer -->
-                @if($nextPrayer)
-                <div class="next-prayer-tv">
-                    <h4 class="text-center">Next Prayer</h4>
-                    <h2 class="text-center prayer-name">{{ ucfirst($nextPrayer['name']) }}</h2>
-                    <h3 class="text-center prayer-time">{{ \Carbon\Carbon::parse($nextPrayer['time'])->format('h:i A') }}</h3>
-                    <div id="countdown" class="text-center mt-2">
-                        <span class="countdown-timer countdown-tv" data-seconds="{{ $nextPrayer['time_until'] }}"></span>
-                    </div>
-                </div>
-                @endif
-
-                <!-- Compact Announcements -->
-                @if($announcements->count() > 0)
-                <div class="announcements-tv mt-4">
-                    <h4 class="text-center mb-3">Announcements</h4>
-                    <div class="announcements-container">
-                        @foreach($announcements->take(3) as $announcement)
-                            <div class="announcement-tv mb-2" 
-                                 style="background-color: {{ $announcement->background_color }}; 
-                                        color: {{ $announcement->text_color }};">
-                                <h6 class="mb-1">{{ $announcement->title }}</h6>
-                                <p class="mb-0">{{ Str::limit($announcement->content, 80) }}</p>
+                            <div class="hadeeth-text">
+                                <div class="arabic-hadeeth">{{ $hadeeth->arabic_text }}</div>
+                                <div class="english-hadeeth">{{ $hadeeth->english_translation }}</div>
+                                <div class="hadeeth-reference">{{ $hadeeth->reference }}</div>
                             </div>
-                        @endforeach
+                        @else
+                            <div class="hadeeth-placeholder">
+                                <p>Displayed large, clear and nice</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
-                @endif
+            </div>
+
+            <!-- Right Column - Announcements -->
+            <div class="col-md-4">
+                <div class="announcements-section">
+                    <div class="announcements-header">Announcement</div>
+                    <div class="announcements-content">
+                        @if($announcements->count() > 0)
+                            @foreach($announcements->take(2) as $announcement)
+                                <div class="announcement-item">
+                                    <div class="announcement-title">{{ $announcement->title }}</div>
+                                    <div class="announcement-text">{{ $announcement->content }}</div>
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="announcement-placeholder">
+                                <p>Announcements should be centered in large and clear text.</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Scrolling Announcements Bar -->
-    @if($announcements->count() > 0)
-    <div class="tv-ticker">
-        <div class="announcement-scroll">
-            @foreach($announcements as $announcement)
-                <span class="mx-5">{{ $announcement->title }}: {{ $announcement->content }}</span>
-            @endforeach
+    <!-- Bottom Additional Times -->
+    <div class="board-bottom-times">
+        <div class="row">
+            <div class="col">
+                <div class="additional-times">
+                    <div class="time-item">
+                        <div class="time-label">Sehri Ends</div>
+                        <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') : '--:--' }}</div>
+                    </div>
+                    <div class="time-item">
+                        <div class="time-label">Sun Rise</div>
+                        <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->sun_rise)->format('h:i') : '--:--' }}</div>
+                    </div>
+                    <div class="time-item">
+                        <div class="time-label">Noon</div>
+                        <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') : '--:--' }}</div>
+                    </div>
+                    <div class="time-item">
+                        <div class="time-label">Jumu'ah 1</div>
+                        <div class="time-value">{{ $prayerTimes && $prayerTimes->jumah_1 ? \Carbon\Carbon::parse($prayerTimes->jumah_1)->format('h:i') : '--:--' }}</div>
+                    </div>
+                    <div class="time-item">
+                        <div class="time-label">Jumu'ah 2</div>
+                        <div class="time-value">{{ $prayerTimes && $prayerTimes->jumah_2 ? \Carbon\Carbon::parse($prayerTimes->jumah_2)->format('h:i') : '--:--' }}</div>
+                    </div>
+                    <div class="time-item">
+                        <div class="time-label">Eid Prayer 1</div>
+                        <div class="time-value">{{ $prayerTimes && $prayerTimes->eid_prayer_1 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_1)->format('h:i') : '--:--' }}</div>
+                            </div>
+                    <div class="time-item">
+                        <div class="time-label">Eid Prayer 2</div>
+                        <div class="time-value">{{ $prayerTimes && $prayerTimes->eid_prayer_2 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_2)->format('h:i') : '--:--' }}</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    @endif
+
+    <!-- Scrolling Text Area -->
+    <div class="scrolling-text-area">
+        <div class="scroll-separator"></div>
+        <div class="scrolling-content">
+            <div class="scroll-arrow left-arrow">←</div>
+            <div class="scrolling-text">
+    @if($announcements->count() > 0)
+            @foreach($announcements as $announcement)
+                        <span class="scroll-item">{{ $announcement->title }}: {{ $announcement->content }}</span>
+            @endforeach
+                @else
+                    <span class="scroll-item">SCROLLING TEXT</span>
+                @endif
+            </div>
+            <div class="scroll-arrow right-arrow">→</div>
+        </div>
+    </div>
+
 </div>
 @endsection
 

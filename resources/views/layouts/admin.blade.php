@@ -86,6 +86,115 @@
         .badge {
             font-size: 0.85em;
         }
+        
+        /* Custom Pagination Styles */
+        .pagination {
+            margin-bottom: 0;
+        }
+        
+        .pagination .page-link {
+            color: #667eea;
+            border: 1px solid #dee2e6;
+            padding: 0.5rem 0.75rem;
+            margin: 0 2px;
+            border-radius: 0.375rem;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination .page-link:hover {
+            color: #fff;
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        
+        .pagination .page-item.active .page-link {
+            background-color: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+        
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d;
+            background-color: #fff;
+            border-color: #dee2e6;
+        }
+        
+        .pagination .page-item:first-child .page-link,
+        .pagination .page-item:last-child .page-link {
+            border-radius: 0.375rem;
+        }
+        
+        /* Pagination Info Styling */
+        .pagination-info {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        /* Responsive Pagination */
+        @media (max-width: 768px) {
+            .pagination .page-link {
+                padding: 0.375rem 0.5rem;
+                font-size: 0.875rem;
+            }
+            
+            .pagination .page-item:not(:first-child):not(:last-child) .page-link {
+                display: none;
+            }
+            
+            .pagination .page-item:first-child,
+            .pagination .page-item:last-child,
+            .pagination .page-item.active {
+                display: block;
+            }
+        }
+        
+        /* Bulk Actions Styling */
+        #bulk-actions-bar {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 1px solid #90caf9;
+            border-radius: 0.5rem;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .prayer-time-checkbox {
+            transform: scale(1.1);
+        }
+        
+        .prayer-time-checkbox:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        
+        /* Table row selection styling */
+        tr:has(.prayer-time-checkbox:checked) {
+            background-color: rgba(102, 126, 234, 0.1);
+        }
+        
+        /* Responsive bulk actions */
+        @media (max-width: 768px) {
+            #bulk-actions-bar .d-flex {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            #bulk-actions-bar .d-flex > div:last-child {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                justify-content: center;
+            }
+        }
     </style>
     
     @yield('styles')

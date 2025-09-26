@@ -55,6 +55,12 @@ Route::post('/logout', function (Illuminate\Http\Request $request) {
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
     
+    // Google Sheets import routes (must come before resource routes)
+    Route::get('prayer-times/import', [PrayerTimeController::class, 'showImport'])->name('admin.prayer-times.import');
+    Route::post('prayer-times/import', [PrayerTimeController::class, 'import'])->name('admin.prayer-times.import.process');
+    Route::post('prayer-times/preview', [PrayerTimeController::class, 'preview'])->name('admin.prayer-times.preview');
+    Route::delete('prayer-times/bulk-delete', [PrayerTimeController::class, 'bulkDelete'])->name('admin.prayer-times.bulk-delete');
+    
     Route::resource('prayer-times', PrayerTimeController::class, [
         'as' => 'admin'
     ]);

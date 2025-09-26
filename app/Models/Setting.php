@@ -64,7 +64,13 @@ class Setting extends Model
             'prayer_time_font_size' => '24',
             'announcement_scroll_speed' => '3',
             'hadeeth_display_duration' => '30',
-            'auto_refresh_interval' => '60'
+            'auto_refresh_interval' => '60',
+            'logo_path' => null,
+            'fajr_jamaat_offset' => '10',
+            'zohar_jamaat_offset' => '15',
+            'asr_jamaat_offset' => '20',
+            'maghrib_jamaat_offset' => '0',
+            'isha_jamaat_offset' => '10'
         ];
     }
 
