@@ -42,7 +42,7 @@
         <div class="row h-100">
             <!-- Left Column - Prayer Times -->
             <div class="col-md-4">
-                <div class="prayer-times-section" @if($settings['logo_path'] ?? false) style="--logo-bg-image: url('{{ asset('storage/' . $settings['logo_path']) }}')" @endif>
+                <div class="prayer-times-section" @if($settings['logo_path'] ?? false) style="--logo-bg-image: url('{{ url('storage/' . $settings['logo_path']) }}')" @endif>
                     <div class="prayer-header">
                         <div class="prayer-col-header">Beginning</div>
                         <div class="prayer-col-header">Jamaat Time</div>
