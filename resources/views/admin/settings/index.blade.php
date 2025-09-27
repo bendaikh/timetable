@@ -76,7 +76,7 @@ use App\Models\Setting;
                                                     <p class="mb-2"><strong>Current Logo:</strong></p>
                                                     <div id="logo-preview">
                                                         @if(Setting::get('logo_path'))
-                                                            <img src="{{ url('storage/' . Setting::get('logo_path')) }}" 
+                                                            <img src="{{ url('public/storage/' . Setting::get('logo_path')) }}" 
                                                                  alt="Current Logo" 
                                                                  class="img-thumbnail" 
                                                                  style="max-height: 100px; max-width: 200px;">
