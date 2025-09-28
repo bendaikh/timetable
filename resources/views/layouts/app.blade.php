@@ -25,7 +25,7 @@
         /* Digital Information Board Layout */
         .digital-board {
             height: 100vh;
-            background: #ffffff;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #2980b9 100%);
             display: flex;
             flex-direction: column;
             font-family: 'Courier New', monospace;
@@ -33,7 +33,7 @@
         
         /* Top Header */
         .board-header {
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.95);
             padding: 20px;
             border-bottom: 2px solid #000;
             flex-shrink: 0;
@@ -78,7 +78,7 @@
         
         /* Prayer Times Section */
         .prayer-times-section {
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.9);
             border: 2px solid #000;
             padding: 20px;
             height: 100%;
@@ -137,11 +137,11 @@
         
         .prayer-name {
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 1.5rem;
         }
         
         .prayer-time, .prayer-jamaat {
-            font-size: 1.2rem;
+            font-size: 1.8rem;
             font-weight: bold;
         }
         
@@ -155,7 +155,7 @@
         
         /* Hadeeth Section */
         .hadeeth-section {
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.9);
             border: 2px solid #000;
             padding: 20px;
             height: 100%;
@@ -211,7 +211,7 @@
         
         /* Announcements Section */
         .announcements-section {
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.9);
             border: 2px solid #000;
             padding: 20px;
             height: 100%;
@@ -227,11 +227,14 @@
         
         .announcements-content {
             height: calc(100% - 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .announcement-item {
-            margin-bottom: 20px;
             text-align: center;
+            width: 100%;
         }
         
         .announcement-title {
@@ -255,7 +258,7 @@
         
         /* Bottom Additional Times */
         .board-bottom-times {
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.95);
             border-top: 2px solid #000;
             padding: 15px 20px;
             flex-shrink: 0;
@@ -341,7 +344,7 @@
         
         /* Fullscreen styles */
         .fullscreen-mode {
-            background: #ffffff !important;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #2980b9 100%) !important;
         }
         
         /* Hide header fullscreen button in fullscreen mode */
@@ -356,7 +359,7 @@
             }
             
             .prayer-time, .prayer-jamaat {
-                font-size: 1.1rem;
+                font-size: 1.5rem;
             }
             
             .arabic-hadeeth {

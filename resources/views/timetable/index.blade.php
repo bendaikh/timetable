@@ -29,8 +29,6 @@
             <div class="col-md-4">
                 <div class="current-time-display">
                     <div class="time-large" id="current-time">{{ $now->format('h:i') }}</div>
-                    <div class="time-seconds">{{ $now->format('s') }}</div>
-                    <div class="time-period">{{ $now->format('A') }}</div>
                 </div>
             </div>
             
@@ -41,14 +39,16 @@
                 </div>
             </div>
             
-            <!-- Islamic Date -->
-            <div class="col-md-4 text-end">
-                <div class="islamic-date-display">
-                    <div class="islamic-date">{{ $islamicDate['day'] }} {{ $islamicDate['month'] }} {{ $islamicDate['year'] }}</div>
+            <!-- Islamic Date and Fullscreen Button -->
+            <div class="col-md-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="islamic-date-display text-center" style="flex: 1;">
+                        <div class="islamic-date">{{ $islamicDate['day'] }} {{ $islamicDate['month'] }} {{ $islamicDate['year'] }}</div>
+                    </div>
+                    <button onclick="toggleFullscreen()" class="btn btn-light btn-sm" id="fullscreenBtn">
+                        <i class="bi bi-arrows-fullscreen"></i>
+                    </button>
                 </div>
-                <button onclick="toggleFullscreen()" class="btn btn-light btn-sm mt-1" id="fullscreenBtn">
-                    <i class="bi bi-arrows-fullscreen"></i>
-                </button>
             </div>
         </div>
     </div>
@@ -60,6 +60,7 @@
             <div class="col-md-4">
                 <div class="prayer-times-section" @if($settings['logo_path'] ?? false) style="--logo-bg-image: url('{{ app()->environment('production') ? url('public/storage/' . $settings['logo_path']) : asset('storage/' . $settings['logo_path']) }}')" @endif>
                     <div class="prayer-header">
+                        <div class="prayer-col-header"></div>
                         <div class="prayer-col-header">Beginning</div>
                         <div class="prayer-col-header">Jamaat Time</div>
                     </div>
@@ -108,13 +109,15 @@
             <div class="col-md-4">
                 <div class="hadeeth-section">
                     <div class="hadeeth-header">Hadeeth Of The Day</div>
-                    <div class="hadeeth-content">
-                @if($hadeeth)
-                            <div class="hadeeth-text">
-                                <div class="arabic-hadeeth">{{ $hadeeth->arabic_text }}</div>
-                                <div class="english-hadeeth">{{ $hadeeth->english_translation }}</div>
-                                <div class="hadeeth-reference">{{ $hadeeth->reference }}</div>
-                            </div>
+                    <div class="hadeeth-content" id="hadeeth-content">
+                        @if($hadeeths->count() > 0)
+                            @foreach($hadeeths as $index => $hadeethItem)
+                                <div class="hadeeth-text rotating-hadeeth" data-index="{{ $index }}" style="{{ $index === 0 ? 'display: block;' : 'display: none;' }}">
+                                    <div class="arabic-hadeeth">{{ $hadeethItem->arabic_text }}</div>
+                                    <div class="english-hadeeth">{{ $hadeethItem->english_translation }}</div>
+                                    <div class="hadeeth-reference">{{ $hadeethItem->reference }}</div>
+                                </div>
+                            @endforeach
                         @else
                             <div class="hadeeth-placeholder">
                                 <p>Displayed large, clear and nice</p>
@@ -128,10 +131,10 @@
             <div class="col-md-4">
                 <div class="announcements-section">
                     <div class="announcements-header">Announcement</div>
-                    <div class="announcements-content">
+                    <div class="announcements-content" id="announcements-content">
                         @if($announcements->count() > 0)
-                            @foreach($announcements->take(2) as $announcement)
-                                <div class="announcement-item">
+                            @foreach($announcements as $index => $announcement)
+                                <div class="announcement-item rotating-announcement" data-index="{{ $index }}" style="{{ $index === 0 ? 'display: block;' : 'display: none;' }}">
                                     <div class="announcement-title">{{ $announcement->title }}</div>
                                     <div class="announcement-text">{{ $announcement->content }}</div>
                                 </div>
@@ -187,7 +190,6 @@
 
     <!-- Scrolling Text Area -->
     <div class="scrolling-text-area">
-        <div class="scroll-separator"></div>
         <div class="scrolling-content">
             <div class="scroll-arrow left-arrow">←</div>
             <div class="scrolling-text">
@@ -505,6 +507,32 @@
     // Initialize media display when page loads
     document.addEventListener('DOMContentLoaded', function() {
         initMediaDisplay();
+        initContentRotation();
     });
+
+    // Content rotation for hadeeths and announcements
+    function initContentRotation() {
+        // Rotate hadeeths
+        const hadeeths = document.querySelectorAll('.rotating-hadeeth');
+        if (hadeeths.length > 1) {
+            let currentHadeethIndex = 0;
+            setInterval(() => {
+                hadeeths[currentHadeethIndex].style.display = 'none';
+                currentHadeethIndex = (currentHadeethIndex + 1) % hadeeths.length;
+                hadeeths[currentHadeethIndex].style.display = 'block';
+            }, {{ $settings['hadeeth_display_duration'] ?? 30 }} * 1000); // Use hadeeth display duration from settings
+        }
+
+        // Rotate announcements
+        const announcements = document.querySelectorAll('.rotating-announcement');
+        if (announcements.length > 1) {
+            let currentAnnouncementIndex = 0;
+            setInterval(() => {
+                announcements[currentAnnouncementIndex].style.display = 'none';
+                currentAnnouncementIndex = (currentAnnouncementIndex + 1) % announcements.length;
+                announcements[currentAnnouncementIndex].style.display = 'block';
+            }, 15000); // 15 seconds for announcements
+        }
+    }
 </script>
 @endsection

@@ -32,8 +32,9 @@ class TimetableController extends Controller
         // Get active announcements
         $announcements = Announcement::getActiveAnnouncements();
         
-        // Get today's hadeeth
+        // Get today's hadeeths (multiple for rotation)
         $hadeeth = Hadeeth::getTodayHadeeth();
+        $hadeeths = Hadeeth::getOrderedHadeeths();
         
         // Get settings
         $settings = [
@@ -57,7 +58,7 @@ class TimetableController extends Controller
         // Get Islamic date (you may want to integrate with a proper Islamic calendar API)
         $islamicDate = $this->getIslamicDate($now);
         
-        return compact('prayerTimes', 'nextPrayer', 'announcements', 'hadeeth', 'settings', 'islamicDate', 'now');
+        return compact('prayerTimes', 'nextPrayer', 'announcements', 'hadeeth', 'hadeeths', 'settings', 'islamicDate', 'now');
     }
     
     private function getIslamicDate($date)
