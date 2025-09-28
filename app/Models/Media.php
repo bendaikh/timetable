@@ -30,7 +30,9 @@ class Media extends Model
 
     public function getFileUrlAttribute(): string
     {
-        return asset('storage/' . $this->file_path);
+        return app()->environment('production') 
+            ? url('public/storage/' . $this->file_path) 
+            : asset('storage/' . $this->file_path);
     }
 
     public function isImage(): bool
