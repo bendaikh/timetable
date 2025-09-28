@@ -1,7 +1,9 @@
 @extends('layouts.admin')
 
 @section('title', 'Settings')
-@section('page-icon', '<i class="bi bi-gear me-2"></i>')
+@section('page-icon')
+{!! '<i class="bi bi-gear me-2"></i>' !!}
+@endsection
 @section('page-title', 'Settings')
 
 @php

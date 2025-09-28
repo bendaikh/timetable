@@ -70,7 +70,11 @@ class Setting extends Model
             'zohar_jamaat_offset' => '15',
             'asr_jamaat_offset' => '20',
             'maghrib_jamaat_offset' => '0',
-            'isha_jamaat_offset' => '10'
+            'isha_jamaat_offset' => '10',
+            'adhan_timing_enabled' => true,
+            'adhan_countdown_duration' => '30',
+            'media_display_enabled' => true,
+            'default_media_duration' => '30'
         ];
     }
 

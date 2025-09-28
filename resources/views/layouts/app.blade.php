@@ -392,6 +392,124 @@
         .scrolling-text {
             animation: scroll-left 30s linear infinite;
         }
+
+        /* Media Display Overlay Styles */
+        .media-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-content img,
+        .media-content video {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Countdown Timer Styles */
+        .media-countdown {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Courier New', monospace;
+        }
+
+        .countdown-timer {
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .countdown-label {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .countdown-prayer {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .countdown-time {
+            font-size: 6rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            letter-spacing: 5px;
+        }
+
+        /* Responsive countdown styles */
+        @media (max-width: 1200px) {
+            .countdown-label {
+                font-size: 1.5rem;
+            }
+            
+            .countdown-prayer {
+                font-size: 3rem;
+            }
+            
+            .countdown-time {
+                font-size: 4rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .countdown-timer {
+                padding: 20px;
+            }
+            
+            .countdown-label {
+                font-size: 1.2rem;
+            }
+            
+            .countdown-prayer {
+                font-size: 2.5rem;
+            }
+            
+            .countdown-time {
+                font-size: 3rem;
+            }
+        }
     </style>
     
     @yield('styles')

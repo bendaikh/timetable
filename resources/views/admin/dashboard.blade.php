@@ -107,6 +107,38 @@
             background: rgba(255, 255, 255, 0.2);
             color: white;
         }
+        
+        .text-purple {
+            color: #6f42c1 !important;
+        }
+        
+        .text-orange {
+            color: #fd7e14 !important;
+        }
+        
+        .btn-purple {
+            background-color: #6f42c1;
+            border-color: #6f42c1;
+            color: white;
+        }
+        
+        .btn-purple:hover {
+            background-color: #5a32a3;
+            border-color: #5a32a3;
+            color: white;
+        }
+        
+        .btn-orange {
+            background-color: #fd7e14;
+            border-color: #fd7e14;
+            color: white;
+        }
+        
+        .btn-orange:hover {
+            background-color: #e8650e;
+            border-color: #e8650e;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -141,6 +173,18 @@
                     <a class="nav-link" href="{{ route('admin.hadeeths.index') }}">
                         <i class="bi bi-book me-2"></i>
                         Hadeeths
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.media.index') }}">
+                        <i class="bi bi-images me-2"></i>
+                        Media Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.media-schedules.index') }}">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        Media Schedules
                     </a>
                 </li>
                 <li class="nav-item">
@@ -188,7 +232,7 @@
 
         <!-- Statistics Cards -->
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="stat-card text-center">
                     <div class="stat-icon text-primary">
                         <i class="bi bi-clock"></i>
@@ -198,7 +242,7 @@
                 </div>
             </div>
             
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="stat-card text-center">
                     <div class="stat-icon text-success">
                         <i class="bi bi-megaphone"></i>
@@ -208,7 +252,7 @@
                 </div>
             </div>
             
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="stat-card text-center">
                     <div class="stat-icon text-info">
                         <i class="bi bi-book"></i>
@@ -218,7 +262,27 @@
                 </div>
             </div>
             
-            <div class="col-md-3">
+            <div class="col-md-2">
+                <div class="stat-card text-center">
+                    <div class="stat-icon text-purple">
+                        <i class="bi bi-images"></i>
+                    </div>
+                    <div class="stat-number text-purple">{{ $stats['media_count'] }}</div>
+                    <div class="text-muted">Active Media</div>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="stat-card text-center">
+                    <div class="stat-icon text-orange">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    <div class="stat-number text-orange">{{ $stats['media_schedules_count'] }}</div>
+                    <div class="text-muted">Media Schedules</div>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
                 <div class="stat-card text-center">
                     <div class="stat-icon text-warning">
                         <i class="bi bi-gear"></i>
@@ -320,6 +384,14 @@
                             <a href="{{ route('admin.hadeeths.create') }}" class="btn btn-info">
                                 <i class="bi bi-plus-circle me-2"></i>
                                 Add Hadeeth
+                            </a>
+                            <a href="{{ route('admin.media.create') }}" class="btn btn-purple">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Add Media
+                            </a>
+                            <a href="{{ route('admin.media-schedules.create') }}" class="btn btn-orange">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Schedule Media
                             </a>
                         </div>
                     </div>

@@ -1,7 +1,9 @@
 @extends('layouts.admin')
 
 @section('title', 'Prayer Times')
-@section('page-icon', '<i class="bi bi-clock me-2"></i>')
+@section('page-icon')
+{!! '<i class="bi bi-clock me-2"></i>' !!}
+@endsection
 @section('page-title', 'Prayer Times')
 
 @section('content')

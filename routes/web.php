@@ -7,6 +7,9 @@ use App\Http\Controllers\Admin\PrayerTimeController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\HadeethController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\MediaController;
+use App\Http\Controllers\Admin\MediaScheduleController;
+use App\Http\Controllers\MediaDisplayController;
 use App\Http\Controllers\ApiController;
 
 // Public Routes
@@ -19,6 +22,12 @@ Route::prefix('api')->group(function () {
     Route::get('/hadeeth', [ApiController::class, 'hadeeth']);
     Route::get('/next-prayer', [ApiController::class, 'nextPrayer']);
     Route::get('/settings', [ApiController::class, 'settings']);
+    
+    // Media display API routes
+    Route::get('/current-media', [MediaDisplayController::class, 'getCurrentMedia']);
+    Route::get('/countdown-info', [MediaDisplayController::class, 'getCountdownInfo']);
+    Route::get('/media-status', [MediaDisplayController::class, 'getStatus']);
+    Route::get('/debug-schedules', [MediaDisplayController::class, 'debugSchedules']);
 });
 
 // Auth Routes
@@ -79,4 +88,22 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     
     Route::post('settings/batch-update', [SettingController::class, 'updateBatch'])
         ->name('admin.settings.batch-update');
+    
+    // Media management routes
+    Route::resource('media', MediaController::class, [
+        'as' => 'admin'
+    ]);
+    
+    Route::get('media/{medium}/preview', [MediaController::class, 'preview'])
+        ->name('admin.media.preview');
+    
+    Route::post('media/{media}/toggle-status', [MediaController::class, 'toggleStatus'])
+        ->name('admin.media.toggle-status');
+    
+    Route::resource('media-schedules', MediaScheduleController::class, [
+        'as' => 'admin'
+    ]);
+    
+    Route::post('media-schedules/{mediaSchedule}/toggle-status', [MediaScheduleController::class, 'toggleStatus'])
+        ->name('admin.media-schedules.toggle-status');
 });

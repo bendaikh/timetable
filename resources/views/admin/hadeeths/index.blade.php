@@ -1,7 +1,9 @@
 @extends('layouts.admin')
 
 @section('title', 'Hadeeths')
-@section('page-icon', '<i class="bi bi-book me-2"></i>')
+@section('page-icon')
+{!! '<i class="bi bi-book me-2"></i>' !!}
+@endsection
 @section('page-title', 'Hadeeths')
 
 @section('content')

@@ -234,6 +234,18 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.media.*') ? 'active' : '' }}" href="{{ route('admin.media.index') }}">
+                        <i class="bi bi-images me-2"></i>
+                        Media Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.media-schedules.*') ? 'active' : '' }}" href="{{ route('admin.media-schedules.index') }}">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        Media Schedules
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" href="{{ route('admin.settings.index') }}">
                         <i class="bi bi-gear me-2"></i>
                         Settings
@@ -265,7 +277,7 @@
         <nav class="navbar navbar-expand-lg navbar-light bg-white rounded shadow-sm mb-4">
             <div class="container-fluid">
                 <span class="navbar-brand">
-                    @yield('page-icon', '<i class="bi bi-speedometer2 me-2"></i>')
+                    @yield('page-icon')
                     @yield('page-title', 'Dashboard')
                 </span>
                 <div class="navbar-nav ms-auto">

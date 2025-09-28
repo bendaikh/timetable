@@ -4,6 +4,22 @@
 
 @section('content')
 
+<!-- Media Display Overlay (Fullscreen) -->
+<div id="media-overlay" class="media-overlay" style="display: none;">
+    <div class="media-container">
+        <div id="media-content" class="media-content">
+            <!-- Media content will be loaded here -->
+        </div>
+        <div id="media-countdown" class="media-countdown" style="display: none;">
+            <div class="countdown-timer">
+                <div class="countdown-label">Next Prayer</div>
+                <div id="countdown-prayer-name" class="countdown-prayer"></div>
+                <div id="countdown-time" class="countdown-time"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Digital Information Board Layout -->
 <div class="container-fluid digital-board">
     <!-- Top Header Row -->
@@ -316,6 +332,179 @@
                 document.body.classList.remove('show-controls');
             }, 3000);
         }
+    });
+
+    // Media Display System
+    let currentMedia = null;
+    let mediaDisplayTimer = null;
+    let countdownTimer = null;
+    let mediaCheckInterval = null;
+
+    // Initialize media display system
+    function initMediaDisplay() {
+        checkForMedia();
+        // Check for media updates every 30 seconds
+        mediaCheckInterval = setInterval(checkForMedia, 30000);
+    }
+
+    // Check for current media to display
+    async function checkForMedia() {
+        try {
+            const response = await fetch('/api/current-media');
+            const data = await response.json();
+            
+            if (data.media && data.media !== currentMedia) {
+                displayMedia(data.media);
+            }
+            
+            // Also check for countdown
+            checkCountdown();
+        } catch (error) {
+            console.error('Error checking media:', error);
+        }
+    }
+
+    // Display media in fullscreen overlay
+    function displayMedia(media) {
+        currentMedia = media;
+        const overlay = document.getElementById('media-overlay');
+        const content = document.getElementById('media-content');
+        
+        // Clear any existing timers
+        clearTimeout(mediaDisplayTimer);
+        clearTimeout(countdownTimer);
+        
+        // Hide countdown if showing
+        document.getElementById('media-countdown').style.display = 'none';
+        
+        // Create media element
+        let mediaElement;
+        if (media.type === 'image') {
+            mediaElement = document.createElement('img');
+            mediaElement.src = media.file_url;
+            mediaElement.alt = media.title;
+            mediaElement.style.width = '100%';
+            mediaElement.style.height = '100%';
+            mediaElement.style.objectFit = 'contain';
+        } else if (media.type === 'video') {
+            mediaElement = document.createElement('video');
+            mediaElement.src = media.file_url;
+            mediaElement.autoplay = true;
+            mediaElement.loop = true;
+            mediaElement.muted = true;
+            mediaElement.style.width = '100%';
+            mediaElement.style.height = '100%';
+            mediaElement.style.objectFit = 'contain';
+        }
+        
+        // Clear content and add new media
+        content.innerHTML = '';
+        content.appendChild(mediaElement);
+        
+        // Show overlay
+        overlay.style.display = 'flex';
+        
+        // Enter fullscreen
+        if (!document.fullscreenElement) {
+            toggleFullscreen();
+        }
+        
+        // Set timer to hide media after duration
+        mediaDisplayTimer = setTimeout(() => {
+            hideMedia();
+        }, media.display_duration * 1000);
+    }
+
+    // Hide media overlay
+    function hideMedia() {
+        const overlay = document.getElementById('media-overlay');
+        overlay.style.display = 'none';
+        currentMedia = null;
+        clearTimeout(mediaDisplayTimer);
+    }
+
+    // Check for countdown timer
+    async function checkCountdown() {
+        try {
+            const response = await fetch('/api/countdown-info');
+            const data = await response.json();
+            
+            if (data.countdown && data.countdown.is_countdown_time) {
+                showCountdown(data.countdown);
+            } else {
+                hideCountdown();
+            }
+        } catch (error) {
+            console.error('Error checking countdown:', error);
+        }
+    }
+
+    // Show countdown timer
+    function showCountdown(countdownInfo) {
+        // Don't show countdown if media is currently displaying
+        if (currentMedia) return;
+        
+        const overlay = document.getElementById('media-overlay');
+        const countdownDiv = document.getElementById('media-countdown');
+        const prayerName = document.getElementById('countdown-prayer-name');
+        const countdownTime = document.getElementById('countdown-time');
+        
+        prayerName.textContent = countdownInfo.prayer_name;
+        
+        // Show overlay
+        overlay.style.display = 'flex';
+        countdownDiv.style.display = 'flex';
+        
+        // Enter fullscreen
+        if (!document.fullscreenElement) {
+            toggleFullscreen();
+        }
+        
+        // Start countdown timer
+        startCountdownTimer(countdownInfo.prayer_time);
+    }
+
+    // Start countdown timer
+    function startCountdownTimer(prayerTime) {
+        const targetTime = new Date(prayerTime).getTime();
+        
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetTime - now;
+            
+            if (distance < 0) {
+                hideCountdown();
+                // Refresh page to update prayer times
+                location.reload();
+                return;
+            }
+            
+            const hours = Math.floor(distance / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            document.getElementById('countdown-time').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        updateCountdown();
+        countdownTimer = setInterval(updateCountdown, 1000);
+    }
+
+    // Hide countdown
+    function hideCountdown() {
+        const overlay = document.getElementById('media-overlay');
+        const countdownDiv = document.getElementById('media-countdown');
+        
+        countdownDiv.style.display = 'none';
+        overlay.style.display = 'none';
+        
+        clearInterval(countdownTimer);
+    }
+
+    // Initialize media display when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initMediaDisplay();
     });
 </script>
 @endsection

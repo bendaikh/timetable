@@ -17,6 +17,8 @@ class AdminController extends Controller
             'prayer_times_count' => PrayerTime::count(),
             'announcements_count' => Announcement::where('is_active', true)->count(),
             'hadeeths_count' => Hadeeth::where('is_active', true)->count(),
+            'media_count' => \App\Models\Media::where('is_active', true)->count(),
+            'media_schedules_count' => \App\Models\MediaSchedule::where('is_active', true)->count(),
             'total_settings' => Setting::count(),
         ];
 

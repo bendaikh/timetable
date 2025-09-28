@@ -1,7 +1,9 @@
 @extends('layouts.admin')
 
 @section('title', 'Announcements')
-@section('page-icon', '<i class="bi bi-megaphone me-2"></i>')
+@section('page-icon')
+{!! '<i class="bi bi-megaphone me-2"></i>' !!}
+@endsection
 @section('page-title', 'Announcements')
 
 @section('content')
