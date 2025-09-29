@@ -25,7 +25,7 @@
         /* Digital Information Board Layout */
         .digital-board {
             height: 100vh;
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #2980b9 100%);
+            background: linear-gradient(135deg, #0b3d0b 0%, #F8B803 55%, #8B7500 100%);
             display: flex;
             flex-direction: column;
             font-family: 'Courier New', monospace;
@@ -42,6 +42,7 @@
         .current-time-display {
             display: flex;
             align-items: baseline;
+            justify-content: center;
             gap: 5px;
         }
         
@@ -228,8 +229,10 @@
         .announcements-content {
             height: calc(100% - 60px);
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            gap: 15px;
         }
         
         .announcement-item {
@@ -278,10 +281,11 @@
             font-size: 0.9rem;
             color: #666;
             margin-bottom: 5px;
+            font-weight: bold;
         }
         
         .time-value {
-            font-size: 1.2rem;
+            font-size: 1.8rem;
             font-weight: bold;
             color: #000;
         }
@@ -344,7 +348,7 @@
         
         /* Fullscreen styles */
         .fullscreen-mode {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #2980b9 100%) !important;
+            background: linear-gradient(135deg, #0b3d0b 0%, #F8B803 55%, #8B7500 100%) !important;
         }
         
         /* Hide header fullscreen button in fullscreen mode */
@@ -441,7 +445,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #0b3d0b 0%, #8B7500 100%);
             display: flex;
             align-items: center;
             justify-content: center;

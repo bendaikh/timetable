@@ -130,11 +130,11 @@
             <!-- Right Column - Announcements -->
             <div class="col-md-4">
                 <div class="announcements-section">
-                    <div class="announcements-header">Announcement</div>
+                    <div class="announcements-header">Announcements</div>
                     <div class="announcements-content" id="announcements-content">
                         @if($announcements->count() > 0)
                             @foreach($announcements as $index => $announcement)
-                                <div class="announcement-item rotating-announcement" data-index="{{ $index }}" style="{{ $index === 0 ? 'display: block;' : 'display: none;' }}">
+                                <div class="announcement-item rotating-announcement" data-index="{{ $index }}" style="{{ $index < 2 ? 'display: block;' : 'display: none;' }}">
                                     <div class="announcement-title">{{ $announcement->title }}</div>
                                     <div class="announcement-text">{{ $announcement->content }}</div>
                                 </div>
@@ -523,15 +523,20 @@
             }, {{ $settings['hadeeth_display_duration'] ?? 30 }} * 1000); // Use hadeeth display duration from settings
         }
 
-        // Rotate announcements
+        // Rotate announcements in pairs (two visible at a time, stacked)
         const announcements = document.querySelectorAll('.rotating-announcement');
-        if (announcements.length > 1) {
-            let currentAnnouncementIndex = 0;
+        if (announcements.length > 2) {
+            let pairStart = 0;
+            function showPair(start) {
+                announcements.forEach((el, i) => {
+                    el.style.display = (i === start || i === (start + 1) % announcements.length) ? 'block' : 'none';
+                });
+            }
+            showPair(pairStart);
             setInterval(() => {
-                announcements[currentAnnouncementIndex].style.display = 'none';
-                currentAnnouncementIndex = (currentAnnouncementIndex + 1) % announcements.length;
-                announcements[currentAnnouncementIndex].style.display = 'block';
-            }, 15000); // 15 seconds for announcements
+                pairStart = (pairStart + 2) % announcements.length;
+                showPair(pairStart);
+            }, 15000); // 15 seconds per pair
         }
     }
 </script>
