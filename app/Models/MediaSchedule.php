@@ -15,6 +15,8 @@ class MediaSchedule extends Model
         'days_of_week',
         'start_time',
         'end_time',
+        'relative_duration',
+        'exact_start_time',
         'countdown_duration',
         'is_active',
         'priority'
@@ -24,6 +26,8 @@ class MediaSchedule extends Model
         'days_of_week' => 'array',
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
+        'relative_duration' => 'integer',
+        'exact_start_time' => 'datetime:H:i',
         'countdown_duration' => 'integer',
         'is_active' => 'boolean',
         'priority' => 'integer'

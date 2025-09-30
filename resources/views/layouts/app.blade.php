@@ -292,7 +292,7 @@
         
         /* Scrolling Text Area */
         .scrolling-text-area {
-            background: #000;
+            background: #F8B803;
             color: #fff;
             padding: 10px 0;
             flex-shrink: 0;

@@ -40,6 +40,7 @@ class MediaScheduleController extends Controller
             'days_of_week.*' => 'integer|between:1,7',
             'start_time' => 'required_if:schedule_type,time_range|nullable|date_format:H:i',
             'end_time' => 'required_if:schedule_type,time_range|nullable|date_format:H:i|after:start_time',
+            'exact_start_time' => 'required_if:schedule_type,prayer_before,prayer_after|nullable|date_format:H:i',
             'countdown_duration' => 'required_if:schedule_type,countdown|integer|min:10|max:300',
             'priority' => 'required|integer|min:0|max:100'
         ]);
@@ -51,6 +52,7 @@ class MediaScheduleController extends Controller
             'days_of_week' => $request->days_of_week,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
+            'exact_start_time' => $request->exact_start_time,
             'countdown_duration' => $request->countdown_duration ?? 30,
             'priority' => $request->priority,
             'is_active' => $request->has('is_active')
@@ -91,6 +93,7 @@ class MediaScheduleController extends Controller
             'days_of_week.*' => 'integer|between:1,7',
             'start_time' => 'required_if:schedule_type,time_range|nullable|date_format:H:i',
             'end_time' => 'required_if:schedule_type,time_range|nullable|date_format:H:i|after:start_time',
+            'exact_start_time' => 'required_if:schedule_type,prayer_before,prayer_after|nullable|date_format:H:i',
             'countdown_duration' => 'required_if:schedule_type,countdown|integer|min:10|max:300',
             'priority' => 'required|integer|min:0|max:100'
         ]);
@@ -102,6 +105,7 @@ class MediaScheduleController extends Controller
             'days_of_week' => $request->days_of_week,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
+            'exact_start_time' => $request->exact_start_time,
             'countdown_duration' => $request->countdown_duration ?? 30,
             'priority' => $request->priority,
             'is_active' => $request->has('is_active')

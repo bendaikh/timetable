@@ -19,6 +19,7 @@ return new class extends Migration
             $table->json('days_of_week')->nullable(); // [1,2,3,4,5,6,7] for days
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
+            $table->integer('relative_duration')->nullable(); // seconds before/after prayer
             $table->integer('countdown_duration')->default(30); // For countdown before adhan
             $table->boolean('is_active')->default(true);
             $table->integer('priority')->default(0);

@@ -67,6 +67,17 @@
                                     @enderror
                                 </div>
 
+                                <div class="mb-3" id="exact_start_time_field" style="display: none;">
+                                    <label for="exact_start_time" class="form-label">Exact Start Time</label>
+                                    <input type="time" class="form-control @error('exact_start_time') is-invalid @enderror" 
+                                           id="exact_start_time" name="exact_start_time" 
+                                           value="{{ old('exact_start_time', $mediaSchedule->exact_start_time ? $mediaSchedule->exact_start_time->format('H:i') : '') }}">
+                                    <div class="form-text">When to start showing for Before/After Prayer.</div>
+                                    @error('exact_start_time')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
                                 <div class="mb-3" id="time_range_fields" style="display: none;">
                                     <div class="row">
                                         <div class="col-6">
@@ -172,22 +183,28 @@ document.getElementById('schedule_type').addEventListener('change', function() {
     const startTime = document.getElementById('start_time');
     const endTime = document.getElementById('end_time');
     const countdownDuration = document.getElementById('countdown_duration');
+    const exactStartTimeField = document.getElementById('exact_start_time_field');
+    const exactStartTimeInput = document.getElementById('exact_start_time');
 
     // Hide all conditional fields
     prayerField.style.display = 'none';
     timeFields.style.display = 'none';
     countdownField.style.display = 'none';
+    exactStartTimeField.style.display = 'none';
 
     // Clear required attributes
     prayerSelect.removeAttribute('required');
     startTime.removeAttribute('required');
     endTime.removeAttribute('required');
     countdownDuration.removeAttribute('required');
+    exactStartTimeInput.removeAttribute('required');
 
     // Show relevant fields based on schedule type
     if (scheduleType === 'prayer_before' || scheduleType === 'prayer_after') {
         prayerField.style.display = 'block';
         prayerSelect.setAttribute('required', 'required');
+        exactStartTimeField.style.display = 'block';
+        exactStartTimeInput.setAttribute('required', 'required');
     } else if (scheduleType === 'time_range') {
         timeFields.style.display = 'block';
         startTime.setAttribute('required', 'required');

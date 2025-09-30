@@ -65,6 +65,17 @@
                                     @enderror
                                 </div>
 
+                                <!-- Exact Start Time (for prayer_before, prayer_after) -->
+                                <div class="mb-3" id="exact_start_time_selection" style="display: none;">
+                                    <label for="exact_start_time" class="form-label">Exact Start Time</label>
+                                    <input type="time" class="form-control @error('exact_start_time') is-invalid @enderror"
+                                           id="exact_start_time" name="exact_start_time" value="{{ old('exact_start_time') }}">
+                                    <div class="form-text">When to start showing for Before/After Prayer.</div>
+                                    @error('exact_start_time')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
                                 <!-- Time Range Selection (for time_range) -->
                                 <div class="row" id="time_range_selection" style="display: none;">
                                     <div class="col-6">
@@ -193,11 +204,14 @@ document.getElementById('schedule_type').addEventListener('change', function() {
     const timeRangeSelection = document.getElementById('time_range_selection');
     const countdownSelection = document.getElementById('countdown_duration_selection');
     const prayerNameSelect = document.getElementById('prayer_name');
+    const exactStartTimeSelection = document.getElementById('exact_start_time_selection');
+    const exactStartTimeInput = document.getElementById('exact_start_time');
     
     // Hide all conditional fields
     prayerSelection.style.display = 'none';
     timeRangeSelection.style.display = 'none';
     countdownSelection.style.display = 'none';
+    exactStartTimeSelection.style.display = 'none';
     
     // Show relevant fields based on schedule type
     switch(scheduleType) {
@@ -205,6 +219,8 @@ document.getElementById('schedule_type').addEventListener('change', function() {
         case 'prayer_after':
             prayerSelection.style.display = 'block';
             prayerNameSelect.required = true;
+            exactStartTimeSelection.style.display = 'block';
+            exactStartTimeInput.required = true;
             break;
         case 'countdown':
             prayerSelection.style.display = 'block';
@@ -214,9 +230,11 @@ document.getElementById('schedule_type').addEventListener('change', function() {
         case 'time_range':
             timeRangeSelection.style.display = 'block';
             prayerNameSelect.required = false;
+            exactStartTimeInput.required = false;
             break;
         default:
             prayerNameSelect.required = false;
+            exactStartTimeInput.required = false;
     }
     
     updatePreview();

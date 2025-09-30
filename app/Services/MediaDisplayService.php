@@ -99,8 +99,15 @@ class MediaDisplayService
             return false;
         }
 
-        // Check if we're within the display duration before prayer time
-        $displayStart = $prayerTime->subSeconds($schedule->media->display_duration);
+        // If exact_start_time is set, show from that clock time until the prayer time
+        if ($schedule->exact_start_time) {
+            $exactStart = Carbon::today()->setTimeFromTimeString($schedule->exact_start_time->format('H:i:s'));
+            return $now->between($exactStart, $prayerTime);
+        }
+
+        // Otherwise, use schedule-specific relative duration if provided, else fallback to media display_duration
+        $secondsBefore = $schedule->relative_duration ?? $schedule->media->display_duration;
+        $displayStart = $prayerTime->subSeconds($secondsBefore);
         
         return $now->between($displayStart, $prayerTime);
     }
@@ -119,8 +126,15 @@ class MediaDisplayService
             return false;
         }
 
-        // Check if we're within the display duration after prayer time
-        $displayEnd = $prayerTime->addSeconds($schedule->media->display_duration);
+        // If exact_start_time is set, show from the prayer time until that clock time
+        if ($schedule->exact_start_time) {
+            $exactEnd = Carbon::today()->setTimeFromTimeString($schedule->exact_start_time->format('H:i:s'));
+            return $now->between($prayerTime, $exactEnd);
+        }
+
+        // Otherwise, use schedule-specific relative duration if provided, else fallback to media display_duration
+        $secondsAfter = $schedule->relative_duration ?? $schedule->media->display_duration;
+        $displayEnd = $prayerTime->addSeconds($secondsAfter);
         
         return $now->between($prayerTime, $displayEnd);
     }
