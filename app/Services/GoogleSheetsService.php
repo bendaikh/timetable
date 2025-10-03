@@ -163,10 +163,19 @@ class GoogleSheetsService
                     $cell = $worksheet->getCell($col . $row);
                     $cellValue = $cell->getCalculatedValue();
                     
-                    // Handle date cells specially
+                    // Handle date and time cells specially
                     if (\PhpOffice\PhpSpreadsheet\Shared\Date::isDateTime($cell)) {
                         $dateValue = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($cellValue);
-                        $cellValue = $dateValue->format('m/d/Y'); // Convert to readable format
+                        
+                        // Check if this is a time-only value (date part is 1900-01-01 or 1900-01-00)
+                        $datePart = $dateValue->format('Y-m-d');
+                        if ($datePart === '1900-01-01' || $datePart === '1899-12-31') {
+                            // This is a time-only value, format as time
+                            $cellValue = $dateValue->format('H:i:s');
+                        } else {
+                            // This is a full date, format as date
+                            $cellValue = $dateValue->format('m/d/Y');
+                        }
                     }
                     
                     $rowData[] = $cellValue;
@@ -248,6 +257,16 @@ class GoogleSheetsService
                     $errors[] = "Row {$rowNumber}: Invalid date format";
                     continue;
                 }
+
+                // Debug: Log what values we're getting for each prayer time
+                Log::info("Row {$rowNumber} - Raw values:", [
+                    'date' => $row[$headerMapping['date']] ?? 'NOT FOUND',
+                    'fajr' => $row[$headerMapping['fajr']] ?? 'NOT FOUND',
+                    'zohar' => $row[$headerMapping['zohar']] ?? 'NOT FOUND',
+                    'asr' => $row[$headerMapping['asr']] ?? 'NOT FOUND',
+                    'maghrib' => $row[$headerMapping['maghrib']] ?? 'NOT FOUND',
+                    'isha' => $row[$headerMapping['isha']] ?? 'NOT FOUND',
+                ]);
 
                 // Parse prayer times using the mapped columns
                 $prayerTime = [
@@ -440,6 +459,14 @@ class GoogleSheetsService
 
         $timeString = trim($timeString);
 
+        // Check for zero time values (00:00:00, 0:00:00, etc.)
+        if ($timeString === '00:00:00' || $timeString === '0:00:00' || $timeString === '00:00' || $timeString === '0:00') {
+            if ($optional) {
+                return null;
+            }
+            throw new \Exception("{$prayerName} time cannot be 00:00:00. Please provide a valid prayer time.");
+        }
+
         // Try different time formats
         $formats = [
             'H:i',
@@ -453,14 +480,30 @@ class GoogleSheetsService
         foreach ($formats as $format) {
             $time = \DateTime::createFromFormat($format, $timeString);
             if ($time !== false) {
-                return $time->format('H:i:s');
+                $parsedTime = $time->format('H:i:s');
+                // Double-check that the parsed time is not 00:00:00
+                if ($parsedTime === '00:00:00') {
+                    if ($optional) {
+                        return null;
+                    }
+                    throw new \Exception("{$prayerName} time cannot be 00:00:00. Please provide a valid prayer time.");
+                }
+                return $parsedTime;
             }
         }
 
         // Try strtotime as fallback
         $timestamp = strtotime($timeString);
         if ($timestamp !== false) {
-            return date('H:i:s', $timestamp);
+            $parsedTime = date('H:i:s', $timestamp);
+            // Double-check that the parsed time is not 00:00:00
+            if ($parsedTime === '00:00:00') {
+                if ($optional) {
+                    return null;
+                }
+                throw new \Exception("{$prayerName} time cannot be 00:00:00. Please provide a valid prayer time.");
+            }
+            return $parsedTime;
         }
 
         throw new \Exception("Invalid {$prayerName} time format");

@@ -84,7 +84,7 @@
                             </div>
                             <div class="prayer-row">
                                 <div class="prayer-name">Maghrib</div>
-                                <div class="prayer-time">--:--</div>
+                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
                                 <div class="prayer-jamaat">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row">

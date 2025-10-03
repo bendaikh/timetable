@@ -24,6 +24,57 @@ class PrayerTime extends Model
     protected $casts = [
         'date' => 'date',
     ];
+    
+    // Accessor methods to format time fields
+    public function getFajrAttribute($value)
+    {
+        return $value;
+    }
+    
+    public function getZoharAttribute($value)
+    {
+        return $value;
+    }
+    
+    public function getAsrAttribute($value)
+    {
+        return $value;
+    }
+    
+    public function getMaghribAttribute($value)
+    {
+        return $value;
+    }
+    
+    public function getIshaAttribute($value)
+    {
+        return $value;
+    }
+    
+    public function getSunRiseAttribute($value)
+    {
+        return $value;
+    }
+    
+    public function getJumah1Attribute($value)
+    {
+        return $value;
+    }
+    
+    public function getJumah2Attribute($value)
+    {
+        return $value;
+    }
+    
+    public function getEidPrayer1Attribute($value)
+    {
+        return $value;
+    }
+    
+    public function getEidPrayer2Attribute($value)
+    {
+        return $value;
+    }
 
     public static function getTodayPrayerTimes()
     {
