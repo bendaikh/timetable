@@ -34,8 +34,8 @@
         /* Top Header */
         .board-header {
             background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            border-bottom: 2px solid #000;
+            padding: clamp(15px, 3vh, 25px);
+            border-bottom: clamp(1px, 0.2vw, 3px) solid #000;
             flex-shrink: 0;
         }
         
@@ -47,24 +47,24 @@
         }
         
         .time-large {
-            font-size: 3rem;
+            font-size: clamp(2rem, 3vw, 3rem);
             font-weight: bold;
             color: #000;
         }
         
         .time-seconds {
-            font-size: 1.5rem;
+            font-size: clamp(1rem, 1.5vw, 1.5rem);
             color: #666;
         }
         
         .time-period {
-            font-size: 1.2rem;
+            font-size: clamp(1rem, 1.3vw, 1.3rem);
             color: #666;
-            margin-left: 10px;
+            margin-left: clamp(5px, 0.8vw, 10px);
         }
         
         .date-display, .islamic-date-display {
-            font-size: 1.5rem;
+            font-size: clamp(1.2rem, 1.5vw, 1.6rem);
             font-weight: bold;
             color: #000;
         }
@@ -75,6 +75,7 @@
             padding: 20px;
             display: flex;
             align-items: stretch;
+            gap: 15px;
         }
         
         /* Prayer Times Section */
@@ -118,11 +119,11 @@
         }
         
         .prayer-col-header {
-            font-size: 1.1rem;
+            font-size: clamp(0.9rem, 1.2vw, 1.2rem);
         }
         
         .prayer-list {
-            margin-bottom: 20px;
+            margin-bottom: clamp(15px, 2vh, 25px);
             position: relative;
             z-index: 2;
         }
@@ -130,19 +131,19 @@
         .prayer-row {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: clamp(8px, 1vw, 12px);
+            margin-bottom: clamp(8px, 1.5vh, 12px);
             text-align: center;
             align-items: center;
         }
         
         .prayer-name {
             font-weight: bold;
-            font-size: 1.5rem;
+            font-size: clamp(1.2rem, 1.8vw, 1.8rem);
         }
         
         .prayer-time, .prayer-jamaat {
-            font-size: 1.8rem;
+            font-size: clamp(1.4rem, 2vw, 2rem);
             font-weight: bold;
         }
         
@@ -165,10 +166,10 @@
         }
         
         .hadeeth-header {
-            font-size: 1.5rem;
+            font-size: clamp(1.2rem, 1.5vw, 1.6rem);
             font-weight: bold;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: clamp(15px, 2vh, 20px);
             color: #000;
         }
         
@@ -177,31 +178,36 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: clamp(10px, 1.5vh, 15px);
         }
         
         .hadeeth-text {
             text-align: center;
             width: 100%;
+            max-width: 100%;
         }
         
         .arabic-hadeeth {
             font-family: 'Amiri', serif;
-            font-size: 1.3rem;
+            font-size: clamp(1rem, 1.5vw, 1.4rem);
             direction: rtl;
-            margin-bottom: 15px;
+            margin-bottom: clamp(10px, 1.5vh, 15px);
             line-height: 1.6;
+            padding: 0 clamp(5px, 0.8vw, 10px);
         }
         
         .english-hadeeth {
-            font-size: 1.1rem;
-            margin-bottom: 10px;
+            font-size: clamp(0.9rem, 1.3vw, 1.2rem);
+            margin-bottom: clamp(8px, 1.5vh, 12px);
             line-height: 1.4;
+            padding: 0 clamp(5px, 0.8vw, 10px);
         }
         
         .hadeeth-reference {
-            font-size: 0.9rem;
+            font-size: clamp(0.8rem, 1.1vw, 1rem);
             color: #666;
             font-style: italic;
+            padding: 0 clamp(5px, 0.8vw, 10px);
         }
         
         .hadeeth-placeholder {
@@ -219,10 +225,10 @@
         }
         
         .announcements-header {
-            font-size: 1.5rem;
+            font-size: clamp(1.2rem, 1.5vw, 1.6rem);
             font-weight: bold;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: clamp(15px, 2vh, 20px);
             color: #000;
         }
         
@@ -232,23 +238,28 @@
             flex-direction: column;
             align-items: stretch;
             justify-content: flex-start;
-            gap: 15px;
+            gap: clamp(12px, 1.5vh, 15px);
+            padding: clamp(5px, 1vh, 10px);
         }
         
         .announcement-item {
-            text-align: center;
+            text-align: left;
             width: 100%;
+            padding: clamp(8px, 1vh, 12px);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: clamp(5px, 0.8vh, 8px);
+            border-left: clamp(3px, 0.4vw, 5px) solid #0b3d0b;
         }
         
         .announcement-title {
-            font-size: 1.2rem;
+            font-size: clamp(1rem, 1.3vw, 1.3rem);
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: clamp(8px, 1vh, 10px);
             color: #000;
         }
         
         .announcement-text {
-            font-size: 1rem;
+            font-size: clamp(0.9rem, 1.1vw, 1.1rem);
             line-height: 1.4;
             color: #333;
         }
@@ -262,8 +273,8 @@
         /* Bottom Additional Times */
         .board-bottom-times {
             background: rgba(255, 255, 255, 0.95);
-            border-top: 2px solid #000;
-            padding: 15px 20px;
+            border-top: clamp(1px, 0.2vw, 3px) solid #000;
+            padding: clamp(12px, 2.5vh, 20px) clamp(15px, 2.5vw, 25px);
             flex-shrink: 0;
         }
         
@@ -271,21 +282,23 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
+            gap: clamp(10px, 2vw, 20px);
         }
         
         .time-item {
             text-align: center;
+            flex: 1;
         }
         
         .time-label {
-            font-size: 0.9rem;
+            font-size: clamp(0.8rem, 1.5vw, 1.2rem);
             color: #666;
-            margin-bottom: 5px;
+            margin-bottom: clamp(3px, 0.5vh, 8px);
             font-weight: bold;
         }
         
         .time-value {
-            font-size: 1.8rem;
+            font-size: clamp(1.4rem, 3vw, 2.2rem);
             font-weight: bold;
             color: #000;
         }
@@ -294,25 +307,25 @@
         .scrolling-text-area {
             background: #F8B803;
             color: #fff;
-            padding: 10px 0;
+            padding: clamp(8px, 1.5vh, 15px) 0;
             flex-shrink: 0;
         }
         
         .scroll-separator {
-            height: 2px;
+            height: clamp(1px, 0.2vh, 3px);
             background: #fff;
-            margin-bottom: 10px;
+            margin-bottom: clamp(5px, 1vh, 12px);
         }
         
         .scrolling-content {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: clamp(15px, 2.5vw, 25px);
         }
         
         .scroll-arrow {
-            font-size: 1.5rem;
+            font-size: clamp(1.2rem, 2.5vw, 1.8rem);
             color: #ff0000;
             font-weight: bold;
         }
@@ -326,8 +339,8 @@
         
         .scroll-item {
             display: inline-block;
-            margin-right: 50px;
-            font-size: 1rem;
+            margin-right: clamp(30px, 5vw, 60px);
+            font-size: clamp(0.9rem, 1.8vw, 1.3rem);
         }
         
         /* Logo Watermark */
@@ -356,37 +369,87 @@
             display: none;
         }
         
-        /* Responsive adjustments */
+        /* Responsive adjustments for smaller screens */
         @media (max-width: 1200px) {
-            .time-large {
-                font-size: 2.5rem;
+            .board-main-content {
+                padding: clamp(10px, 2vh, 20px) clamp(8px, 1.5vw, 20px);
+            }
+            
+            .prayer-times-section,
+            .hadeeth-section,
+            .announcements-section {
+                padding: clamp(12px, 2.5vh, 25px);
+            }
+        }
+        
+        /* Responsive adjustments for very large screens (4K and above) */
+        @media (min-width: 2560px) {
+            .board-main-content {
+                padding: 30px 25px;
+                gap: 20px;
+            }
+            
+            .prayer-times-section,
+            .hadeeth-section,
+            .announcements-section {
+                padding: 30px;
+            }
+            
+            .prayer-name {
+                font-size: 2rem;
             }
             
             .prayer-time, .prayer-jamaat {
-                font-size: 1.5rem;
+                font-size: 2.2rem;
+            }
+            
+            .hadeeth-header,
+            .announcements-header {
+                font-size: 1.8rem;
             }
             
             .arabic-hadeeth {
-                font-size: 1.1rem;
+                font-size: 1.6rem;
+            }
+            
+            .english-hadeeth {
+                font-size: 1.4rem;
+            }
+            
+            .announcement-title {
+                font-size: 1.5rem;
+            }
+            
+            .announcement-text {
+                font-size: 1.3rem;
+            }
+            
+            .time-large {
+                font-size: 3.5rem;
             }
         }
         
         @media (max-width: 768px) {
             .board-header {
-                padding: 15px;
-            }
-            
-            .time-large {
-                font-size: 2rem;
+                padding: clamp(10px, 2vh, 20px);
             }
             
             .board-main-content {
-                padding: 15px;
+                padding: clamp(10px, 2vh, 20px) clamp(8px, 1.5vw, 15px);
+                flex-direction: column;
+                gap: clamp(8px, 1.5vh, 15px);
+            }
+            
+            .prayer-times-section,
+            .hadeeth-section,
+            .announcements-section {
+                height: auto;
+                min-height: clamp(200px, 30vh, 300px);
             }
             
             .additional-times {
                 flex-wrap: wrap;
-                gap: 10px;
+                gap: clamp(8px, 1.5vh, 15px);
             }
         }
         
@@ -436,6 +499,18 @@
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
+            animation: slideInFromRight 1s ease-out;
+        }
+
+        @keyframes slideInFromRight {
+            0% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         /* Countdown Timer Styles */

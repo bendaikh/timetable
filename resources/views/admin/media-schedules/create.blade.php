@@ -38,21 +38,18 @@
                                 <div class="mb-3">
                                     <label for="schedule_type" class="form-label">Schedule Type <span class="text-danger">*</span></label>
                                     <select class="form-select @error('schedule_type') is-invalid @enderror" id="schedule_type" name="schedule_type" required>
-                                        <option value="">Select Type</option>
-                                        <option value="prayer_before" {{ old('schedule_type') === 'prayer_before' ? 'selected' : '' }}>Before Prayer</option>
-                                        <option value="prayer_after" {{ old('schedule_type') === 'prayer_after' ? 'selected' : '' }}>After Prayer</option>
-                                        <option value="time_range" {{ old('schedule_type') === 'time_range' ? 'selected' : '' }}>Time Range</option>
-                                        <option value="countdown" {{ old('schedule_type') === 'countdown' ? 'selected' : '' }}>Countdown Timer</option>
+                                        <option value="minutes_before_prayer" {{ old('schedule_type', 'minutes_before_prayer') === 'minutes_before_prayer' ? 'selected' : '' }}>Minutes Before Prayer</option>
+                                        <option value="minutes_after_prayer" {{ old('schedule_type') === 'minutes_after_prayer' ? 'selected' : '' }}>Minutes After Prayer</option>
                                     </select>
                                     @error('schedule_type')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
-                                <!-- Prayer Selection (for prayer_before, prayer_after, countdown) -->
-                                <div class="mb-3" id="prayer_selection" style="display: none;">
-                                    <label for="prayer_name" class="form-label">Prayer</label>
-                                    <select class="form-select @error('prayer_name') is-invalid @enderror" id="prayer_name" name="prayer_name">
+                                <!-- Prayer Selection -->
+                                <div class="mb-3">
+                                    <label for="prayer_name" class="form-label">Prayer <span class="text-danger">*</span></label>
+                                    <select class="form-select @error('prayer_name') is-invalid @enderror" id="prayer_name" name="prayer_name" required>
                                         <option value="">Select Prayer</option>
                                         <option value="fajr" {{ old('prayer_name') === 'fajr' ? 'selected' : '' }}>Fajr</option>
                                         <option value="zohar" {{ old('prayer_name') === 'zohar' ? 'selected' : '' }}>Zohar</option>
@@ -65,49 +62,26 @@
                                     @enderror
                                 </div>
 
-                                <!-- Exact Start Time (for prayer_before, prayer_after) -->
-                                <div class="mb-3" id="exact_start_time_selection" style="display: none;">
-                                    <label for="exact_start_time" class="form-label">Exact Start Time</label>
-                                    <input type="time" class="form-control @error('exact_start_time') is-invalid @enderror"
-                                           id="exact_start_time" name="exact_start_time" value="{{ old('exact_start_time') }}">
-                                    <div class="form-text">When to start showing for Before/After Prayer.</div>
-                                    @error('exact_start_time')
+                                <!-- Minutes Before Prayer -->
+                                <div class="mb-3" id="field_minutes_before">
+                                    <label for="minutes_before_prayer" class="form-label">Minutes Before Prayer</label>
+                                    <input type="number" class="form-control @error('minutes_before_prayer') is-invalid @enderror" 
+                                           id="minutes_before_prayer" name="minutes_before_prayer" value="{{ old('minutes_before_prayer') }}" 
+                                           min="5" max="120">
+                                    <div class="form-text">How many minutes before prayer to start displaying (5-120 minutes)</div>
+                                    @error('minutes_before_prayer')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
-                                <!-- Time Range Selection (for time_range) -->
-                                <div class="row" id="time_range_selection" style="display: none;">
-                                    <div class="col-6">
-                                        <div class="mb-3">
-                                            <label for="start_time" class="form-label">Start Time</label>
-                                            <input type="time" class="form-control @error('start_time') is-invalid @enderror" 
-                                                   id="start_time" name="start_time" value="{{ old('start_time') }}">
-                                            @error('start_time')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="mb-3">
-                                            <label for="end_time" class="form-label">End Time</label>
-                                            <input type="time" class="form-control @error('end_time') is-invalid @enderror" 
-                                                   id="end_time" name="end_time" value="{{ old('end_time') }}">
-                                            @error('end_time')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Countdown Duration (for countdown) -->
-                                <div class="mb-3" id="countdown_duration_selection" style="display: none;">
-                                    <label for="countdown_duration" class="form-label">Countdown Duration (seconds)</label>
-                                    <input type="number" class="form-control @error('countdown_duration') is-invalid @enderror" 
-                                           id="countdown_duration" name="countdown_duration" value="{{ old('countdown_duration', 30) }}" 
-                                           min="10" max="300">
-                                    <div class="form-text">How many seconds before the prayer to start countdown</div>
-                                    @error('countdown_duration')
+                                <!-- Minutes After Prayer -->
+                                <div class="mb-3" id="field_minutes_after" style="display:none;">
+                                    <label for="minutes_after_prayer" class="form-label">Minutes After Prayer</label>
+                                    <input type="number" class="form-control @error('minutes_after_prayer') is-invalid @enderror" 
+                                           id="minutes_after_prayer" name="minutes_after_prayer" value="{{ old('minutes_after_prayer') }}" 
+                                           min="1" max="120">
+                                    <div class="form-text">How many minutes after prayer to start displaying (1-120 minutes)</div>
+                                    @error('minutes_after_prayer')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -150,12 +124,25 @@
 
                                 <div class="mb-3">
                                     <label for="priority" class="form-label">Priority <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control @error('priority') is-invalid @enderror" 
-                                           id="priority" name="priority" value="{{ old('priority', 0) }}" 
-                                           min="0" max="100" required>
-                                    <div class="form-text">Higher priority schedules override lower priority ones</div>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control @error('priority') is-invalid @enderror" 
+                                               id="priority" name="priority" value="{{ old('priority', 1) }}" 
+                                               min="1" max="100" required>
+                                        <button type="button" class="btn btn-outline-secondary" id="use_suggested_priority" style="display: none;">
+                                            Use Suggested
+                                        </button>
+                                    </div>
+                                    <div class="form-text" id="priority_help">Higher priority (lower number) schedules display first. Priority must be unique for overlapping schedules.</div>
+                                    
+                                    <div class="alert alert-info mt-2 mb-0" id="priorities_info" style="display: none;">
+                                        <small>
+                                            <strong><i class="bi bi-info-circle"></i> Already Taken Priorities (for this time slot):</strong> 
+                                            <span class="badge bg-secondary ms-1" id="used_priorities_display"></span>
+                                        </small>
+                                    </div>
+                                    
                                     @error('priority')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
 
@@ -172,11 +159,23 @@
 
                                 <!-- Schedule Preview -->
                                 <div class="mb-3" id="schedule_preview">
-                                    <label class="form-label">Schedule Preview</label>
+                                    <label class="form-label">Display Time</label>
                                     <div class="border rounded p-3 bg-light">
-                                        <div id="preview_content" class="text-muted">
-                                            Select schedule type to see preview
+                                        <div id="display_time_content" class="text-muted">
+                                            <small>Enter prayer and minutes to calculate display time</small>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <!-- Overlapping Schedules Warning -->
+                                <div class="mb-3" id="overlap_warning" style="display: none;">
+                                    <label class="form-label text-warning">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> Overlapping Schedules
+                                    </label>
+                                    <div class="alert alert-warning">
+                                        <p class="mb-2"><strong>The following media are already scheduled during this time:</strong></p>
+                                        <div id="overlapping_schedules_list"></div>
+                                        <p class="mb-0 mt-2"><small>Make sure to set the correct priority to control which media displays first.</small></p>
                                     </div>
                                 </div>
                             </div>
@@ -198,101 +197,157 @@
 
 @section('scripts')
 <script>
-document.getElementById('schedule_type').addEventListener('change', function() {
-    const scheduleType = this.value;
-    const prayerSelection = document.getElementById('prayer_selection');
-    const timeRangeSelection = document.getElementById('time_range_selection');
-    const countdownSelection = document.getElementById('countdown_duration_selection');
-    const prayerNameSelect = document.getElementById('prayer_name');
-    const exactStartTimeSelection = document.getElementById('exact_start_time_selection');
-    const exactStartTimeInput = document.getElementById('exact_start_time');
-    
-    // Hide all conditional fields
-    prayerSelection.style.display = 'none';
-    timeRangeSelection.style.display = 'none';
-    countdownSelection.style.display = 'none';
-    exactStartTimeSelection.style.display = 'none';
-    
-    // Show relevant fields based on schedule type
-    switch(scheduleType) {
-        case 'prayer_before':
-        case 'prayer_after':
-            prayerSelection.style.display = 'block';
-            prayerNameSelect.required = true;
-            exactStartTimeSelection.style.display = 'block';
-            exactStartTimeInput.required = true;
-            break;
-        case 'countdown':
-            prayerSelection.style.display = 'block';
-            countdownSelection.style.display = 'block';
-            prayerNameSelect.required = true;
-            break;
-        case 'time_range':
-            timeRangeSelection.style.display = 'block';
-            prayerNameSelect.required = false;
-            exactStartTimeInput.required = false;
-            break;
-        default:
-            prayerNameSelect.required = false;
-            exactStartTimeInput.required = false;
+let checkOverlapTimeout = null;
+let suggestedPriority = 1;
+
+function toggleFields() {
+    const type = document.getElementById('schedule_type').value;
+    const beforeField = document.getElementById('field_minutes_before');
+    const afterField = document.getElementById('field_minutes_after');
+    const beforeInput = document.getElementById('minutes_before_prayer');
+    const afterInput = document.getElementById('minutes_after_prayer');
+
+    if (type === 'minutes_before_prayer') {
+        beforeField.style.display = '';
+        afterField.style.display = 'none';
+        beforeInput.required = true;
+        afterInput.required = false;
+        afterInput.value = '';
+    } else {
+        beforeField.style.display = 'none';
+        afterField.style.display = '';
+        beforeInput.required = false;
+        afterInput.required = true;
+        beforeInput.value = '';
     }
-    
-    updatePreview();
-});
+    checkOverlap();
+}
 
 // Update preview when form changes
 document.addEventListener('DOMContentLoaded', function() {
+    // Add event listener for schedule_type to toggle fields
+    document.getElementById('schedule_type').addEventListener('change', toggleFields);
+    
     // Add event listeners to form fields
-    const formFields = ['schedule_type', 'prayer_name', 'start_time', 'end_time', 'countdown_duration', 'days_of_week[]'];
+    const formFields = ['prayer_name', 'minutes_before_prayer', 'minutes_after_prayer', 'media_id'];
     formFields.forEach(function(fieldName) {
-        const elements = document.querySelectorAll(`[name="${fieldName}"]`);
-        elements.forEach(function(element) {
-            element.addEventListener('change', updatePreview);
-        });
+        const element = document.getElementById(fieldName);
+        if (element) {
+            element.addEventListener('change', checkOverlap);
+            element.addEventListener('input', function() {
+                // Debounce the API call
+                clearTimeout(checkOverlapTimeout);
+                checkOverlapTimeout = setTimeout(checkOverlap, 500);
+            });
+        }
     });
     
-    // Initial preview update
-    updatePreview();
+    // Use suggested priority button
+    document.getElementById('use_suggested_priority').addEventListener('click', function() {
+        document.getElementById('priority').value = suggestedPriority;
+    });
+    
+    // Initial field toggle
+    toggleFields();
 });
 
-function updatePreview() {
-    const scheduleType = document.getElementById('schedule_type').value;
+function checkOverlap() {
     const prayerName = document.getElementById('prayer_name').value;
-    const startTime = document.getElementById('start_time').value;
-    const endTime = document.getElementById('end_time').value;
-    const countdownDuration = document.getElementById('countdown_duration').value;
-    const selectedDays = Array.from(document.querySelectorAll('input[name="days_of_week[]"]:checked')).map(cb => cb.value);
+    const scheduleType = document.getElementById('schedule_type').value;
+    const minutesBeforePrayer = document.getElementById('minutes_before_prayer').value;
+    const minutesAfterPrayer = document.getElementById('minutes_after_prayer').value;
+    const mediaId = document.getElementById('media_id').value;
     
-    let preview = '';
+    const minutes = scheduleType === 'minutes_before_prayer' ? minutesBeforePrayer : minutesAfterPrayer;
     
-    if (!scheduleType) {
-        preview = 'Select schedule type to see preview';
-    } else {
-        switch(scheduleType) {
-            case 'prayer_before':
-                preview = `Display before ${prayerName || 'selected prayer'} prayer`;
-                break;
-            case 'prayer_after':
-                preview = `Display after ${prayerName || 'selected prayer'} prayer`;
-                break;
-            case 'time_range':
-                preview = `Display from ${startTime || 'start time'} to ${endTime || 'end time'}`;
-                break;
-            case 'countdown':
-                preview = `Show countdown timer ${countdownDuration || 30} seconds before ${prayerName || 'selected prayer'} prayer`;
-                break;
-        }
-        
-        if (selectedDays.length > 0 && selectedDays.length < 7) {
-            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            const dayLabels = selectedDays.map(day => dayNames[day - 1]).join(', ');
-            preview += ` on ${dayLabels}`;
-        } else if (selectedDays.length === 0) {
-            preview += ' every day';
-        }
+    if (!prayerName || !minutes) {
+        document.getElementById('display_time_content').innerHTML = '<small class="text-muted">Enter prayer and minutes to calculate display time</small>';
+        document.getElementById('overlap_warning').style.display = 'none';
+        document.getElementById('use_suggested_priority').style.display = 'none';
+        return;
     }
     
-    document.getElementById('preview_content').textContent = preview;
+    // Show loading
+    document.getElementById('display_time_content').innerHTML = '<small class="text-muted"><i class="bi bi-hourglass-split"></i> Calculating...</small>';
+    
+    // Make AJAX call to check overlap
+    fetch('{{ route('admin.media-schedules.check-overlap') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            schedule_type: scheduleType,
+            prayer_name: prayerName,
+            minutes: minutes,
+            media_id: mediaId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update display time
+            document.getElementById('display_time_content').innerHTML = `
+                <div><strong>Start:</strong> ${data.display_start}</div>
+                <div><strong>End:</strong> ${data.display_end}</div>
+            `;
+            
+            // Update suggested priority
+            suggestedPriority = data.suggested_priority;
+            
+            // Update used priorities display
+            const prioritiesInfo = document.getElementById('priorities_info');
+            const usedPrioritiesEl = document.getElementById('used_priorities_display');
+            
+            if (data.used_priorities && data.used_priorities.length > 0) {
+                usedPrioritiesEl.textContent = data.used_priorities.join(', ');
+                prioritiesInfo.style.display = '';
+            } else {
+                prioritiesInfo.style.display = 'none';
+            }
+            
+            // Show overlapping schedules if any
+            if (data.overlapping_schedules.length > 0) {
+                let schedulesList = '<ul class="mb-0">';
+                data.overlapping_schedules.forEach(schedule => {
+                    schedulesList += `
+                        <li>
+                            <strong>${schedule.media_name}</strong> 
+                            (Priority: ${schedule.priority}) - 
+                            ${schedule.start_time} to ${schedule.end_time}
+                            <br><small class="text-muted">${schedule.schedule_type} - ${schedule.prayer_name}</small>
+                        </li>
+                    `;
+                });
+                schedulesList += '</ul>';
+                
+                document.getElementById('overlapping_schedules_list').innerHTML = schedulesList;
+                document.getElementById('overlap_warning').style.display = '';
+                
+                // Show suggested priority button
+                document.getElementById('use_suggested_priority').style.display = '';
+                document.getElementById('priority_help').innerHTML = `
+                    Suggested priority: <strong>${data.suggested_priority}</strong> 
+                    (Next available priority to avoid conflicts)
+                `;
+            } else {
+                document.getElementById('overlap_warning').style.display = 'none';
+                document.getElementById('use_suggested_priority').style.display = '';
+                document.getElementById('priority_help').innerHTML = `
+                    Suggested priority: <strong>${data.suggested_priority}</strong> 
+                    (No overlapping schedules found)
+                `;
+            }
+        } else {
+            document.getElementById('display_time_content').innerHTML = `<small class="text-danger">${data.message}</small>`;
+            document.getElementById('overlap_warning').style.display = 'none';
+        }
+    })
+    .catch(error => {
+        console.error('Error checking overlap:', error);
+        document.getElementById('display_time_content').innerHTML = '<small class="text-danger">Error calculating display time</small>';
+    });
 }
 </script>
 @endsection

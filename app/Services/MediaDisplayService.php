@@ -12,42 +12,19 @@ class MediaDisplayService
 {
     /**
      * Get the current media to display based on schedules and prayer times
+     * Returns null if no media should be displayed (show timetable)
      */
     public function getCurrentMedia(): ?Media
     {
         $now = Carbon::now();
-        $today = $now->format('Y-m-d');
         
-        // Get prayer times for today
-        $prayerTimes = PrayerTime::whereDate('date', $today)->first();
-        
-        if (!$prayerTimes) {
-            return null;
-        }
-
-        // Check for scheduled media based on priority
-        $scheduledMedia = $this->getScheduledMedia($now, $prayerTimes);
-        
-        if ($scheduledMedia) {
-            return $scheduledMedia;
-        }
-
-        // Fallback to default media (always display)
-        return $this->getDefaultMedia();
-    }
-
-    /**
-     * Get scheduled media based on current time and prayer times
-     */
-    private function getScheduledMedia(Carbon $now, PrayerTime $prayerTimes): ?Media
-    {
         // Get all active schedules ordered by priority
         $schedules = MediaSchedule::with('media')
-            ->where('is_active', true)
+            ->active()
             ->whereHas('media', function($query) {
                 $query->where('is_active', true);
             })
-            ->orderBy('priority', 'desc')
+            ->orderedByPriority()
             ->get();
 
         foreach ($schedules as $schedule) {
@@ -55,115 +32,44 @@ class MediaDisplayService
                 continue;
             }
 
-            switch ($schedule->schedule_type) {
-                case 'prayer_before':
-                    if ($this->isBeforePrayerTime($now, $schedule, $prayerTimes)) {
-                        return $schedule->media;
-                    }
-                    break;
-
-                case 'prayer_after':
-                    if ($this->isAfterPrayerTime($now, $schedule, $prayerTimes)) {
-                        return $schedule->media;
-                    }
-                    break;
-
-                case 'time_range':
-                    if ($schedule->isActiveForTimeRange()) {
-                        return $schedule->media;
-                    }
-                    break;
-
-                case 'countdown':
-                    if ($this->isCountdownTime($now, $schedule, $prayerTimes)) {
-                        return $schedule->media;
-                    }
-                    break;
+            if ($this->shouldDisplayMedia($schedule, $now)) {
+                return $schedule->media;
             }
         }
 
+        // No scheduled media to display - show timetable
         return null;
     }
 
     /**
-     * Check if current time is before prayer time
+     * Check if a media should be displayed based on schedule type and current time
      */
-    private function isBeforePrayerTime(Carbon $now, MediaSchedule $schedule, PrayerTime $prayerTimes): bool
+    private function shouldDisplayMedia(MediaSchedule $schedule, Carbon $now): bool
     {
-        if (!$schedule->prayer_name) {
-            return false;
-        }
+        switch ($schedule->schedule_type) {
+            case 'minutes_before_prayer':
+                return $schedule->isActiveForMinutesBeforePrayer();
+            case 'minutes_after_prayer':
+                return $schedule->isActiveForMinutesAfterPrayer();
 
-        $prayerTime = $this->getPrayerTime($prayerTimes, $schedule->prayer_name);
-        if (!$prayerTime) {
-            return false;
+            default:
+                return false;
         }
-
-        // If exact_start_time is set, show from that clock time until the prayer time
-        if ($schedule->exact_start_time) {
-            $exactStart = Carbon::today()->setTimeFromTimeString($schedule->exact_start_time->format('H:i:s'));
-            return $now->between($exactStart, $prayerTime);
-        }
-
-        // Otherwise, use schedule-specific relative duration if provided, else fallback to media display_duration
-        $secondsBefore = $schedule->relative_duration ?? $schedule->media->display_duration;
-        $displayStart = $prayerTime->subSeconds($secondsBefore);
-        
-        return $now->between($displayStart, $prayerTime);
     }
 
+
     /**
-     * Check if current time is after prayer time
+     * Get prayer time Carbon instance for today
      */
-    private function isAfterPrayerTime(Carbon $now, MediaSchedule $schedule, PrayerTime $prayerTimes): bool
+    private function getPrayerTime(string $prayerName): ?Carbon
     {
-        if (!$schedule->prayer_name) {
-            return false;
-        }
-
-        $prayerTime = $this->getPrayerTime($prayerTimes, $schedule->prayer_name);
-        if (!$prayerTime) {
-            return false;
-        }
-
-        // If exact_start_time is set, show from the prayer time until that clock time
-        if ($schedule->exact_start_time) {
-            $exactEnd = Carbon::today()->setTimeFromTimeString($schedule->exact_start_time->format('H:i:s'));
-            return $now->between($prayerTime, $exactEnd);
-        }
-
-        // Otherwise, use schedule-specific relative duration if provided, else fallback to media display_duration
-        $secondsAfter = $schedule->relative_duration ?? $schedule->media->display_duration;
-        $displayEnd = $prayerTime->addSeconds($secondsAfter);
+        $today = Carbon::now()->format('Y-m-d');
+        $prayerTimes = PrayerTime::whereDate('date', $today)->first();
         
-        return $now->between($prayerTime, $displayEnd);
-    }
-
-    /**
-     * Check if current time is countdown time before adhan
-     */
-    private function isCountdownTime(Carbon $now, MediaSchedule $schedule, PrayerTime $prayerTimes): bool
-    {
-        if (!$schedule->prayer_name) {
-            return false;
+        if (!$prayerTimes) {
+            return null;
         }
 
-        $prayerTime = $this->getPrayerTime($prayerTimes, $schedule->prayer_name);
-        if (!$prayerTime) {
-            return false;
-        }
-
-        // Check if we're within countdown duration before prayer time
-        $countdownStart = $prayerTime->subSeconds($schedule->countdown_duration);
-        
-        return $now->between($countdownStart, $prayerTime);
-    }
-
-    /**
-     * Get prayer time Carbon instance
-     */
-    private function getPrayerTime(PrayerTime $prayerTimes, string $prayerName): ?Carbon
-    {
         $timeString = match($prayerName) {
             'fajr' => $prayerTimes->fajr,
             'zohar' => $prayerTimes->zohar,
@@ -177,15 +83,88 @@ class MediaDisplayService
     }
 
     /**
-     * Get default media (always display)
+     * Get slideshow information for current media
      */
-    private function getDefaultMedia(): ?Media
+    public function getSlideshowInfo(): array
     {
-        return Media::where('is_active', true)
-            ->where('priority', 0) // Default priority
-            ->whereDoesntHave('schedules') // No specific schedules
-            ->orderBy('created_at', 'asc')
+        $now = Carbon::now();
+        $currentMedia = $this->getCurrentMedia();
+        
+        if (!$currentMedia) {
+            return [
+                'should_display' => false,
+                'media' => null,
+                'duration' => 0,
+                'next_schedule' => null
+            ];
+        }
+
+        // Get the schedule that's currently active
+        $activeSchedule = MediaSchedule::with('media')
+            ->active()
+            ->whereHas('media', function($query) {
+                $query->where('is_active', true);
+            })
+            ->orderedByPriority()
+            ->where('media_id', $currentMedia->id)
             ->first();
+
+        $duration = $activeSchedule ? $activeSchedule->media->display_duration : 30;
+
+        return [
+            'should_display' => true,
+            'media' => $currentMedia,
+            'duration' => $duration,
+            'schedule' => $activeSchedule,
+            'next_schedule' => $this->getNextScheduledMedia()
+        ];
+    }
+
+    /**
+     * Get the next scheduled media in queue
+     */
+    private function getNextScheduledMedia(): ?MediaSchedule
+    {
+        $now = Carbon::now();
+        
+        $schedules = MediaSchedule::with('media')
+            ->active()
+            ->whereHas('media', function($query) {
+                $query->where('is_active', true);
+            })
+            ->orderedByPriority()
+            ->get();
+
+        foreach ($schedules as $schedule) {
+            if (!$schedule->isActiveForToday()) {
+                continue;
+            }
+
+            // Check if this schedule will be active in the future
+            if ($this->willBeActiveInFuture($schedule, $now)) {
+                return $schedule;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if a schedule will be active in the future
+     */
+    private function willBeActiveInFuture(MediaSchedule $schedule, Carbon $now): bool
+    {
+        switch ($schedule->schedule_type) {
+            case 'minutes_before_prayer':
+                $startTime = $schedule->getDisplayStartTime();
+                return $startTime && $startTime->gt($now);
+            case 'minutes_after_prayer':
+                $startTime = $schedule->getDisplayStartTime();
+                return $startTime && $startTime->gt($now);
+
+            default:
+                return false;
+        }
     }
 
     /**

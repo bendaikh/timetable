@@ -207,7 +207,7 @@
                     <div>
                         <div class="media-title">{{ $medium->title }}</div>
                         <div class="media-details">
-                            {{ ucfirst($medium->type) }} • Priority: {{ $medium->priority }}
+                            {{ ucfirst($medium->type) }} • ID: {{ $medium->id }}
                             @if($medium->description)
                                 <br>{{ $medium->description }}
                             @endif

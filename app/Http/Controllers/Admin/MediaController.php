@@ -15,7 +15,7 @@ class MediaController extends Controller
      */
     public function index()
     {
-        $media = Media::with('schedules')->orderBy('priority', 'desc')->paginate(20);
+        $media = Media::with('schedules')->orderBy('id', 'desc')->paginate(20);
         return view('admin.media.index', compact('media'));
     }
 
@@ -37,7 +37,6 @@ class MediaController extends Controller
             'file' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,avi,mov|max:102400', // 100MB max
             'description' => 'nullable|string',
             'display_duration' => 'required|integer|min:5|max:300',
-            'priority' => 'required|integer|min:0|max:100',
             'type' => 'required|in:image,video'
         ]);
 
@@ -51,7 +50,6 @@ class MediaController extends Controller
             'type' => $request->type,
             'description' => $request->description,
             'display_duration' => $request->display_duration,
-            'priority' => $request->priority,
             'is_active' => $request->has('is_active')
         ]);
 
@@ -86,7 +84,6 @@ class MediaController extends Controller
             'file' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,avi,mov|max:102400',
             'description' => 'nullable|string',
             'display_duration' => 'required|integer|min:5|max:300',
-            'priority' => 'required|integer|min:0|max:100',
             'type' => 'required|in:image,video'
         ]);
 
@@ -95,7 +92,6 @@ class MediaController extends Controller
             'type' => $request->type,
             'description' => $request->description,
             'display_duration' => $request->display_duration,
-            'priority' => $request->priority,
             'is_active' => $request->has('is_active')
         ];
 

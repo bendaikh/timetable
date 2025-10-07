@@ -56,19 +56,15 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge bg-{{ $schedule->schedule_type === 'countdown' ? 'info' : ($schedule->schedule_type === 'time_range' ? 'warning' : 'success') }}">
+                                            <span class="badge bg-success">
                                                 {{ $schedule->getScheduleTypeLabel() }}
                                             </span>
                                         </td>
                                         <td>
-                                            @if($schedule->schedule_type === 'prayer_before' || $schedule->schedule_type === 'prayer_after')
-                                                <span class="badge bg-primary">{{ $schedule->getPrayerNameLabel() }}</span>
-                                            @elseif($schedule->schedule_type === 'time_range')
-                                                <small>
-                                                    {{ $schedule->start_time->format('H:i') }} - {{ $schedule->end_time->format('H:i') }}
-                                                </small>
-                                            @elseif($schedule->schedule_type === 'countdown')
-                                                <small>{{ $schedule->countdown_duration }}s before {{ $schedule->getPrayerNameLabel() }}</small>
+                                            @if($schedule->schedule_type === 'minutes_before_prayer')
+                                                <small>{{ $schedule->minutes_before_prayer }} minutes before {{ $schedule->getPrayerNameLabel() }}</small>
+                                            @elseif($schedule->schedule_type === 'minutes_after_prayer')
+                                                <small>{{ $schedule->minutes_after_prayer }} minutes after {{ $schedule->getPrayerNameLabel() }}</small>
                                             @endif
                                         </td>
                                         <td>

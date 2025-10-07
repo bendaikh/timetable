@@ -63,8 +63,8 @@
                                         </td>
                                         <td>{{ $item->display_duration }}s</td>
                                         <td>
-                                            <span class="badge bg-{{ $item->priority > 50 ? 'danger' : ($item->priority > 20 ? 'warning' : 'secondary') }}">
-                                                {{ $item->priority }}
+                                            <span class="badge bg-info">
+                                                ID: {{ $item->id }}
                                             </span>
                                         </td>
                                         <td>

@@ -64,12 +64,12 @@
                                     <td>{{ $medium->display_duration }} seconds</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Priority:</strong></td>
-                                    <td>
-                                        <span class="badge bg-{{ $medium->priority > 50 ? 'danger' : ($medium->priority > 20 ? 'warning' : 'secondary') }}">
-                                            {{ $medium->priority }}
-                                        </span>
-                                    </td>
+                                                    <td><strong>ID:</strong></td>
+                                                    <td>
+                                                        <span class="badge bg-info">
+                                                            {{ $medium->id }}
+                                                        </span>
+                                                    </td>
                                 </tr>
                                 <tr>
                                     <td><strong>Status:</strong></td>
@@ -160,13 +160,7 @@
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        @if($schedule->schedule_type === 'prayer_before' || $schedule->schedule_type === 'prayer_after')
-                                                            {{ ucfirst($schedule->prayer_name) }} Prayer
-                                                        @elseif($schedule->schedule_type === 'time_range')
-                                                            {{ $schedule->start_time }} - {{ $schedule->end_time }}
-                                                        @elseif($schedule->schedule_type === 'countdown')
-                                                            {{ $schedule->countdown_duration }}s before prayer
-                                                        @endif
+                                                        {{ $schedule->minutes_before_prayer }} minutes before {{ ucfirst($schedule->prayer_name) }} Prayer
                                                         @if($schedule->days_of_week)
                                                             <br><small class="text-muted">
                                                                 Days: {{ implode(', ', array_map(function($day) {

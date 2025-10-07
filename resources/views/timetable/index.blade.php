@@ -244,39 +244,42 @@
         if (!document.fullscreenElement && !document.mozFullScreenElement && 
             !document.webkitFullscreenElement && !document.msFullscreenElement) {
             // Enter fullscreen
-            if (element.requestFullscreen) {
-                element.requestFullscreen();
-            } else if (element.msRequestFullscreen) {
-                element.msRequestFullscreen();
-            } else if (element.mozRequestFullScreen) {
-                element.mozRequestFullScreen();
-            } else if (element.webkitRequestFullscreen) {
-                element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-            }
+            const fullscreenPromise = element.requestFullscreen ? 
+                element.requestFullscreen() :
+                element.msRequestFullscreen ? element.msRequestFullscreen() :
+                element.mozRequestFullScreen ? element.mozRequestFullScreen() :
+                element.webkitRequestFullscreen ? element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT) :
+                Promise.reject('Fullscreen not supported');
             
-            button.innerHTML = '<i class="bi bi-fullscreen-exit"></i> Exit Fullscreen';
-            document.body.classList.add('fullscreen-mode');
-            document.body.classList.add('show-controls');
-            
-            // Hide controls after 3 seconds
-            setTimeout(() => {
-                document.body.classList.remove('show-controls');
-            }, 3000);
+            fullscreenPromise.then(() => {
+                button.innerHTML = '<i class="bi bi-fullscreen-exit"></i> Exit Fullscreen';
+                document.body.classList.add('fullscreen-mode');
+                document.body.classList.add('show-controls');
+                
+                // Hide controls after 3 seconds
+                setTimeout(() => {
+                    document.body.classList.remove('show-controls');
+                }, 3000);
+            }).catch((error) => {
+                console.log('Fullscreen permission denied or not supported:', error);
+                // Still show media even if fullscreen fails
+            });
             
         } else {
             // Exit fullscreen
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
-            } else if (document.mozCancelFullScreen) {
-                document.mozCancelFullScreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            }
+            const exitPromise = document.exitFullscreen ? 
+                document.exitFullscreen() :
+                document.msExitFullscreen ? document.msExitFullscreen() :
+                document.mozCancelFullScreen ? document.mozCancelFullScreen() :
+                document.webkitExitFullscreen ? document.webkitExitFullscreen() :
+                Promise.reject('Exit fullscreen not supported');
             
-            button.innerHTML = '<i class="bi bi-arrows-fullscreen"></i> Enter Fullscreen';
-            document.body.classList.remove('fullscreen-mode');
+            exitPromise.then(() => {
+                button.innerHTML = '<i class="bi bi-arrows-fullscreen"></i> Enter Fullscreen';
+                document.body.classList.remove('fullscreen-mode');
+            }).catch((error) => {
+                console.log('Exit fullscreen failed:', error);
+            });
         }
     }
     
@@ -341,12 +344,13 @@
     let mediaDisplayTimer = null;
     let countdownTimer = null;
     let mediaCheckInterval = null;
+    let displayedMediaIds = new Set(); // Track which media has been displayed
 
     // Initialize media display system
     function initMediaDisplay() {
         checkForMedia();
-        // Check for media updates every 30 seconds
-        mediaCheckInterval = setInterval(checkForMedia, 30000);
+        // Check for media updates every 10 seconds for more precise timing
+        mediaCheckInterval = setInterval(checkForMedia, 10000);
     }
 
     // Check for current media to display
@@ -355,8 +359,14 @@
             const response = await fetch('/api/current-media');
             const data = await response.json();
             
-            if (data.media && data.media !== currentMedia) {
+            // Only display media if it's new and hasn't been displayed before
+            if (data.media && data.media.id !== currentMedia?.id && !displayedMediaIds.has(data.media.id)) {
+                console.log('New media found, displaying:', data.media);
                 displayMedia(data.media);
+            } else if (data.media) {
+                console.log('Media already displayed or same as current:', data.media.id);
+            } else {
+                console.log('No media returned from API');
             }
             
             // Also check for countdown
@@ -368,7 +378,12 @@
 
     // Display media in fullscreen overlay
     function displayMedia(media) {
+        console.log('displayMedia called with:', media);
         currentMedia = media;
+
+        // Mark this media as displayed to prevent showing it again
+        displayedMediaIds.add(media.id);
+        
         const overlay = document.getElementById('media-overlay');
         const content = document.getElementById('media-content');
         
@@ -388,6 +403,33 @@
             mediaElement.style.width = '100%';
             mediaElement.style.height = '100%';
             mediaElement.style.objectFit = 'contain';
+            mediaElement.style.display = 'block';
+            mediaElement.style.position = 'relative';
+            mediaElement.style.zIndex = '1';
+
+            // Add error handling for image loading
+            mediaElement.onload = function() {
+                console.log('Image loaded successfully:', media.file_url);
+                console.log('Image natural dimensions:', this.naturalWidth, 'x', this.naturalHeight);
+                console.log('Image display style:', this.style.display);
+                console.log('Image visibility:', this.style.visibility);
+                console.log('Image opacity:', this.style.opacity);
+                console.log('Content children:', content.children.length);
+                console.log('Media element tag name:', this.tagName);
+                console.log('Image computed display:', window.getComputedStyle(this).display);
+                console.log('Image computed width:', window.getComputedStyle(this).width);
+                console.log('Image computed height:', window.getComputedStyle(this).height);
+                console.log('Content dimensions:', content.offsetWidth, 'x', content.offsetHeight);
+            };
+
+            mediaElement.onerror = function() {
+                console.error('Failed to load image:', media.file_url);
+                console.error('Image natural dimensions:', this.naturalWidth, 'x', this.naturalHeight);
+                // Show error message instead of black screen
+                content.innerHTML = '<div style="color: white; text-align: center; padding: 20px;">Failed to load image: ' + media.title + '</div>';
+            };
+
+            console.log('Loading image from:', media.file_url);
         } else if (media.type === 'video') {
             mediaElement = document.createElement('video');
             mediaElement.src = media.file_url;
@@ -401,28 +443,80 @@
         
         // Clear content and add new media
         content.innerHTML = '';
+        console.log('Content dimensions before adding image:', content.offsetWidth, 'x', content.offsetHeight);
+
+        // Clear any existing animations
+        mediaElement.style.animation = 'none';
+
         content.appendChild(mediaElement);
-        
+
+        // Force reflow to ensure animation plays
+        mediaElement.offsetHeight;
+
+        // Start the slide-in animation
+        mediaElement.style.animation = 'slideInFromRight 1s ease-out';
+
+        console.log('Content dimensions after adding image:', content.offsetWidth, 'x', content.offsetHeight);
+        console.log('Media element dimensions:', mediaElement.offsetWidth, 'x', mediaElement.offsetHeight);
+
         // Show overlay
+        console.log('Showing media overlay');
         overlay.style.display = 'flex';
-        
-        // Enter fullscreen
-        if (!document.fullscreenElement) {
-            toggleFullscreen();
-        }
-        
+        overlay.style.visibility = 'visible';
+        overlay.style.opacity = '1';
+
+        // Debug: Check if overlay is actually visible
+        console.log('Overlay display style:', overlay.style.display);
+        console.log('Overlay computed display:', window.getComputedStyle(overlay).display);
+        console.log('Overlay z-index:', window.getComputedStyle(overlay).zIndex);
+        console.log('Overlay background:', window.getComputedStyle(overlay).backgroundColor);
+
+        // Skip fullscreen for now - just show the media overlay
+        // User can manually click fullscreen button if they want
+
         // Set timer to hide media after duration
+        console.log('Setting timer to hide media after', media.display_duration, 'seconds');
+        console.log('Timer ID:', mediaDisplayTimer);
         mediaDisplayTimer = setTimeout(() => {
+            console.log('Hiding media after duration');
             hideMedia();
         }, media.display_duration * 1000);
+
+        // Prevent multiple timers
+        if (window.mediaDisplayTimer) {
+            clearTimeout(window.mediaDisplayTimer);
+        }
+        window.mediaDisplayTimer = mediaDisplayTimer;
+
+        // Also set a timer to check if the media is still visible after 1 second
+        setTimeout(() => {
+            console.log('Checking media visibility after 1 second');
+            console.log('Overlay display:', overlay.style.display);
+            console.log('Overlay visibility:', overlay.style.visibility);
+            console.log('Overlay opacity:', overlay.style.opacity);
+            console.log('Current media:', currentMedia?.title || 'none');
+            console.log('Media element in DOM:', content.contains(mediaElement));
+            console.log('Media element visible:', mediaElement.offsetWidth > 0 && mediaElement.offsetHeight > 0);
+        }, 1000);
+
+        // Debug: Check media element
+        console.log('Media element in content:', content.contains(mediaElement));
+        console.log('Media element src:', mediaElement.src);
+        console.log('Media element style:', mediaElement.style.cssText);
     }
 
     // Hide media overlay
     function hideMedia() {
+        console.log('hideMedia called, currentMedia:', currentMedia?.title || 'none');
         const overlay = document.getElementById('media-overlay');
         overlay.style.display = 'none';
         currentMedia = null;
         clearTimeout(mediaDisplayTimer);
+    }
+
+    // Clear displayed media IDs (useful for new day or reset)
+    function clearDisplayedMedia() {
+        displayedMediaIds.clear();
     }
 
     // Check for countdown timer
@@ -457,10 +551,8 @@
         overlay.style.display = 'flex';
         countdownDiv.style.display = 'flex';
         
-        // Enter fullscreen
-        if (!document.fullscreenElement) {
-            toggleFullscreen();
-        }
+        // Skip fullscreen for countdown - just show the overlay
+        // User can manually click fullscreen button if they want
         
         // Start countdown timer
         startCountdownTimer(countdownInfo.prayer_time);
@@ -495,12 +587,20 @@
 
     // Hide countdown
     function hideCountdown() {
+        // Don't hide overlay if media is currently displaying
+        if (currentMedia) {
+            const countdownDiv = document.getElementById('media-countdown');
+            countdownDiv.style.display = 'none';
+            clearInterval(countdownTimer);
+            return;
+        }
+
         const overlay = document.getElementById('media-overlay');
         const countdownDiv = document.getElementById('media-countdown');
-        
+
         countdownDiv.style.display = 'none';
         overlay.style.display = 'none';
-        
+
         clearInterval(countdownTimer);
     }
 
@@ -508,7 +608,25 @@
     document.addEventListener('DOMContentLoaded', function() {
         initMediaDisplay();
         initContentRotation();
+        
+        // Clear displayed media IDs at midnight each day
+        scheduleMidnightReset();
     });
+
+    // Schedule reset at midnight
+    function scheduleMidnightReset() {
+        const now = new Date();
+        const midnight = new Date(now);
+        midnight.setHours(24, 0, 0, 0); // Next midnight
+        
+        const msUntilMidnight = midnight.getTime() - now.getTime();
+        
+        setTimeout(() => {
+            clearDisplayedMedia();
+            // Schedule the next reset
+            scheduleMidnightReset();
+        }, msUntilMidnight);
+    }
 
     // Content rotation for hadeeths and announcements
     function initContentRotation() {

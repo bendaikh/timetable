@@ -100,6 +100,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('media/{media}/toggle-status', [MediaController::class, 'toggleStatus'])
         ->name('admin.media.toggle-status');
     
+    Route::post('media-schedules/check-overlap', [MediaScheduleController::class, 'checkOverlap'])
+        ->name('admin.media-schedules.check-overlap');
+    
     Route::resource('media-schedules', MediaScheduleController::class, [
         'as' => 'admin'
     ]);

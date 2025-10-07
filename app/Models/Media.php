@@ -13,14 +13,12 @@ class Media extends Model
         'type',
         'description',
         'is_active',
-        'display_duration',
-        'priority'
+        'display_duration'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'display_duration' => 'integer',
-        'priority' => 'integer'
+        'display_duration' => 'integer'
     ];
 
     public function schedules(): HasMany
@@ -30,9 +28,21 @@ class Media extends Model
 
     public function getFileUrlAttribute(): string
     {
-        return app()->environment('production') 
-            ? url('public/storage/' . $this->file_path) 
-            : asset('storage/' . $this->file_path);
+        if (app()->environment('production')) {
+            return url('public/storage/' . $this->file_path);
+        }
+
+        // For development, construct URL with proper port if needed
+        $scheme = request()->isSecure() ? 'https' : 'http';
+        $host = request()->getHost();
+        $port = request()->getPort();
+
+        // Only include port if it's not the default for the scheme
+        if (($scheme === 'http' && $port != 80) || ($scheme === 'https' && $port != 443)) {
+            $host .= ':' . $port;
+        }
+
+        return $scheme . '://' . $host . '/storage/' . $this->file_path;
     }
 
     public function isImage(): bool

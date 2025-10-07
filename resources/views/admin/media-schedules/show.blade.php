@@ -62,30 +62,29 @@
                                 <tr>
                                     <td><strong>Schedule Type:</strong></td>
                                     <td>
-                                        <span class="badge bg-{{ $mediaSchedule->schedule_type === 'countdown' ? 'info' : ($mediaSchedule->schedule_type === 'time_range' ? 'warning' : 'success') }}">
+                                        <span class="badge bg-success">
                                             {{ ucwords(str_replace('_', ' ', $mediaSchedule->schedule_type)) }}
                                         </span>
                                     </td>
                                 </tr>
-                                @if($mediaSchedule->schedule_type === 'prayer_before' || $mediaSchedule->schedule_type === 'prayer_after')
+                                <tr>
+                                    <td><strong>Prayer:</strong></td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ ucfirst($mediaSchedule->prayer_name) }}</span>
+                                    </td>
+                                </tr>
+                                @if($mediaSchedule->schedule_type === 'minutes_before_prayer')
                                     <tr>
-                                        <td><strong>Prayer:</strong></td>
+                                        <td><strong>Minutes Before:</strong></td>
                                         <td>
-                                            <span class="badge bg-primary">{{ ucfirst($mediaSchedule->prayer_name) }}</span>
+                                            {{ $mediaSchedule->minutes_before_prayer }} minutes
                                         </td>
                                     </tr>
-                                @elseif($mediaSchedule->schedule_type === 'time_range')
+                                @elseif($mediaSchedule->schedule_type === 'minutes_after_prayer')
                                     <tr>
-                                        <td><strong>Time Range:</strong></td>
+                                        <td><strong>Minutes After:</strong></td>
                                         <td>
-                                            {{ $mediaSchedule->start_time->format('H:i') }} - {{ $mediaSchedule->end_time->format('H:i') }}
-                                        </td>
-                                    </tr>
-                                @elseif($mediaSchedule->schedule_type === 'countdown')
-                                    <tr>
-                                        <td><strong>Countdown:</strong></td>
-                                        <td>
-                                            {{ $mediaSchedule->countdown_duration }}s before {{ ucfirst($mediaSchedule->prayer_name) }}
+                                            {{ $mediaSchedule->minutes_after_prayer }} minutes
                                         </td>
                                     </tr>
                                 @endif
@@ -171,14 +170,12 @@
                                 <div class="col-md-6">
                                     <h6>How This Schedule Works:</h6>
                                     <ul class="list-unstyled">
-                                        @if($mediaSchedule->schedule_type === 'prayer_before')
-                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will be displayed before {{ ucfirst($mediaSchedule->prayer_name) }} prayer</li>
-                                        @elseif($mediaSchedule->schedule_type === 'prayer_after')
-                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will be displayed after {{ ucfirst($mediaSchedule->prayer_name) }} prayer</li>
-                                        @elseif($mediaSchedule->schedule_type === 'time_range')
-                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will be displayed between {{ $mediaSchedule->start_time->format('H:i') }} and {{ $mediaSchedule->end_time->format('H:i') }}</li>
-                                        @elseif($mediaSchedule->schedule_type === 'countdown')
-                                            <li><i class="bi bi-check-circle text-success me-2"></i>Countdown timer will be shown {{ $mediaSchedule->countdown_duration }} seconds before {{ ucfirst($mediaSchedule->prayer_name) }} prayer</li>
+                                        @if($mediaSchedule->schedule_type === 'minutes_before_prayer')
+                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will be displayed {{ $mediaSchedule->minutes_before_prayer }} minutes before {{ ucfirst($mediaSchedule->prayer_name) }} prayer</li>
+                                            <li><i class="bi bi-info-circle text-info me-2"></i>Stops 5 minutes before prayer time</li>
+                                        @elseif($mediaSchedule->schedule_type === 'minutes_after_prayer')
+                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will be displayed {{ $mediaSchedule->minutes_after_prayer }} minutes after {{ ucfirst($mediaSchedule->prayer_name) }} prayer</li>
+                                            <li><i class="bi bi-info-circle text-info me-2"></i>Displays for 10 minutes duration</li>
                                         @endif
                                         
                                         @if($mediaSchedule->days_of_week)
@@ -187,7 +184,7 @@
                                             <li><i class="bi bi-check-circle text-success me-2"></i>Active every day</li>
                                         @endif
                                         
-                                        <li><i class="bi bi-check-circle text-success me-2"></i>Priority level: {{ $mediaSchedule->priority }} (higher overrides lower)</li>
+                                        <li><i class="bi bi-check-circle text-success me-2"></i>Priority level: {{ $mediaSchedule->priority }} (lower number = higher priority)</li>
                                         <li><i class="bi bi-check-circle text-success me-2"></i>Media duration: {{ $mediaSchedule->media->display_duration }} seconds</li>
                                     </ul>
                                 </div>
@@ -196,10 +193,11 @@
                                     <div class="alert alert-info">
                                         <i class="bi bi-clock me-2"></i>
                                         @if($mediaSchedule->is_active)
-                                            @if($mediaSchedule->schedule_type === 'time_range')
-                                                <strong>Today:</strong> {{ $mediaSchedule->start_time->format('H:i') }} - {{ $mediaSchedule->end_time->format('H:i') }}
-                                            @else
-                                                <strong>Next {{ ucfirst($mediaSchedule->prayer_name) }} prayer</strong>
+                                            <strong>Next {{ ucfirst($mediaSchedule->prayer_name) }} prayer</strong>
+                                            @if($mediaSchedule->schedule_type === 'minutes_before_prayer')
+                                                <br><small>{{ $mediaSchedule->minutes_before_prayer }} minutes before prayer time</small>
+                                            @elseif($mediaSchedule->schedule_type === 'minutes_after_prayer')
+                                                <br><small>{{ $mediaSchedule->minutes_after_prayer }} minutes after prayer time</small>
                                             @endif
                                         @else
                                             <em>Schedule is currently inactive</em>
