@@ -26,11 +26,10 @@
                         <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th>Media</th>
+                                    <th>Media Items</th>
                                     <th>Schedule Type</th>
                                     <th>Prayer/Time</th>
                                     <th>Days</th>
-                                    <th>Priority</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -39,32 +38,45 @@
                                 @forelse($schedules as $schedule)
                                     <tr>
                                         <td>
-                                            <div class="d-flex align-items-center">
-                                                @if($schedule->media->isImage())
-                                                    <img src="{{ $schedule->media->file_url }}" alt="{{ $schedule->media->title }}" 
-                                                         class="img-thumbnail me-2" style="width: 40px; height: 40px; object-fit: cover;">
-                                                @else
-                                                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center me-2" 
-                                                         style="width: 40px; height: 40px;">
-                                                        <i class="bi bi-play-circle"></i>
-                                                    </div>
-                                                @endif
-                                                <div>
-                                                    <strong>{{ $schedule->media->title }}</strong>
-                                                    <br><small class="text-muted">{{ ucfirst($schedule->media->type) }}</small>
+                                            @if($schedule->mediaItems->count() > 0)
+                                                <div class="d-flex flex-column">
+                                                    @foreach($schedule->mediaItems->take(2) as $media)
+                                                        <div class="d-flex align-items-center mb-1">
+                                                            @if($media->isImage())
+                                                                <img src="{{ $media->file_url }}" alt="{{ $media->title }}" 
+                                                                     class="img-thumbnail me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                                            @else
+                                                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center me-2" 
+                                                                     style="width: 30px; height: 30px; font-size: 10px;">
+                                                                    <i class="bi bi-play-circle"></i>
+                                                                </div>
+                                                            @endif
+                                                            <div>
+                                                                <small><strong>{{ $media->title }}</strong></small>
+                                                                <br><small class="text-muted">Priority: {{ $media->pivot->priority }}, Duration: {{ $media->pivot->duration }}s</small>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                    @if($schedule->mediaItems->count() > 2)
+                                                        <small class="text-muted">+ {{ $schedule->mediaItems->count() - 2 }} more</small>
+                                                    @endif
                                                 </div>
-                                            </div>
+                                            @else
+                                                <span class="text-muted">No media</span>
+                                            @endif
                                         </td>
                                         <td>
-                                            <span class="badge bg-success">
+                                            <span class="badge bg-{{ $schedule->schedule_type === 'full_time_poster' ? 'primary' : 'success' }}">
                                                 {{ $schedule->getScheduleTypeLabel() }}
                                             </span>
                                         </td>
                                         <td>
                                             @if($schedule->schedule_type === 'minutes_before_prayer')
-                                                <small>{{ $schedule->minutes_before_prayer }} minutes before {{ $schedule->getPrayerNameLabel() }}</small>
+                                                <small>{{ $schedule->minutes_before_prayer }} min before {{ $schedule->getPrayerNameLabel() }}</small>
                                             @elseif($schedule->schedule_type === 'minutes_after_prayer')
-                                                <small>{{ $schedule->minutes_after_prayer }} minutes after {{ $schedule->getPrayerNameLabel() }}</small>
+                                                <small>{{ $schedule->minutes_after_prayer }} min after {{ $schedule->getPrayerNameLabel() }}</small>
+                                            @elseif($schedule->schedule_type === 'full_time_poster')
+                                                <small class="text-muted">All day</small>
                                             @endif
                                         </td>
                                         <td>
@@ -79,11 +91,6 @@
                                             @else
                                                 <span class="text-muted">All Days</span>
                                             @endif
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-{{ $schedule->priority > 50 ? 'danger' : ($schedule->priority > 20 ? 'warning' : 'secondary') }}">
-                                                {{ $schedule->priority }}
-                                            </span>
                                         </td>
                                         <td>
                                             <button type="button" class="btn btn-sm btn-{{ $schedule->is_active ? 'success' : 'secondary' }}"
@@ -108,7 +115,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center text-muted py-4">
+                                        <td colspan="6" class="text-center text-muted py-4">
                                             No schedules found. <a href="{{ route('admin.media-schedules.create') }}">Create your first schedule</a>
                                         </td>
                                     </tr>

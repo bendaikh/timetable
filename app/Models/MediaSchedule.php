@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Carbon\Carbon;
+use App\Models\Setting;
 
 class MediaSchedule extends Model
 {
     protected $fillable = [
-        'media_id',
         'schedule_type',
         'prayer_name',
         'minutes_before_prayer',
@@ -19,8 +20,7 @@ class MediaSchedule extends Model
         'end_time',
         'relative_duration',
         'exact_start_time',
-        'is_active',
-        'priority'
+        'is_active'
     ];
 
     protected $casts = [
@@ -31,13 +31,21 @@ class MediaSchedule extends Model
         'minutes_after_prayer' => 'integer',
         'relative_duration' => 'integer',
         'exact_start_time' => 'datetime:H:i',
-        'is_active' => 'boolean',
-        'priority' => 'integer'
+        'is_active' => 'boolean'
     ];
 
-    public function media(): BelongsTo
+    public function mediaItems(): BelongsToMany
     {
-        return $this->belongsTo(Media::class);
+        return $this->belongsToMany(Media::class, 'media_schedule_media')
+            ->withPivot('duration', 'priority')
+            ->orderBy('media_schedule_media.priority', 'asc')
+            ->withTimestamps();
+    }
+    
+    // Keep for backward compatibility, but deprecated
+    public function media(): BelongsToMany
+    {
+        return $this->mediaItems();
     }
 
     public function isActiveForToday(): bool
@@ -65,7 +73,7 @@ class MediaSchedule extends Model
 
 
     /**
-     * Check if this schedule should be active based on minutes before prayer
+     * Check if this schedule should be active based on minutes before prayer (uses JAMAAT TIME)
      */
     public function isActiveForMinutesBeforePrayer(): bool
     {
@@ -86,9 +94,13 @@ class MediaSchedule extends Model
             return false;
         }
 
-        $prayerDateTime = Carbon::parse($prayerTime->$prayerTimeField);
-        $displayStartTime = $prayerDateTime->copy()->subMinutes($this->minutes_before_prayer);
-        $displayEndTime = $prayerDateTime->copy()->subMinutes(5); // Stop 5 minutes before prayer
+        // Get beginning time and add jamaat offset to get actual Jamaat time
+        $beginningTime = Carbon::parse($prayerTime->$prayerTimeField);
+        $jamaatOffset = (int) Setting::get($this->prayer_name . '_jamaat_offset', 0);
+        $jamaatTime = $beginningTime->addMinutes($jamaatOffset);
+        
+        $displayStartTime = $jamaatTime->copy()->subMinutes($this->minutes_before_prayer);
+        $displayEndTime = $jamaatTime->copy()->subMinutes(5); // Stop 5 minutes before Jamaat
 
         $now = Carbon::now();
 
@@ -96,7 +108,7 @@ class MediaSchedule extends Model
     }
 
     /**
-     * Get the display start time for this schedule
+     * Get the display start time for this schedule (based on JAMAAT TIME)
      */
     public function getDisplayStartTime(): ?Carbon
     {
@@ -105,7 +117,12 @@ class MediaSchedule extends Model
             if ($prayerTime) {
                 $prayerTimeField = $this->prayer_name;
                 if (isset($prayerTime->$prayerTimeField)) {
-                    return Carbon::parse($prayerTime->$prayerTimeField)->subMinutes($this->minutes_before_prayer);
+                    // Get beginning time and add jamaat offset to get actual Jamaat time
+                    $beginningTime = Carbon::parse($prayerTime->$prayerTimeField);
+                    $jamaatOffset = (int) Setting::get($this->prayer_name . '_jamaat_offset', 0);
+                    $jamaatTime = $beginningTime->addMinutes($jamaatOffset);
+                    
+                    return $jamaatTime->subMinutes($this->minutes_before_prayer);
                 }
             }
         }
@@ -115,7 +132,12 @@ class MediaSchedule extends Model
             if ($prayerTime) {
                 $prayerTimeField = $this->prayer_name;
                 if (isset($prayerTime->$prayerTimeField)) {
-                    return Carbon::parse($prayerTime->$prayerTimeField)->addMinutes($this->minutes_after_prayer);
+                    // Get beginning time and add jamaat offset to get actual Jamaat time
+                    $beginningTime = Carbon::parse($prayerTime->$prayerTimeField);
+                    $jamaatOffset = (int) Setting::get($this->prayer_name . '_jamaat_offset', 0);
+                    $jamaatTime = $beginningTime->addMinutes($jamaatOffset);
+                    
+                    return $jamaatTime->addMinutes($this->minutes_after_prayer);
                 }
             }
         }
@@ -124,7 +146,7 @@ class MediaSchedule extends Model
     }
 
     /**
-     * Get the display end time for this schedule
+     * Get the display end time for this schedule (based on JAMAAT TIME)
      */
     public function getDisplayEndTime(): ?Carbon
     {
@@ -133,7 +155,12 @@ class MediaSchedule extends Model
             if ($prayerTime) {
                 $prayerTimeField = $this->prayer_name;
                 if (isset($prayerTime->$prayerTimeField)) {
-                    return Carbon::parse($prayerTime->$prayerTimeField)->subMinutes(5); // Stop 5 minutes before prayer
+                    // Get beginning time and add jamaat offset to get actual Jamaat time
+                    $beginningTime = Carbon::parse($prayerTime->$prayerTimeField);
+                    $jamaatOffset = (int) Setting::get($this->prayer_name . '_jamaat_offset', 0);
+                    $jamaatTime = $beginningTime->addMinutes($jamaatOffset);
+                    
+                    return $jamaatTime->subMinutes(5); // Stop 5 minutes before Jamaat
                 }
             }
         }
@@ -143,9 +170,14 @@ class MediaSchedule extends Model
             if ($prayerTime) {
                 $prayerTimeField = $this->prayer_name;
                 if (isset($prayerTime->$prayerTimeField)) {
+                    // Get beginning time and add jamaat offset to get actual Jamaat time
+                    $beginningTime = Carbon::parse($prayerTime->$prayerTimeField);
+                    $jamaatOffset = (int) Setting::get($this->prayer_name . '_jamaat_offset', 0);
+                    $jamaatTime = $beginningTime->addMinutes($jamaatOffset);
+                    
                     // End at start time + media duration window; as a simple rule, end at + (minutes_after + 10)
                     // The service will cycle media by its own display duration; here we just mark an end window.
-                    return Carbon::parse($prayerTime->$prayerTimeField)->addMinutes($this->minutes_after_prayer + 10);
+                    return $jamaatTime->addMinutes($this->minutes_after_prayer + 10);
                 }
             }
         }
@@ -154,11 +186,14 @@ class MediaSchedule extends Model
     }
 
     /**
-     * Scope to get schedules ordered by priority
+     * Scope to get schedules ordered by the earliest priority in their media items
      */
     public function scopeOrderedByPriority($query)
     {
-        return $query->orderBy('priority', 'asc');
+        return $query->leftJoin('media_schedule_media', 'media_schedules.id', '=', 'media_schedule_media.media_schedule_id')
+            ->select('media_schedules.*')
+            ->groupBy('media_schedules.id')
+            ->orderByRaw('MIN(media_schedule_media.priority) ASC');
     }
 
     /**
@@ -174,12 +209,13 @@ class MediaSchedule extends Model
         return match($this->schedule_type) {
             'minutes_before_prayer' => 'Minutes Before Prayer',
             'minutes_after_prayer' => 'Minutes After Prayer',
+            'full_time_poster' => 'Full Time Poster',
             default => 'Unknown'
         };
     }
 
     /**
-     * Check if this schedule should be active based on minutes after prayer
+     * Check if this schedule should be active based on minutes after prayer (uses JAMAAT TIME)
      */
     public function isActiveForMinutesAfterPrayer(): bool
     {
@@ -197,8 +233,12 @@ class MediaSchedule extends Model
             return false;
         }
 
-        $prayerDateTime = Carbon::parse($prayerTime->$prayerTimeField);
-        $displayStartTime = $prayerDateTime->copy()->addMinutes($this->minutes_after_prayer);
+        // Get beginning time and add jamaat offset to get actual Jamaat time
+        $beginningTime = Carbon::parse($prayerTime->$prayerTimeField);
+        $jamaatOffset = (int) Setting::get($this->prayer_name . '_jamaat_offset', 0);
+        $jamaatTime = $beginningTime->addMinutes($jamaatOffset);
+        
+        $displayStartTime = $jamaatTime->copy()->addMinutes($this->minutes_after_prayer);
         $displayEndTime = $this->getDisplayEndTime() ?? $displayStartTime->copy()->addMinutes(10);
 
         $now = Carbon::now();

@@ -24,17 +24,43 @@
                 <div class="col-md-8">
                     <div class="card">
                         <div class="card-header card-header-custom">
-                            <h5 class="mb-0">Media Preview</h5>
+                            <h5 class="mb-0">Media Items ({{ $mediaSchedule->mediaItems->count() }})</h5>
                         </div>
-                        <div class="card-body text-center">
-                            @if($mediaSchedule->media->isImage())
-                                <img src="{{ $mediaSchedule->media->file_url }}" alt="{{ $mediaSchedule->media->title }}" 
-                                     class="img-fluid" style="max-height: 400px;">
+                        <div class="card-body">
+                            @if($mediaSchedule->mediaItems->count() > 0)
+                                <div class="row">
+                                    @foreach($mediaSchedule->mediaItems as $media)
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <h6 class="mb-0">{{ $media->title }}</h6>
+                                                        <div>
+                                                            <span class="badge bg-primary">Priority: {{ $media->pivot->priority }}</span>
+                                                            <span class="badge bg-info">{{ $media->pivot->duration }}s</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-center">
+                                                        @if($media->isImage())
+                                                            <img src="{{ $media->file_url }}" alt="{{ $media->title }}" 
+                                                                 class="img-fluid" style="max-height: 200px; object-fit: contain;">
+                                                        @else
+                                                            <video controls class="w-100" style="max-height: 200px;">
+                                                                <source src="{{ $media->file_url }}" type="video/mp4">
+                                                                Your browser does not support the video tag.
+                                                            </video>
+                                                        @endif
+                                                    </div>
+                                                    <div class="mt-2">
+                                                        <small class="text-muted">{{ ucfirst($media->type) }}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
                             @else
-                                <video controls class="w-100" style="max-height: 400px;">
-                                    <source src="{{ $mediaSchedule->media->file_url }}" type="video/mp4">
-                                    Your browser does not support the video tag.
-                                </video>
+                                <p class="text-muted text-center">No media items in this schedule</p>
                             @endif
                         </div>
                     </div>
@@ -48,45 +74,31 @@
                         <div class="card-body">
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>Media:</strong></td>
-                                    <td>{{ $mediaSchedule->media->title }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Type:</strong></td>
-                                    <td>
-                                        <span class="badge bg-{{ $mediaSchedule->media->type === 'image' ? 'info' : 'warning' }}">
-                                            {{ ucfirst($mediaSchedule->media->type) }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr>
                                     <td><strong>Schedule Type:</strong></td>
                                     <td>
-                                        <span class="badge bg-success">
-                                            {{ ucwords(str_replace('_', ' ', $mediaSchedule->schedule_type)) }}
+                                        <span class="badge bg-{{ $mediaSchedule->schedule_type === 'full_time_poster' ? 'primary' : 'success' }}">
+                                            {{ $mediaSchedule->getScheduleTypeLabel() }}
                                         </span>
                                     </td>
                                 </tr>
-                                <tr>
-                                    <td><strong>Prayer:</strong></td>
-                                    <td>
-                                        <span class="badge bg-primary">{{ ucfirst($mediaSchedule->prayer_name) }}</span>
-                                    </td>
-                                </tr>
-                                @if($mediaSchedule->schedule_type === 'minutes_before_prayer')
+                                @if($mediaSchedule->schedule_type !== 'full_time_poster')
                                     <tr>
-                                        <td><strong>Minutes Before:</strong></td>
+                                        <td><strong>Prayer:</strong></td>
                                         <td>
-                                            {{ $mediaSchedule->minutes_before_prayer }} minutes
+                                            <span class="badge bg-primary">{{ $mediaSchedule->getPrayerNameLabel() }}</span>
                                         </td>
                                     </tr>
-                                @elseif($mediaSchedule->schedule_type === 'minutes_after_prayer')
-                                    <tr>
-                                        <td><strong>Minutes After:</strong></td>
-                                        <td>
-                                            {{ $mediaSchedule->minutes_after_prayer }} minutes
-                                        </td>
-                                    </tr>
+                                    @if($mediaSchedule->schedule_type === 'minutes_before_prayer')
+                                        <tr>
+                                            <td><strong>Minutes Before:</strong></td>
+                                            <td>{{ $mediaSchedule->minutes_before_prayer }} minutes</td>
+                                        </tr>
+                                    @elseif($mediaSchedule->schedule_type === 'minutes_after_prayer')
+                                        <tr>
+                                            <td><strong>Minutes After:</strong></td>
+                                            <td>{{ $mediaSchedule->minutes_after_prayer }} minutes</td>
+                                        </tr>
+                                    @endif
                                 @endif
                                 <tr>
                                     <td><strong>Days:</strong></td>
@@ -105,12 +117,12 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Priority:</strong></td>
-                                    <td>
-                                        <span class="badge bg-{{ $mediaSchedule->priority > 50 ? 'danger' : ($mediaSchedule->priority > 20 ? 'warning' : 'secondary') }}">
-                                            {{ $mediaSchedule->priority }}
-                                        </span>
-                                    </td>
+                                    <td><strong>Media Count:</strong></td>
+                                    <td>{{ $mediaSchedule->mediaItems->count() }} item(s)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Duration:</strong></td>
+                                    <td>{{ $mediaSchedule->mediaItems->sum('pivot.duration') }} seconds</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Status:</strong></td>
@@ -143,9 +155,6 @@
                                     <i class="bi bi-{{ $mediaSchedule->is_active ? 'pause' : 'play' }}"></i>
                                     {{ $mediaSchedule->is_active ? 'Deactivate' : 'Activate' }}
                                 </button>
-                                <a href="{{ route('admin.media.show', $mediaSchedule->media) }}" class="btn btn-info">
-                                    <i class="bi bi-images"></i> View Media
-                                </a>
                                 <button type="button" class="btn btn-danger" onclick="deleteSchedule({{ $mediaSchedule->id }})">
                                     <i class="bi bi-trash"></i> Delete Schedule
                                 </button>
@@ -171,11 +180,12 @@
                                     <h6>How This Schedule Works:</h6>
                                     <ul class="list-unstyled">
                                         @if($mediaSchedule->schedule_type === 'minutes_before_prayer')
-                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will be displayed {{ $mediaSchedule->minutes_before_prayer }} minutes before {{ ucfirst($mediaSchedule->prayer_name) }} prayer</li>
+                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will be displayed {{ $mediaSchedule->minutes_before_prayer }} minutes before {{ $mediaSchedule->getPrayerNameLabel() }} prayer</li>
                                             <li><i class="bi bi-info-circle text-info me-2"></i>Stops 5 minutes before prayer time</li>
                                         @elseif($mediaSchedule->schedule_type === 'minutes_after_prayer')
-                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will be displayed {{ $mediaSchedule->minutes_after_prayer }} minutes after {{ ucfirst($mediaSchedule->prayer_name) }} prayer</li>
-                                            <li><i class="bi bi-info-circle text-info me-2"></i>Displays for 10 minutes duration</li>
+                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will be displayed {{ $mediaSchedule->minutes_after_prayer }} minutes after {{ $mediaSchedule->getPrayerNameLabel() }} prayer</li>
+                                        @elseif($mediaSchedule->schedule_type === 'full_time_poster')
+                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will cycle continuously throughout the day</li>
                                         @endif
                                         
                                         @if($mediaSchedule->days_of_week)
@@ -184,37 +194,31 @@
                                             <li><i class="bi bi-check-circle text-success me-2"></i>Active every day</li>
                                         @endif
                                         
-                                        <li><i class="bi bi-check-circle text-success me-2"></i>Priority level: {{ $mediaSchedule->priority }} (lower number = higher priority)</li>
-                                        <li><i class="bi bi-check-circle text-success me-2"></i>Media duration: {{ $mediaSchedule->media->display_duration }} seconds</li>
+                                        <li><i class="bi bi-check-circle text-success me-2"></i>Media display in priority order (1, 2, 3...)</li>
+                                        <li><i class="bi bi-check-circle text-success me-2"></i>Each media has its own duration</li>
                                     </ul>
                                 </div>
                                 <div class="col-md-6">
-                                    <h6>Next Occurrence:</h6>
+                                    <h6>Display Sequence:</h6>
                                     <div class="alert alert-info">
-                                        <i class="bi bi-clock me-2"></i>
-                                        @if($mediaSchedule->is_active)
-                                            <strong>Next {{ ucfirst($mediaSchedule->prayer_name) }} prayer</strong>
-                                            @if($mediaSchedule->schedule_type === 'minutes_before_prayer')
-                                                <br><small>{{ $mediaSchedule->minutes_before_prayer }} minutes before prayer time</small>
-                                            @elseif($mediaSchedule->schedule_type === 'minutes_after_prayer')
-                                                <br><small>{{ $mediaSchedule->minutes_after_prayer }} minutes after prayer time</small>
-                                            @endif
+                                        @if($mediaSchedule->mediaItems->count() > 0)
+                                            <p class="mb-2"><strong>Media will display in this order:</strong></p>
+                                            <ol class="mb-0">
+                                                @foreach($mediaSchedule->mediaItems->sortBy('pivot.priority') as $media)
+                                                    <li>{{ $media->title }} ({{ $media->pivot->duration }}s)</li>
+                                                @endforeach
+                                            </ol>
+                                            <hr>
+                                            <small class="text-muted">
+                                                Total cycle duration: {{ $mediaSchedule->mediaItems->sum('pivot.duration') }} seconds
+                                                @if($mediaSchedule->schedule_type === 'full_time_poster')
+                                                    <br>This cycle repeats continuously
+                                                @endif
+                                            </small>
                                         @else
-                                            <em>Schedule is currently inactive</em>
+                                            <em>No media items in this schedule</em>
                                         @endif
                                     </div>
-                                    
-                                    <h6>Media Details:</h6>
-                                    <ul class="list-unstyled">
-                                        <li><strong>Title:</strong> {{ $mediaSchedule->media->title }}</li>
-                                        <li><strong>Type:</strong> {{ ucfirst($mediaSchedule->media->type) }}</li>
-                                        <li><strong>Duration:</strong> {{ $mediaSchedule->media->display_duration }}s</li>
-                                        <li><strong>Status:</strong> 
-                                            <span class="badge bg-{{ $mediaSchedule->media->is_active ? 'success' : 'secondary' }}">
-                                                {{ $mediaSchedule->media->is_active ? 'Active' : 'Inactive' }}
-                                            </span>
-                                        </li>
-                                    </ul>
                                 </div>
                             </div>
                         </div>

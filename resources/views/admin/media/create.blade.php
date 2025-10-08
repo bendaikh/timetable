@@ -52,17 +52,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
-                                <div class="mb-3">
-                                    <label for="display_duration" class="form-label">Display Duration (seconds) <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control @error('display_duration') is-invalid @enderror" 
-                                           id="display_duration" name="display_duration" value="{{ old('display_duration', 30) }}" 
-                                           min="5" max="300" required>
-                                    <div class="form-text">How long this media should be displayed (5-300 seconds)</div>
-                                    @error('display_duration')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
                             </div>
 
                             <div class="col-md-6">

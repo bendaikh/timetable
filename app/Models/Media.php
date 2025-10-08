@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Media extends Model
 {
@@ -21,9 +22,12 @@ class Media extends Model
         'display_duration' => 'integer'
     ];
 
-    public function schedules(): HasMany
+    public function schedules(): BelongsToMany
     {
-        return $this->hasMany(MediaSchedule::class);
+        return $this->belongsToMany(MediaSchedule::class, 'media_schedule_media')
+            ->withPivot('duration', 'priority')
+            ->orderBy('media_schedule_media.priority', 'asc')
+            ->withTimestamps();
     }
 
     public function getFileUrlAttribute(): string

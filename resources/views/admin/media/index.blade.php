@@ -29,8 +29,6 @@
                                     <th>Preview</th>
                                     <th>Title</th>
                                     <th>Type</th>
-                                    <th>Duration</th>
-                                    <th>Priority</th>
                                     <th>Status</th>
                                     <th>Schedules</th>
                                     <th width="180">Actions</th>
@@ -59,12 +57,6 @@
                                         <td>
                                             <span class="badge bg-{{ $item->type === 'image' ? 'info' : 'warning' }}">
                                                 {{ ucfirst($item->type) }}
-                                            </span>
-                                        </td>
-                                        <td>{{ $item->display_duration }}s</td>
-                                        <td>
-                                            <span class="badge bg-info">
-                                                ID: {{ $item->id }}
                                             </span>
                                         </td>
                                         <td>
@@ -99,7 +91,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center text-muted py-4">
+                                        <td colspan="6" class="text-center text-muted py-4">
                                             No media files found. <a href="{{ route('admin.media.create') }}">Add your first media file</a>
                                         </td>
                                     </tr>

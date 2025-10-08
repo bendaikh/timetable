@@ -24,11 +24,14 @@ class MediaDisplayController extends Controller
             return response()->json(['media' => null]);
         }
 
-        $media = $this->mediaDisplayService->getCurrentMedia();
+        $mediaInfo = $this->mediaDisplayService->getCurrentMedia();
         
-        if (!$media) {
+        if (!$mediaInfo) {
             return response()->json(['media' => null]);
         }
+
+        $media = $mediaInfo['media'];
+        $duration = $mediaInfo['duration'];
 
         return response()->json([
             'media' => [
@@ -36,8 +39,10 @@ class MediaDisplayController extends Controller
                 'title' => $media->title,
                 'type' => $media->type,
                 'file_url' => $media->file_url,
-                'display_duration' => $media->display_duration,
-                'description' => $media->description
+                'display_duration' => $duration, // Use duration from pivot table
+                'description' => $media->description,
+                'priority' => $mediaInfo['priority'],
+                'schedule_id' => $mediaInfo['schedule']->id ?? null
             ]
         ]);
     }
@@ -72,7 +77,8 @@ class MediaDisplayController extends Controller
     public function debugSchedules(): JsonResponse
     {
         return response()->json([
-            'active_schedules' => $this->mediaDisplayService->getActiveSchedules()
+            'active_schedules' => $this->mediaDisplayService->getActiveSchedules(),
+            'current_media_info' => $this->mediaDisplayService->getCurrentMedia()
         ]);
     }
 }

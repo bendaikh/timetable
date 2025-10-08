@@ -341,16 +341,19 @@
 
     // Media Display System
     let currentMedia = null;
+    let currentMediaData = null;
     let mediaDisplayTimer = null;
     let countdownTimer = null;
     let mediaCheckInterval = null;
-    let displayedMediaIds = new Set(); // Track which media has been displayed
+    let lastScheduleId = null;
+    let lastMediaId = null;
+    let scheduleMediaSequence = new Set(); // Track media within current schedule sequence
 
     // Initialize media display system
     function initMediaDisplay() {
         checkForMedia();
-        // Check for media updates every 10 seconds for more precise timing
-        mediaCheckInterval = setInterval(checkForMedia, 10000);
+        // Check for media updates every 3 seconds for responsive sequencing
+        mediaCheckInterval = setInterval(checkForMedia, 3000);
     }
 
     // Check for current media to display
@@ -359,14 +362,26 @@
             const response = await fetch('/api/current-media');
             const data = await response.json();
             
-            // Only display media if it's new and hasn't been displayed before
-            if (data.media && data.media.id !== currentMedia?.id && !displayedMediaIds.has(data.media.id)) {
-                console.log('New media found, displaying:', data.media);
-                displayMedia(data.media);
-            } else if (data.media) {
-                console.log('Media already displayed or same as current:', data.media.id);
+            // If we have media data
+            if (data.media) {
+                const scheduleId = data.media.schedule_id || 'unknown';
+                const mediaId = data.media.id;
+                
+                // Check if this is a new media or different from what's currently showing
+                const isNewMedia = mediaId !== lastMediaId;
+                const isDifferentMedia = !currentMedia || currentMedia.id !== mediaId;
+                
+                if (isNewMedia && isDifferentMedia) {
+                    console.log('New media in sequence, displaying:', data.media);
+                    lastMediaId = mediaId;
+                    displayMedia(data.media);
+                }
             } else {
-                console.log('No media returned from API');
+                // No media to display, hide current media if showing
+                if (currentMedia) {
+                    console.log('No media to display, hiding current');
+                    hideMedia();
+                }
             }
             
             // Also check for countdown
@@ -380,9 +395,7 @@
     function displayMedia(media) {
         console.log('displayMedia called with:', media);
         currentMedia = media;
-
-        // Mark this media as displayed to prevent showing it again
-        displayedMediaIds.add(media.id);
+        currentMediaData = media;
         
         const overlay = document.getElementById('media-overlay');
         const content = document.getElementById('media-content');
@@ -511,12 +524,11 @@
         const overlay = document.getElementById('media-overlay');
         overlay.style.display = 'none';
         currentMedia = null;
+        currentMediaData = null;
         clearTimeout(mediaDisplayTimer);
-    }
-
-    // Clear displayed media IDs (useful for new day or reset)
-    function clearDisplayedMedia() {
-        displayedMediaIds.clear();
+        
+        // Immediately check for next media in sequence
+        setTimeout(checkForMedia, 500);
     }
 
     // Check for countdown timer
@@ -609,7 +621,7 @@
         initMediaDisplay();
         initContentRotation();
         
-        // Clear displayed media IDs at midnight each day
+        // Reset at midnight each day
         scheduleMidnightReset();
     });
 
@@ -622,7 +634,9 @@
         const msUntilMidnight = midnight.getTime() - now.getTime();
         
         setTimeout(() => {
-            clearDisplayedMedia();
+            lastScheduleId = null;
+            lastMediaId = null;
+            scheduleMediaSequence.clear();
             // Schedule the next reset
             scheduleMidnightReset();
         }, msUntilMidnight);

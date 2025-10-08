@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Media;
 use App\Models\MediaSchedule;
 use App\Models\PrayerTime;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -16,7 +17,7 @@ class MediaScheduleController extends Controller
      */
     public function index()
     {
-        $schedules = MediaSchedule::with('media')->orderBy('priority', 'desc')->paginate(20);
+        $schedules = MediaSchedule::with('mediaItems')->orderBy('id', 'desc')->paginate(20);
         return view('admin.media-schedules.index', compact('schedules'));
     }
 
@@ -39,50 +40,50 @@ class MediaScheduleController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'media_id' => 'required|exists:media,id',
-            'schedule_type' => 'required|in:minutes_before_prayer,minutes_after_prayer',
-            'prayer_name' => 'required|in:fajr,zohar,asr,maghrib,isha',
+            'media_ids' => 'required|array|min:1',
+            'media_ids.*' => 'required|exists:media,id',
+            'schedule_type' => 'required|in:minutes_before_prayer,minutes_after_prayer,full_time_poster',
+            'prayer_name' => 'required_unless:schedule_type,full_time_poster|in:fajr,zohar,asr,maghrib,isha',
             'minutes_before_prayer' => 'nullable|integer|min:5|max:120',
-            'minutes_after_prayer' => 'nullable|integer|min:1|max:120',
+            'minutes_after_prayer' => 'nullable|integer|min:1|max:480',
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
-            'priority' => 'required|integer|min:1|max:100'
+            'media_durations' => 'required|array',
+            'media_durations.*' => 'required|integer|min:1|max:300',
+            'media_priorities' => 'required|array',
+            'media_priorities.*' => 'required|integer|min:1|max:100'
         ]);
 
-        // Check if priority conflicts with overlapping schedules
-        $conflictingSchedule = $this->checkPriorityConflict(
-            $request->schedule_type,
-            $request->prayer_name,
-            $request->schedule_type === 'minutes_before_prayer' ? $request->minutes_before_prayer : $request->minutes_after_prayer,
-            $request->priority,
-            null,
-            $request->media_id
-        );
-
-        if ($conflictingSchedule) {
-            return redirect()->back()
-                ->withInput()
-                ->withErrors(['priority' => "Priority {$request->priority} is already used by \"{$conflictingSchedule->media->title}\" which displays at the same time. Please choose a different priority."]);
-        }
-
         $data = [
-            'media_id' => $request->media_id,
             'schedule_type' => $request->schedule_type,
             'prayer_name' => $request->prayer_name,
             'days_of_week' => $request->days_of_week,
-            'priority' => $request->priority,
             'is_active' => $request->has('is_active')
         ];
 
         if ($request->schedule_type === 'minutes_before_prayer') {
             $data['minutes_before_prayer'] = $request->minutes_before_prayer;
             $data['minutes_after_prayer'] = null;
-        } else {
+        } elseif ($request->schedule_type === 'minutes_after_prayer') {
             $data['minutes_before_prayer'] = null;
             $data['minutes_after_prayer'] = $request->minutes_after_prayer;
+        } else {
+            $data['minutes_before_prayer'] = null;
+            $data['minutes_after_prayer'] = null;
         }
 
-        MediaSchedule::create($data);
+        $schedule = MediaSchedule::create($data);
+
+        // Attach media items with their duration and priority
+        $pivotData = [];
+        foreach ($request->media_ids as $index => $mediaId) {
+            $pivotData[$mediaId] = [
+                'duration' => $request->media_durations[$index] ?? 30,
+                'priority' => $request->media_priorities[$index] ?? ($index + 1)
+            ];
+        }
+        
+        $schedule->mediaItems()->attach($pivotData);
 
         return redirect()->route('admin.media-schedules.index')
             ->with('success', 'Media schedule created successfully.');
@@ -93,7 +94,7 @@ class MediaScheduleController extends Controller
      */
     public function show(MediaSchedule $mediaSchedule)
     {
-        $mediaSchedule->load('media');
+        $mediaSchedule->load('mediaItems');
         return view('admin.media-schedules.show', compact('mediaSchedule'));
     }
 
@@ -116,50 +117,50 @@ class MediaScheduleController extends Controller
     public function update(Request $request, MediaSchedule $mediaSchedule)
     {
         $request->validate([
-            'media_id' => 'required|exists:media,id',
-            'schedule_type' => 'required|in:minutes_before_prayer,minutes_after_prayer',
-            'prayer_name' => 'required|in:fajr,zohar,asr,maghrib,isha',
+            'media_ids' => 'required|array|min:1',
+            'media_ids.*' => 'required|exists:media,id',
+            'schedule_type' => 'required|in:minutes_before_prayer,minutes_after_prayer,full_time_poster',
+            'prayer_name' => 'required_unless:schedule_type,full_time_poster|in:fajr,zohar,asr,maghrib,isha',
             'minutes_before_prayer' => 'nullable|integer|min:5|max:120',
-            'minutes_after_prayer' => 'nullable|integer|min:1|max:120',
+            'minutes_after_prayer' => 'nullable|integer|min:1|max:480',
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
-            'priority' => 'required|integer|min:1|max:100'
+            'media_durations' => 'required|array',
+            'media_durations.*' => 'required|integer|min:1|max:300',
+            'media_priorities' => 'required|array',
+            'media_priorities.*' => 'required|integer|min:1|max:100'
         ]);
 
-        // Check if priority conflicts with overlapping schedules (excluding current schedule)
-        $conflictingSchedule = $this->checkPriorityConflict(
-            $request->schedule_type,
-            $request->prayer_name,
-            $request->schedule_type === 'minutes_before_prayer' ? $request->minutes_before_prayer : $request->minutes_after_prayer,
-            $request->priority,
-            $mediaSchedule->id,
-            $request->media_id
-        );
-
-        if ($conflictingSchedule) {
-            return redirect()->back()
-                ->withInput()
-                ->withErrors(['priority' => "Priority {$request->priority} is already used by \"{$conflictingSchedule->media->title}\" which displays at the same time. Please choose a different priority."]);
-        }
-
         $data = [
-            'media_id' => $request->media_id,
             'schedule_type' => $request->schedule_type,
             'prayer_name' => $request->prayer_name,
             'days_of_week' => $request->days_of_week,
-            'priority' => $request->priority,
             'is_active' => $request->has('is_active')
         ];
 
         if ($request->schedule_type === 'minutes_before_prayer') {
             $data['minutes_before_prayer'] = $request->minutes_before_prayer;
             $data['minutes_after_prayer'] = null;
-        } else {
+        } elseif ($request->schedule_type === 'minutes_after_prayer') {
             $data['minutes_before_prayer'] = null;
             $data['minutes_after_prayer'] = $request->minutes_after_prayer;
+        } else {
+            $data['minutes_before_prayer'] = null;
+            $data['minutes_after_prayer'] = null;
         }
 
         $mediaSchedule->update($data);
+
+        // Sync media items with their duration and priority
+        $pivotData = [];
+        foreach ($request->media_ids as $index => $mediaId) {
+            $pivotData[$mediaId] = [
+                'duration' => $request->media_durations[$index] ?? 30,
+                'priority' => $request->media_priorities[$index] ?? ($index + 1)
+            ];
+        }
+        
+        $mediaSchedule->mediaItems()->sync($pivotData);
 
         return redirect()->route('admin.media-schedules.index')
             ->with('success', 'Media schedule updated successfully.');
@@ -219,14 +220,18 @@ class MediaScheduleController extends Controller
             }
         }
         
-        // Calculate the display start and end time
-        $prayerTime = Carbon::parse($prayerTimes->$prayerName);
+        // Calculate the display start and end time based on JAMAAT TIME (not beginning time)
+        $beginningTime = Carbon::parse($prayerTimes->$prayerName);
+        
+        // Get Jamaat offset from settings and add to beginning time to get Jamaat time
+        $jamaatOffset = (int) Setting::get($prayerName . '_jamaat_offset', 0);
+        $jamaatTime = $beginningTime->copy()->addMinutes($jamaatOffset);
         
         if ($scheduleType === 'minutes_before_prayer') {
-            $displayStart = $prayerTime->copy()->subMinutes((int) $minutes);
-            $displayEnd = $prayerTime->copy()->subMinutes(5); // Stops 5 minutes before prayer
+            $displayStart = $jamaatTime->copy()->subMinutes((int) $minutes);
+            $displayEnd = $jamaatTime->copy()->subMinutes(5); // Stops 5 minutes before Jamaat
         } else { // minutes_after_prayer
-            $displayStart = $prayerTime->copy()->addMinutes((int) $minutes);
+            $displayStart = $jamaatTime->copy()->addMinutes((int) $minutes);
             $displayEnd = $displayStart->copy()->addSeconds($mediaDuration); // Use actual media duration
         }
         
@@ -292,70 +297,4 @@ class MediaScheduleController extends Controller
         ]);
     }
 
-    /**
-     * Check if priority conflicts with any overlapping schedules
-     * 
-     * @param string $scheduleType
-     * @param string $prayerName
-     * @param int $minutes
-     * @param int $priority
-     * @param int|null $excludeId
-     * @param int|null $mediaId
-     * @return MediaSchedule|null
-     */
-    private function checkPriorityConflict($scheduleType, $prayerName, $minutes, $priority, $excludeId = null, $mediaId = null)
-    {
-        // Get today's prayer times
-        $prayerTimes = PrayerTime::getTodayPrayerTimes();
-        
-        if (!$prayerTimes || !$prayerName) {
-            return null;
-        }
-        
-        // Get media duration if media_id is provided
-        $mediaDuration = 30; // Default 30 seconds
-        if ($mediaId) {
-            $media = Media::find($mediaId);
-            if ($media) {
-                $mediaDuration = (int) $media->display_duration;
-            }
-        }
-        
-        // Calculate the display start and end time for the new/edited schedule
-        $prayerTime = Carbon::parse($prayerTimes->$prayerName);
-        
-        if ($scheduleType === 'minutes_before_prayer') {
-            $displayStart = $prayerTime->copy()->subMinutes((int) $minutes);
-            $displayEnd = $prayerTime->copy()->subMinutes(5);
-        } else {
-            $displayStart = $prayerTime->copy()->addMinutes((int) $minutes);
-            $displayEnd = $displayStart->copy()->addSeconds($mediaDuration);
-        }
-        
-        // Find all active schedules with the same priority
-        $query = MediaSchedule::with('media')
-            ->where('is_active', true)
-            ->where('priority', $priority);
-            
-        if ($excludeId) {
-            $query->where('id', '!=', $excludeId);
-        }
-        
-        $schedulesWithSamePriority = $query->get();
-        
-        // Check if any of them overlap with our time range
-        foreach ($schedulesWithSamePriority as $schedule) {
-            $scheduleStart = $schedule->getDisplayStartTime();
-            $scheduleEnd = $schedule->getDisplayEndTime();
-            
-            if ($scheduleStart && $scheduleEnd) {
-                // Check if time ranges overlap
-                if ($scheduleStart->lt($displayEnd) && $scheduleEnd->gt($displayStart)) {
-                    return $schedule; // Found a conflict
-                }
-            }
-        }
-        
-        return null; // No conflict
-    }
 }

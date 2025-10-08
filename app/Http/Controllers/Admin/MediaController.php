@@ -36,7 +36,6 @@ class MediaController extends Controller
             'title' => 'required|string|max:255',
             'file' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,avi,mov|max:102400', // 100MB max
             'description' => 'nullable|string',
-            'display_duration' => 'required|integer|min:5|max:300',
             'type' => 'required|in:image,video'
         ]);
 
@@ -49,7 +48,6 @@ class MediaController extends Controller
             'file_path' => $filePath,
             'type' => $request->type,
             'description' => $request->description,
-            'display_duration' => $request->display_duration,
             'is_active' => $request->has('is_active')
         ]);
 
@@ -83,7 +81,6 @@ class MediaController extends Controller
             'title' => 'required|string|max:255',
             'file' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,avi,mov|max:102400',
             'description' => 'nullable|string',
-            'display_duration' => 'required|integer|min:5|max:300',
             'type' => 'required|in:image,video'
         ]);
 
@@ -91,7 +88,6 @@ class MediaController extends Controller
             'title' => $request->title,
             'type' => $request->type,
             'description' => $request->description,
-            'display_duration' => $request->display_duration,
             'is_active' => $request->has('is_active')
         ];
 
