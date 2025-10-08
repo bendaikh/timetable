@@ -54,7 +54,7 @@ Same update as store method.
 
 | Setting | Min | Max | Description |
 |---------|-----|-----|-------------|
-| **Minutes Before Prayer** | 5 | 120 | 5 min to 2 hours before Jamaat |
+| **Minutes Before Prayer** | 1 | 120 | 1 min to 2 hours before Jamaat |
 | **Minutes After Prayer** | 1 | **480** | 1 min to **8 hours** after Jamaat |
 
 ## Use Cases Enabled

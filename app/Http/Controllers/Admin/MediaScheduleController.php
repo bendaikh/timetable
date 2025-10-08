@@ -44,7 +44,7 @@ class MediaScheduleController extends Controller
             'media_ids.*' => 'required|exists:media,id',
             'schedule_type' => 'required|in:minutes_before_prayer,minutes_after_prayer,full_time_poster',
             'prayer_name' => 'required_unless:schedule_type,full_time_poster|in:fajr,zohar,asr,maghrib,isha',
-            'minutes_before_prayer' => 'nullable|integer|min:5|max:120',
+            'minutes_before_prayer' => 'nullable|integer|min:1|max:120',
             'minutes_after_prayer' => 'nullable|integer|min:1|max:480',
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
@@ -121,7 +121,7 @@ class MediaScheduleController extends Controller
             'media_ids.*' => 'required|exists:media,id',
             'schedule_type' => 'required|in:minutes_before_prayer,minutes_after_prayer,full_time_poster',
             'prayer_name' => 'required_unless:schedule_type,full_time_poster|in:fajr,zohar,asr,maghrib,isha',
-            'minutes_before_prayer' => 'nullable|integer|min:5|max:120',
+            'minutes_before_prayer' => 'nullable|integer|min:1|max:120',
             'minutes_after_prayer' => 'nullable|integer|min:1|max:480',
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
@@ -236,7 +236,7 @@ class MediaScheduleController extends Controller
         }
         
         // Find all active schedules
-        $query = MediaSchedule::with('media')
+        $query = MediaSchedule::with('mediaItems')
             ->where('is_active', true);
             
         if ($excludeId) {
@@ -255,16 +255,22 @@ class MediaScheduleController extends Controller
             if ($scheduleStart && $scheduleEnd) {
                 // Check if time ranges overlap
                 if ($scheduleStart->lt($displayEnd) && $scheduleEnd->gt($displayStart)) {
+                    // Get media names
+                    $mediaNames = $schedule->mediaItems->pluck('name')->join(', ') ?: 'No media';
+                    
+                    // Get minimum priority from pivot table
+                    $minPriority = $schedule->mediaItems->min('pivot.priority') ?: 1;
+                    
                     $overlappingSchedules[] = [
                         'id' => $schedule->id,
-                        'media_name' => $schedule->media->name,
-                        'priority' => $schedule->priority,
+                        'media_name' => $mediaNames,
+                        'priority' => $minPriority,
                         'schedule_type' => $schedule->getScheduleTypeLabel(),
                         'prayer_name' => $schedule->getPrayerNameLabel(),
                         'start_time' => $scheduleStart->format('h:i A'),
                         'end_time' => $scheduleEnd->format('h:i A'),
                     ];
-                    $usedPrioritiesInOverlap[] = $schedule->priority;
+                    $usedPrioritiesInOverlap[] = $minPriority;
                 }
             }
         }
