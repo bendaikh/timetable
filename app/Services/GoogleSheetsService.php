@@ -262,20 +262,30 @@ class GoogleSheetsService
                 Log::info("Row {$rowNumber} - Raw values:", [
                     'date' => $row[$headerMapping['date']] ?? 'NOT FOUND',
                     'fajr' => $row[$headerMapping['fajr']] ?? 'NOT FOUND',
+                    'fajr_jamaat' => $row[$headerMapping['fajr_jamaat']] ?? 'NOT FOUND',
                     'zohar' => $row[$headerMapping['zohar']] ?? 'NOT FOUND',
+                    'zohar_jamaat' => $row[$headerMapping['zohar_jamaat']] ?? 'NOT FOUND',
                     'asr' => $row[$headerMapping['asr']] ?? 'NOT FOUND',
+                    'asr_jamaat' => $row[$headerMapping['asr_jamaat']] ?? 'NOT FOUND',
                     'maghrib' => $row[$headerMapping['maghrib']] ?? 'NOT FOUND',
+                    'maghrib_jamaat' => $row[$headerMapping['maghrib_jamaat']] ?? 'NOT FOUND',
                     'isha' => $row[$headerMapping['isha']] ?? 'NOT FOUND',
+                    'isha_jamaat' => $row[$headerMapping['isha_jamaat']] ?? 'NOT FOUND',
                 ]);
 
                 // Parse prayer times using the mapped columns
                 $prayerTime = [
                     'date' => $date,
                     'fajr' => $this->parseTime($row[$headerMapping['fajr']] ?? '', $rowNumber, 'Fajr'),
+                    'fajr_jamaat' => $this->parseTime($row[$headerMapping['fajr_jamaat']] ?? '', $rowNumber, 'Fajr Jamaat', true),
                     'zohar' => $this->parseTime($row[$headerMapping['zohar']] ?? '', $rowNumber, 'Zohar'),
+                    'zohar_jamaat' => $this->parseTime($row[$headerMapping['zohar_jamaat']] ?? '', $rowNumber, 'Zohar Jamaat', true),
                     'asr' => $this->parseTime($row[$headerMapping['asr']] ?? '', $rowNumber, 'Asr'),
+                    'asr_jamaat' => $this->parseTime($row[$headerMapping['asr_jamaat']] ?? '', $rowNumber, 'Asr Jamaat', true),
                     'maghrib' => $this->parseTime($row[$headerMapping['maghrib']] ?? '', $rowNumber, 'Maghrib'),
+                    'maghrib_jamaat' => $this->parseTime($row[$headerMapping['maghrib_jamaat']] ?? '', $rowNumber, 'Maghrib Jamaat', true),
                     'isha' => $this->parseTime($row[$headerMapping['isha']] ?? '', $rowNumber, 'Isha'),
+                    'isha_jamaat' => $this->parseTime($row[$headerMapping['isha_jamaat']] ?? '', $rowNumber, 'Isha Jamaat', true),
                     'sun_rise' => $this->parseTime($row[$headerMapping['sun_rise']] ?? '', $rowNumber, 'Sun Rise', true),
                     'jumah_1' => $this->parseTime($row[$headerMapping['jumah_1']] ?? '', $rowNumber, 'Jumah 1', true),
                     'jumah_2' => $this->parseTime($row[$headerMapping['jumah_2']] ?? '', $rowNumber, 'Jumah 2', true),
@@ -301,10 +311,15 @@ class GoogleSheetsService
         $mapping = [
             'date' => 0,
             'fajr' => 1,
+            'fajr_jamaat' => 2,
             'zohar' => 4,
+            'zohar_jamaat' => 5,
             'asr' => 6,
+            'asr_jamaat' => 7,
             'maghrib' => 8,
+            'maghrib_jamaat' => 9,
             'isha' => 10,
+            'isha_jamaat' => 11,
             'sun_rise' => 3,
             'jumah_1' => 12,
             'jumah_2' => 13,
@@ -330,10 +345,26 @@ class GoogleSheetsService
                 }
             }
 
+            // Look for fajr jamaat column
+            foreach ($headerRow as $index => $header) {
+                if (strpos($header, 'fajr') !== false && strpos($header, 'jamaat') !== false) {
+                    $mapping['fajr_jamaat'] = $index;
+                    break;
+                }
+            }
+
             // Look for zuhr/zohar column (handle variations like "Zuhr Beginnin", "Zuhr Beginning", etc.)
             foreach ($headerRow as $index => $header) {
                 if ((strpos($header, 'zuhr') !== false || strpos($header, 'zohar') !== false) && (strpos($header, 'begin') !== false || strpos($header, 'beginnin') !== false)) {
                     $mapping['zohar'] = $index;
+                    break;
+                }
+            }
+
+            // Look for zuhr/zohar jamaat column
+            foreach ($headerRow as $index => $header) {
+                if ((strpos($header, 'zuhr') !== false || strpos($header, 'zohar') !== false) && strpos($header, 'jamaat') !== false) {
+                    $mapping['zohar_jamaat'] = $index;
                     break;
                 }
             }
@@ -346,6 +377,14 @@ class GoogleSheetsService
                 }
             }
 
+            // Look for asr jamaat column
+            foreach ($headerRow as $index => $header) {
+                if (strpos($header, 'asr') !== false && strpos($header, 'jamaat') !== false) {
+                    $mapping['asr_jamaat'] = $index;
+                    break;
+                }
+            }
+
             // Look for maghrib column (handle variations like "Maghrib Beginnin", "Maghrib Beginning", etc.)
             foreach ($headerRow as $index => $header) {
                 if (strpos($header, 'maghrib') !== false && (strpos($header, 'begin') !== false || strpos($header, 'beginnin') !== false)) {
@@ -354,10 +393,26 @@ class GoogleSheetsService
                 }
             }
 
+            // Look for maghrib jamaat column
+            foreach ($headerRow as $index => $header) {
+                if (strpos($header, 'maghrib') !== false && strpos($header, 'jamaat') !== false) {
+                    $mapping['maghrib_jamaat'] = $index;
+                    break;
+                }
+            }
+
             // Look for isha column (handle variations like "Isha Beginnin", "Isha Beginning", etc.)
             foreach ($headerRow as $index => $header) {
                 if (strpos($header, 'isha') !== false && (strpos($header, 'begin') !== false || strpos($header, 'beginnin') !== false)) {
                     $mapping['isha'] = $index;
+                    break;
+                }
+            }
+
+            // Look for isha jamaat column
+            foreach ($headerRow as $index => $header) {
+                if (strpos($header, 'isha') !== false && strpos($header, 'jamaat') !== false) {
+                    $mapping['isha_jamaat'] = $index;
                     break;
                 }
             }

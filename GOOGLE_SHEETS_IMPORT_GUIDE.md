@@ -34,9 +34,9 @@ Starting from Row 2, add your prayer times data. Here's an example:
 | 2024-01-03 | 05:28          | 05:43       | 06:47   | 12:16          | 12:31       | 15:47         | 16:02      | 18:22             | 18:27          | 19:52          | 20:07       | 12:30   | 13:30   | 17 Jumada al-Awwal 1445 |
 
 **Important Notes:**
-- The system will automatically use the "Beginning" times for each prayer
-- The "Jamaat" times are ignored but won't cause errors
-- The "hijri_date" column is also ignored but won't cause errors
+- The system will automatically detect and import both "Beginning" and "Jamaat" times for each prayer
+- Jamaat times are now fully supported and will be imported if present in your sheet
+- The "hijri_date" column is ignored but won't cause errors
 - Sunrise, Jumma 1, and Jumma 2 are optional fields
 
 ### 4. Choose Your Import Method
