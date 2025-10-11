@@ -59,8 +59,8 @@
                                     <input type="number" class="form-control @error('minutes_before_prayer') is-invalid @enderror" 
                                            id="minutes_before_prayer" name="minutes_before_prayer" 
                                            value="{{ old('minutes_before_prayer', $mediaSchedule->minutes_before_prayer) }}" 
-                                           min="1" max="120">
-                                    <div class="form-text">How many minutes before prayer to start displaying (1-120 minutes)</div>
+                                           min="1" max="480">
+                                    <div class="form-text">How many minutes before prayer to start displaying (1-480 minutes / up to 8 hours)</div>
                                     @error('minutes_before_prayer')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

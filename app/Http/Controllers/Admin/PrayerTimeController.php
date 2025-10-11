@@ -36,10 +36,15 @@ class PrayerTimeController extends Controller
         $request->validate([
             'date' => 'required|date|unique:prayer_times,date',
             'fajr' => 'required|date_format:H:i',
+            'fajr_jamaat' => 'nullable|date_format:H:i',
             'zohar' => 'required|date_format:H:i',
+            'zohar_jamaat' => 'nullable|date_format:H:i',
             'asr' => 'required|date_format:H:i',
+            'asr_jamaat' => 'nullable|date_format:H:i',
             'maghrib' => 'required|date_format:H:i',
+            'maghrib_jamaat' => 'nullable|date_format:H:i',
             'isha' => 'required|date_format:H:i',
+            'isha_jamaat' => 'nullable|date_format:H:i',
             'sun_rise' => 'nullable|date_format:H:i',
             'jumah_1' => 'nullable|date_format:H:i',
             'jumah_2' => 'nullable|date_format:H:i',
@@ -47,8 +52,8 @@ class PrayerTimeController extends Controller
 
         $data = $request->all();
         // Convert time format to include seconds
-        foreach (['fajr', 'zohar', 'asr', 'maghrib', 'isha', 'sun_rise', 'jumah_1', 'jumah_2'] as $field) {
-            if ($data[$field]) {
+        foreach (['fajr', 'fajr_jamaat', 'zohar', 'zohar_jamaat', 'asr', 'asr_jamaat', 'maghrib', 'maghrib_jamaat', 'isha', 'isha_jamaat', 'sun_rise', 'jumah_1', 'jumah_2'] as $field) {
+            if (isset($data[$field]) && $data[$field]) {
                 $data[$field] = $data[$field] . ':00';
             }
         }
@@ -83,10 +88,15 @@ class PrayerTimeController extends Controller
         $request->validate([
             'date' => 'required|date|unique:prayer_times,date,' . $prayerTime->id,
             'fajr' => 'required|date_format:H:i',
+            'fajr_jamaat' => 'nullable|date_format:H:i',
             'zohar' => 'required|date_format:H:i',
+            'zohar_jamaat' => 'nullable|date_format:H:i',
             'asr' => 'required|date_format:H:i',
+            'asr_jamaat' => 'nullable|date_format:H:i',
             'maghrib' => 'required|date_format:H:i',
+            'maghrib_jamaat' => 'nullable|date_format:H:i',
             'isha' => 'required|date_format:H:i',
+            'isha_jamaat' => 'nullable|date_format:H:i',
             'sun_rise' => 'nullable|date_format:H:i',
             'jumah_1' => 'nullable|date_format:H:i',
             'jumah_2' => 'nullable|date_format:H:i',
@@ -94,8 +104,8 @@ class PrayerTimeController extends Controller
 
         $data = $request->all();
         // Convert time format to include seconds
-        foreach (['fajr', 'zohar', 'asr', 'maghrib', 'isha', 'sun_rise', 'jumah_1', 'jumah_2'] as $field) {
-            if ($data[$field]) {
+        foreach (['fajr', 'fajr_jamaat', 'zohar', 'zohar_jamaat', 'asr', 'asr_jamaat', 'maghrib', 'maghrib_jamaat', 'isha', 'isha_jamaat', 'sun_rise', 'jumah_1', 'jumah_2'] as $field) {
+            if (isset($data[$field]) && $data[$field]) {
                 $data[$field] = $data[$field] . ':00';
             }
         }
