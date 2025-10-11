@@ -139,6 +139,45 @@
             border-color: #e8650e;
             color: white;
         }
+        
+        /* Sliding Text Section */
+        .sliding-text-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 12px 10px;
+            margin: 20px 0;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sliding-text-wrapper {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            animation: slideText 20s linear infinite;
+        }
+        
+        .sliding-text {
+            color: #000000;
+            font-weight: 700;
+            font-size: 14px;
+            display: inline-block;
+            padding-right: 100px;
+        }
+        
+        @keyframes slideText {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+        
+        .sliding-text-container:hover .sliding-text-wrapper {
+            animation-play-state: paused;
+        }
     </style>
 </head>
 <body>
@@ -193,6 +232,12 @@
                         Settings
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.sliding-texts.index') }}">
+                        <i class="bi bi-text-left me-2"></i>
+                        Sliding Texts
+                    </a>
+                </li>
                 <li class="nav-item mt-4">
                     <a class="nav-link" href="{{ route('timetable.index') }}" target="_blank">
                         <i class="bi bi-eye me-2"></i>
@@ -201,11 +246,28 @@
                 </li>
             </ul>
             
-            <div class="mt-5">
+            <!-- Sliding Text Section -->
+            @if(isset($slidingTexts) && $slidingTexts->count() > 0)
+                @foreach($slidingTexts as $slidingText)
+                <div class="sliding-text-container" style="background: {{ $slidingText->background_color }};">
+                    <div class="sliding-text-wrapper" style="animation-duration: {{ $slidingText->animation_speed }}s;">
+                        <span class="sliding-text" style="color: {{ $slidingText->text_color }}; font-size: {{ $slidingText->font_size }}px; font-weight: {{ $slidingText->font_weight }};">{{ $slidingText->text }}</span>
+                    </div>
+                </div>
+                @endforeach
+            @else
+                <div class="sliding-text-container">
+                    <div class="sliding-text-wrapper">
+                        <span class="sliding-text">Welcome to Masjid Admin Panel - Manage your prayer times, announcements, and media schedules</span>
+                    </div>
+                </div>
+            @endif
+            
+            <div class="mt-3">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="btn logout-btn w-100">
-                        <i class="bi bi-box-arrow-right me-2"></i>
+                        <i class="bi box-arrow-right me-2"></i>
                         Logout
                     </button>
                 </form>

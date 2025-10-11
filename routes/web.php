@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\HadeethController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\MediaScheduleController;
+use App\Http\Controllers\Admin\SlidingTextController;
 use App\Http\Controllers\MediaDisplayController;
 use App\Http\Controllers\ApiController;
 
@@ -109,4 +110,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     
     Route::post('media-schedules/{mediaSchedule}/toggle-status', [MediaScheduleController::class, 'toggleStatus'])
         ->name('admin.media-schedules.toggle-status');
+    
+    // Sliding text management routes
+    Route::resource('sliding-texts', SlidingTextController::class, [
+        'as' => 'admin'
+    ]);
 });

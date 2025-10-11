@@ -193,13 +193,15 @@
         <div class="scrolling-content">
             <div class="scroll-arrow left-arrow">←</div>
             <div class="scrolling-text">
-    @if($announcements->count() > 0)
-            @foreach($announcements as $announcement)
-                        <span class="scroll-item">{{ $announcement->title }}: {{ $announcement->content }}</span>
+                <div class="scroll-wrapper">
+    @if($slidingTexts->count() > 0)
+            @foreach($slidingTexts as $slidingText)
+                        <span class="scroll-item">{{ $slidingText->text }}</span>
             @endforeach
                 @else
-                    <span class="scroll-item">SCROLLING TEXT</span>
+                    <span class="scroll-item">Welcome to the Masjid - No sliding text configured</span>
                 @endif
+                </div>
             </div>
             <div class="scroll-arrow right-arrow">→</div>
         </div>

@@ -307,8 +307,9 @@
         .scrolling-text-area {
             background: #F8B803;
             color: #fff;
-            padding: clamp(8px, 1.5vh, 15px) 0;
+            padding: clamp(15px, 2.5vh, 25px) 0;
             flex-shrink: 0;
+            box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.3);
         }
         
         .scroll-separator {
@@ -321,26 +322,39 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: clamp(15px, 2.5vw, 25px);
+            gap: clamp(20px, 3vw, 35px);
         }
         
         .scroll-arrow {
-            font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+            font-size: clamp(1.8rem, 3.5vw, 2.5rem);
             color: #ff0000;
-            font-weight: bold;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
         
         .scrolling-text {
             flex-grow: 1;
-            text-align: center;
             overflow: hidden;
             white-space: nowrap;
+            position: relative;
+        }
+        
+        .scroll-wrapper {
+            display: inline-block;
+            animation: scroll-left 45s linear infinite;
+            white-space: nowrap;
+            will-change: transform;
         }
         
         .scroll-item {
             display: inline-block;
-            margin-right: clamp(30px, 5vw, 60px);
-            font-size: clamp(0.9rem, 1.8vw, 1.3rem);
+            margin-right: clamp(50px, 8vw, 100px);
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            font-weight: 900;
+            font-family: 'Arial Black', 'Arial Bold', 'Helvetica Neue', Arial, sans-serif;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+            letter-spacing: 1px;
+            color: #000000;
         }
         
         /* Logo Watermark */
@@ -455,12 +469,17 @@
         
         /* Animation for scrolling text */
         @keyframes scroll-left {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+            0% { 
+                transform: translateX(0%); 
+            }
+            100% { 
+                transform: translateX(-100%); 
+            }
         }
         
-        .scrolling-text {
-            animation: scroll-left 30s linear infinite;
+        /* Pause animation on hover */
+        .scrolling-text:hover .scroll-wrapper {
+            animation-play-state: paused;
         }
 
         /* Media Display Overlay Styles */

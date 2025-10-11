@@ -7,6 +7,7 @@ use App\Models\PrayerTime;
 use App\Models\Announcement;
 use App\Models\Hadeeth;
 use App\Models\Setting;
+use App\Models\SlidingText;
 use Carbon\Carbon;
 
 class TimetableController extends Controller
@@ -36,6 +37,9 @@ class TimetableController extends Controller
         $hadeeth = Hadeeth::getTodayHadeeth();
         $hadeeths = Hadeeth::getOrderedHadeeths();
         
+        // Get active sliding texts
+        $slidingTexts = SlidingText::getActiveTexts();
+        
         // Get settings
         $settings = [
             'masjid_name' => Setting::get('masjid_name', 'Al Hidaya Academy'),
@@ -58,7 +62,7 @@ class TimetableController extends Controller
         // Get Islamic date (you may want to integrate with a proper Islamic calendar API)
         $islamicDate = $this->getIslamicDate($now);
         
-        return compact('prayerTimes', 'nextPrayer', 'announcements', 'hadeeth', 'hadeeths', 'settings', 'islamicDate', 'now');
+        return compact('prayerTimes', 'nextPrayer', 'announcements', 'hadeeth', 'hadeeths', 'slidingTexts', 'settings', 'islamicDate', 'now');
     }
     
     private function getIslamicDate($date)
