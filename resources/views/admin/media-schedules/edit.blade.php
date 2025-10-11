@@ -79,38 +79,6 @@
                                     @enderror
                                 </div>
 
-                                <!-- Days of Week -->
-                                <div class="mb-3">
-                                    <label for="days_of_week" class="form-label">Days of Week</label>
-                                    <div class="form-text mb-2">Select specific days (leave empty for all days)</div>
-                                    <div class="row">
-                                        @php
-                                            $selectedDays = old('days_of_week', $mediaSchedule->days_of_week ?? []);
-                                            $days = [
-                                                ['value' => 1, 'label' => 'Monday'],
-                                                ['value' => 2, 'label' => 'Tuesday'],
-                                                ['value' => 3, 'label' => 'Wednesday'],
-                                                ['value' => 4, 'label' => 'Thursday'],
-                                                ['value' => 5, 'label' => 'Friday'],
-                                                ['value' => 6, 'label' => 'Saturday'],
-                                                ['value' => 7, 'label' => 'Sunday']
-                                            ];
-                                        @endphp
-                                        @foreach($days as $day)
-                                            <div class="col-6 col-md-4 mb-2">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" 
-                                                           name="days_of_week[]" value="{{ $day['value'] }}" 
-                                                           id="day_{{ $day['value'] }}"
-                                                           {{ in_array($day['value'], $selectedDays) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="day_{{ $day['value'] }}">
-                                                        {{ $day['label'] }}
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
                             </div>
 
                             <div class="col-md-6">
@@ -213,7 +181,14 @@
 let selectedMedia = [];
 let checkOverlapTimeout = null;
 const existingMediaData = @json($mediaSchedule->mediaItems->mapWithKeys(function($media) {
-    return [$media->id => ['duration' => $media->pivot->duration, 'priority' => $media->pivot->priority]];
+    return [$media->id => [
+        'duration' => $media->pivot->duration, 
+        'priority' => $media->pivot->priority,
+        'expiry_date' => $media->pivot->expiry_date,
+        'expiry_time' => $media->pivot->expiry_time,
+        'gap_duration' => $media->pivot->gap_duration ?? 0,
+        'days_of_week' => $media->pivot->days_of_week
+    ]];
 }));
 
 function toggleFields() {
@@ -256,6 +231,8 @@ function toggleFields() {
 function updateMediaConfig() {
     const configContainer = document.getElementById('media_config_list');
     const configSection = document.getElementById('selected_media_config');
+    const scheduleType = document.getElementById('schedule_type').value;
+    const isFullTimePoster = scheduleType === 'full_time_poster';
     
     selectedMedia = [];
     document.querySelectorAll('.media-checkbox:checked').forEach(checkbox => {
@@ -272,27 +249,116 @@ function updateMediaConfig() {
         selectedMedia.forEach((media, index) => {
             const oldDuration = {{ json_encode(old('media_durations', [])) }};
             const oldPriority = {{ json_encode(old('media_priorities', [])) }};
+            const oldExpiryDates = {{ json_encode(old('media_expiry_dates', [])) }};
+            const oldExpiryTimes = {{ json_encode(old('media_expiry_times', [])) }};
+            const oldGapDurations = {{ json_encode(old('media_gap_durations', [])) }};
+            const oldDaysOfWeek = {{ json_encode(old('media_days_of_week', [])) }};
             
             // Use old values if available, otherwise use existing data from database
             const duration = oldDuration[index] || existingMediaData[media.id]?.duration || 30;
             const priority = oldPriority[index] || existingMediaData[media.id]?.priority || (index + 1);
+            const expiryDate = oldExpiryDates[index] || existingMediaData[media.id]?.expiry_date || '';
+            const expiryTime = oldExpiryTimes[index] || existingMediaData[media.id]?.expiry_time || '';
+            const gapDuration = oldGapDurations[index] || existingMediaData[media.id]?.gap_duration || 0;
+            
+            // Handle days of week for this media
+            let mediaDaysOfWeek = [];
+            if (oldDaysOfWeek[index]) {
+                mediaDaysOfWeek = oldDaysOfWeek[index];
+            } else if (existingMediaData[media.id]?.days_of_week) {
+                const daysData = existingMediaData[media.id].days_of_week;
+                mediaDaysOfWeek = typeof daysData === 'string' ? JSON.parse(daysData) : daysData;
+            }
             
             html += `
-                <div class="card mb-2">
+                <div class="card mb-3 media-config-card">
                     <div class="card-body p-3">
-                        <h6 class="mb-2">${media.title}</h6>
+                        <h6 class="mb-3"><i class="bi bi-image"></i> ${media.title}</h6>
                         <div class="row">
-                            <div class="col-6">
+                            <div class="col-md-6 mb-2">
                                 <label class="form-label small">Duration (seconds)</label>
                                 <input type="number" class="form-control form-control-sm" 
                                        name="media_durations[]" value="${duration}" 
                                        min="1" max="300" required>
                             </div>
-                            <div class="col-6">
+                            <div class="col-md-6 mb-2">
                                 <label class="form-label small">Priority</label>
                                 <input type="number" class="form-control form-control-sm" 
                                        name="media_priorities[]" value="${priority}" 
                                        min="1" max="100" required>
+                            </div>
+                        </div>
+                        
+                        ${isFullTimePoster ? `
+                        <div class="row mt-2">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small">Expiry Date <span class="text-muted">(optional)</span></label>
+                                <input type="date" class="form-control form-control-sm" 
+                                       name="media_expiry_dates[]" value="${expiryDate}">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small">Expiry Time <span class="text-muted">(optional)</span></label>
+                                <input type="time" class="form-control form-control-sm" 
+                                       name="media_expiry_times[]" value="${expiryTime}">
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12 mb-2">
+                                <label class="form-label small">Gap Duration (seconds) <span class="text-muted">(time between this and next media)</span></label>
+                                <input type="number" class="form-control form-control-sm" 
+                                       name="media_gap_durations[]" value="${gapDuration}" 
+                                       min="0" max="3600">
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <label class="form-label small">Days of Week for this Media <span class="text-muted">(leave unchecked for all days)</span></label>
+                                <div class="row">
+                                    <div class="col-6 col-md-4">
+                                        <div class="form-check form-check-sm">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="1" id="media_${index}_day_1" ${mediaDaysOfWeek.includes(1) ? 'checked' : ''}>
+                                            <label class="form-check-label small" for="media_${index}_day_1">Mon</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <div class="form-check form-check-sm">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="2" id="media_${index}_day_2" ${mediaDaysOfWeek.includes(2) ? 'checked' : ''}>
+                                            <label class="form-check-label small" for="media_${index}_day_2">Tue</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <div class="form-check form-check-sm">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="3" id="media_${index}_day_3" ${mediaDaysOfWeek.includes(3) ? 'checked' : ''}>
+                                            <label class="form-check-label small" for="media_${index}_day_3">Wed</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <div class="form-check form-check-sm">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="4" id="media_${index}_day_4" ${mediaDaysOfWeek.includes(4) ? 'checked' : ''}>
+                                            <label class="form-check-label small" for="media_${index}_day_4">Thu</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <div class="form-check form-check-sm">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="5" id="media_${index}_day_5" ${mediaDaysOfWeek.includes(5) ? 'checked' : ''}>
+                                            <label class="form-check-label small" for="media_${index}_day_5">Fri</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <div class="form-check form-check-sm">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="6" id="media_${index}_day_6" ${mediaDaysOfWeek.includes(6) ? 'checked' : ''}>
+                                            <label class="form-check-label small" for="media_${index}_day_6">Sat</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <div class="form-check form-check-sm">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="7" id="media_${index}_day_7" ${mediaDaysOfWeek.includes(7) ? 'checked' : ''}>
+                                            <label class="form-check-label small" for="media_${index}_day_7">Sun</label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -394,7 +460,10 @@ function checkDisplayTime() {
 
 document.addEventListener('DOMContentLoaded', function() {
     // Schedule type change
-    document.getElementById('schedule_type').addEventListener('change', toggleFields);
+    document.getElementById('schedule_type').addEventListener('change', function() {
+        toggleFields();
+        updateMediaConfig(); // Update media config when schedule type changes
+    });
     
     // Add event listeners for time calculation
     ['prayer_name', 'minutes_before_prayer', 'minutes_after_prayer'].forEach(fieldName => {

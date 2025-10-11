@@ -43,15 +43,24 @@ class MediaScheduleController extends Controller
             'media_ids' => 'required|array|min:1',
             'media_ids.*' => 'required|exists:media,id',
             'schedule_type' => 'required|in:minutes_before_prayer,minutes_after_prayer,full_time_poster',
-            'prayer_name' => 'required_unless:schedule_type,full_time_poster|in:fajr,zohar,asr,maghrib,isha',
-            'minutes_before_prayer' => 'nullable|integer|min:1|max:480',
-            'minutes_after_prayer' => 'nullable|integer|min:1|max:480',
+            'prayer_name' => 'required_unless:schedule_type,full_time_poster|nullable|in:fajr,zohar,asr,maghrib,isha',
+            'minutes_before_prayer' => 'required_if:schedule_type,minutes_before_prayer|nullable|integer|min:1|max:480',
+            'minutes_after_prayer' => 'required_if:schedule_type,minutes_after_prayer|nullable|integer|min:1|max:480',
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
             'media_durations' => 'required|array',
             'media_durations.*' => 'required|integer|min:1|max:300',
             'media_priorities' => 'required|array',
-            'media_priorities.*' => 'required|integer|min:1|max:100'
+            'media_priorities.*' => 'required|integer|min:1|max:100',
+            // New fields for pivot table
+            'media_expiry_dates' => 'nullable|array',
+            'media_expiry_dates.*' => 'nullable|date',
+            'media_expiry_times' => 'nullable|array',
+            'media_expiry_times.*' => 'nullable|date_format:H:i',
+            'media_gap_durations' => 'nullable|array',
+            'media_gap_durations.*' => 'nullable|integer|min:0|max:3600',
+            'media_days_of_week' => 'nullable|array',
+            'media_days_of_week.*' => 'nullable|array'
         ]);
 
         $data = [
@@ -74,12 +83,18 @@ class MediaScheduleController extends Controller
 
         $schedule = MediaSchedule::create($data);
 
-        // Attach media items with their duration and priority
+        // Attach media items with their duration, priority, and new fields
         $pivotData = [];
         foreach ($request->media_ids as $index => $mediaId) {
             $pivotData[$mediaId] = [
                 'duration' => $request->media_durations[$index] ?? 30,
-                'priority' => $request->media_priorities[$index] ?? ($index + 1)
+                'priority' => $request->media_priorities[$index] ?? ($index + 1),
+                'expiry_date' => $request->media_expiry_dates[$index] ?? null,
+                'expiry_time' => $request->media_expiry_times[$index] ?? null,
+                'gap_duration' => $request->media_gap_durations[$index] ?? 0,
+                'days_of_week' => isset($request->media_days_of_week[$index]) && !empty($request->media_days_of_week[$index])
+                    ? json_encode($request->media_days_of_week[$index]) 
+                    : null
             ];
         }
         
@@ -120,15 +135,24 @@ class MediaScheduleController extends Controller
             'media_ids' => 'required|array|min:1',
             'media_ids.*' => 'required|exists:media,id',
             'schedule_type' => 'required|in:minutes_before_prayer,minutes_after_prayer,full_time_poster',
-            'prayer_name' => 'required_unless:schedule_type,full_time_poster|in:fajr,zohar,asr,maghrib,isha',
-            'minutes_before_prayer' => 'nullable|integer|min:1|max:480',
-            'minutes_after_prayer' => 'nullable|integer|min:1|max:480',
+            'prayer_name' => 'required_unless:schedule_type,full_time_poster|nullable|in:fajr,zohar,asr,maghrib,isha',
+            'minutes_before_prayer' => 'required_if:schedule_type,minutes_before_prayer|nullable|integer|min:1|max:480',
+            'minutes_after_prayer' => 'required_if:schedule_type,minutes_after_prayer|nullable|integer|min:1|max:480',
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
             'media_durations' => 'required|array',
             'media_durations.*' => 'required|integer|min:1|max:300',
             'media_priorities' => 'required|array',
-            'media_priorities.*' => 'required|integer|min:1|max:100'
+            'media_priorities.*' => 'required|integer|min:1|max:100',
+            // New fields for pivot table
+            'media_expiry_dates' => 'nullable|array',
+            'media_expiry_dates.*' => 'nullable|date',
+            'media_expiry_times' => 'nullable|array',
+            'media_expiry_times.*' => 'nullable|date_format:H:i',
+            'media_gap_durations' => 'nullable|array',
+            'media_gap_durations.*' => 'nullable|integer|min:0|max:3600',
+            'media_days_of_week' => 'nullable|array',
+            'media_days_of_week.*' => 'nullable|array'
         ]);
 
         $data = [
@@ -151,12 +175,18 @@ class MediaScheduleController extends Controller
 
         $mediaSchedule->update($data);
 
-        // Sync media items with their duration and priority
+        // Sync media items with their duration, priority, and new fields
         $pivotData = [];
         foreach ($request->media_ids as $index => $mediaId) {
             $pivotData[$mediaId] = [
                 'duration' => $request->media_durations[$index] ?? 30,
-                'priority' => $request->media_priorities[$index] ?? ($index + 1)
+                'priority' => $request->media_priorities[$index] ?? ($index + 1),
+                'expiry_date' => $request->media_expiry_dates[$index] ?? null,
+                'expiry_time' => $request->media_expiry_times[$index] ?? null,
+                'gap_duration' => $request->media_gap_durations[$index] ?? 0,
+                'days_of_week' => isset($request->media_days_of_week[$index]) && !empty($request->media_days_of_week[$index])
+                    ? json_encode($request->media_days_of_week[$index]) 
+                    : null
             ];
         }
         

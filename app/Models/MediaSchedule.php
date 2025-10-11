@@ -37,7 +37,7 @@ class MediaSchedule extends Model
     public function mediaItems(): BelongsToMany
     {
         return $this->belongsToMany(Media::class, 'media_schedule_media')
-            ->withPivot('duration', 'priority')
+            ->withPivot('duration', 'priority', 'expiry_date', 'expiry_time', 'gap_duration', 'days_of_week')
             ->orderBy('media_schedule_media.priority', 'asc')
             ->withTimestamps();
     }

@@ -30,19 +30,35 @@ class MediaDisplayService
             ->orderBy('id', 'desc')
             ->get();
 
+        // Priority 1: Check for Before/After Prayer schedules first (they override Full Time Poster)
+        $prayerBasedMedia = null;
+        $fullTimePosterMedia = null;
+        
         foreach ($schedules as $schedule) {
+            // Check if schedule is active for today (schedule level check still applies)
             if (!$schedule->isActiveForToday()) {
                 continue;
             }
 
             $mediaInfo = $this->shouldDisplayMediaFromSchedule($schedule, $now);
+            
             if ($mediaInfo) {
-                return $mediaInfo;
+                // Categorize by schedule type
+                if ($schedule->schedule_type === 'full_time_poster') {
+                    // Store Full Time Poster as fallback
+                    if (!$fullTimePosterMedia) {
+                        $fullTimePosterMedia = $mediaInfo;
+                    }
+                } else {
+                    // Before/After Prayer schedules have priority
+                    $prayerBasedMedia = $mediaInfo;
+                    break; // Found a prayer-based schedule, stop looking
+                }
             }
         }
 
-        // No scheduled media to display - show timetable
-        return null;
+        // Return prayer-based media if found, otherwise full-time poster, otherwise null (timetable)
+        return $prayerBasedMedia ?? $fullTimePosterMedia;
     }
 
     /**
@@ -130,8 +146,42 @@ class MediaDisplayService
             return null;
         }
 
-        // Calculate total cycle duration
-        $totalDuration = $mediaItems->sum('pivot.duration');
+        // Filter out expired media and media not active for today
+        $activeMediaItems = $mediaItems->filter(function($media) use ($now) {
+            // Check expiry date/time
+            if ($media->pivot->expiry_date && $media->pivot->expiry_time) {
+                $expiryDateTime = Carbon::parse($media->pivot->expiry_date . ' ' . $media->pivot->expiry_time);
+                if ($now->greaterThanOrEqualTo($expiryDateTime)) {
+                    return false; // Media has expired
+                }
+            }
+            
+            // Check days of week for this media
+            if ($media->pivot->days_of_week) {
+                $daysOfWeek = is_string($media->pivot->days_of_week) 
+                    ? json_decode($media->pivot->days_of_week, true) 
+                    : $media->pivot->days_of_week;
+                    
+                if (!empty($daysOfWeek)) {
+                    $today = $now->dayOfWeekIso; // 1-7 (Monday-Sunday)
+                    if (!in_array($today, $daysOfWeek)) {
+                        return false; // Media not active for today
+                    }
+                }
+            }
+            
+            return true; // Media is active
+        });
+
+        if ($activeMediaItems->isEmpty()) {
+            return null;
+        }
+
+        // Calculate total cycle duration (media duration + gap duration)
+        $totalDuration = $activeMediaItems->sum(function($media) {
+            return $media->pivot->duration + ($media->pivot->gap_duration ?? 0);
+        });
+        
         if ($totalDuration <= 0) {
             return null;
         }
@@ -150,11 +200,14 @@ class MediaDisplayService
 
         // Find which media should be displayed
         $accumulatedDuration = 0;
-        foreach ($mediaItems as $media) {
+        foreach ($activeMediaItems as $media) {
             $mediaDuration = $media->pivot->duration;
-            $mediaEndTime = $accumulatedDuration + $mediaDuration;
+            $gapDuration = $media->pivot->gap_duration ?? 0;
+            $totalMediaDuration = $mediaDuration + $gapDuration;
+            $mediaEndTime = $accumulatedDuration + $mediaDuration; // Display ends before gap
+            $slotEndTime = $accumulatedDuration + $totalMediaDuration; // Gap ends here
             
-            // Check if current time falls within this media's time window in the cycle
+            // Check if current time falls within this media's display window (not in the gap)
             if ($positionInCycle >= $accumulatedDuration && $positionInCycle < $mediaEndTime) {
                 return [
                     'media' => $media,
@@ -164,11 +217,18 @@ class MediaDisplayService
                 ];
             }
             
-            $accumulatedDuration = $mediaEndTime;
+            // If we're in the gap period, don't display anything (return null or wait)
+            // Actually, we should skip to next media, so just accumulate
+            $accumulatedDuration = $slotEndTime;
         }
 
-        // Fallback to first media (shouldn't reach here)
-        $firstMedia = $mediaItems->first();
+        // If we're in a gap period between media, return null to show timetable momentarily
+        // Or fallback to first active media
+        $firstMedia = $activeMediaItems->first();
+        if (!$firstMedia) {
+            return null;
+        }
+        
         return [
             'media' => $firstMedia,
             'duration' => $firstMedia->pivot->duration,
@@ -187,6 +247,29 @@ class MediaDisplayService
             return null;
         }
 
+        // Filter media based on days_of_week at media level
+        $activeMediaItems = $mediaItems->filter(function($media) use ($now) {
+            // Check days of week for this media
+            if ($media->pivot->days_of_week) {
+                $daysOfWeek = is_string($media->pivot->days_of_week) 
+                    ? json_decode($media->pivot->days_of_week, true) 
+                    : $media->pivot->days_of_week;
+                    
+                if (!empty($daysOfWeek)) {
+                    $today = $now->dayOfWeekIso; // 1-7 (Monday-Sunday)
+                    if (!in_array($today, $daysOfWeek)) {
+                        return false; // Media not active for today
+                    }
+                }
+            }
+            
+            return true; // Media is active
+        });
+
+        if ($activeMediaItems->isEmpty()) {
+            return null;
+        }
+
         // Calculate seconds elapsed since schedule start
         // Use diffInSeconds with false to get signed difference (can be negative if schedule hasn't started)
         $elapsedSeconds = $scheduleStart->diffInSeconds($now, false);
@@ -199,7 +282,7 @@ class MediaDisplayService
         // Find which media should be displayed based on priority order and duration
         // Media 1: 0-29s, Media 2: 30-59s, etc.
         $accumulatedDuration = 0;
-        foreach ($mediaItems as $media) {
+        foreach ($activeMediaItems as $media) {
             $mediaDuration = $media->pivot->duration;
             $mediaEndTime = $accumulatedDuration + $mediaDuration;
             
