@@ -180,16 +180,21 @@
 <script>
 let selectedMedia = [];
 let checkOverlapTimeout = null;
-const existingMediaData = @json($mediaSchedule->mediaItems->mapWithKeys(function($media) {
-    return [$media->id => [
-        'duration' => $media->pivot->duration, 
-        'priority' => $media->pivot->priority,
-        'expiry_date' => $media->pivot->expiry_date,
-        'expiry_time' => $media->pivot->expiry_time,
-        'gap_duration' => $media->pivot->gap_duration ?? 0,
-        'days_of_week' => $media->pivot->days_of_week
-    ]];
-}));
+@php
+$existingMediaData = $mediaSchedule->mediaItems->mapWithKeys(function($media) {
+    return [
+        $media->id => [
+            'duration' => $media->pivot->duration,
+            'priority' => $media->pivot->priority,
+            'expiry_date' => $media->pivot->expiry_date,
+            'expiry_time' => $media->pivot->expiry_time,
+            'gap_duration' => $media->pivot->gap_duration ?? 0,
+            'days_of_week' => $media->pivot->days_of_week,
+        ],
+    ];
+})->toArray();
+@endphp
+const existingMediaData = @json($existingMediaData);
 
 function toggleFields() {
     const type = document.getElementById('schedule_type').value;
@@ -246,14 +251,14 @@ function updateMediaConfig() {
         configSection.style.display = 'block';
         let html = '';
         
+        const oldDuration = @json(old('media_durations', []));
+        const oldPriority = @json(old('media_priorities', []));
+        const oldExpiryDates = @json(old('media_expiry_dates', []));
+        const oldExpiryTimes = @json(old('media_expiry_times', []));
+        const oldGapDurations = @json(old('media_gap_durations', []));
+        const oldDaysOfWeek = @json(old('media_days_of_week', []));
+        
         selectedMedia.forEach((media, index) => {
-            const oldDuration = {{ json_encode(old('media_durations', [])) }};
-            const oldPriority = {{ json_encode(old('media_priorities', [])) }};
-            const oldExpiryDates = {{ json_encode(old('media_expiry_dates', [])) }};
-            const oldExpiryTimes = {{ json_encode(old('media_expiry_times', [])) }};
-            const oldGapDurations = {{ json_encode(old('media_gap_durations', [])) }};
-            const oldDaysOfWeek = {{ json_encode(old('media_days_of_week', [])) }};
-            
             // Use old values if available, otherwise use existing data from database
             const duration = oldDuration[index] || existingMediaData[media.id]?.duration || 30;
             const priority = oldPriority[index] || existingMediaData[media.id]?.priority || (index + 1);
