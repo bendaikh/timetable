@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\MediaScheduleController;
 use App\Http\Controllers\Admin\SlidingTextController;
+use App\Http\Controllers\Admin\BoxesManagementController;
 use App\Http\Controllers\MediaDisplayController;
 use App\Http\Controllers\ApiController;
 
@@ -115,4 +116,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::resource('sliding-texts', SlidingTextController::class, [
         'as' => 'admin'
     ]);
+    
+    // Boxes management routes
+    Route::prefix('boxes')->group(function () {
+        Route::get('/', [BoxesManagementController::class, 'index'])->name('admin.boxes.index');
+        Route::get('/{boxType}/edit', [BoxesManagementController::class, 'edit'])->name('admin.boxes.edit');
+        Route::put('/{boxType}', [BoxesManagementController::class, 'update'])->name('admin.boxes.update');
+        Route::post('/{boxType}/update-ajax', [BoxesManagementController::class, 'updateAjax'])->name('admin.boxes.update-ajax');
+        Route::post('/{boxType}/toggle', [BoxesManagementController::class, 'toggleActive'])->name('admin.boxes.toggle');
+        Route::post('/{boxType}/reset', [BoxesManagementController::class, 'reset'])->name('admin.boxes.reset');
+        Route::get('/{boxType}/preview', [BoxesManagementController::class, 'getPreview'])->name('admin.boxes.preview');
+        Route::get('/all', [BoxesManagementController::class, 'getAllBoxes'])->name('admin.boxes.all');
+        Route::post('/update-order', [BoxesManagementController::class, 'updateOrder'])->name('admin.boxes.update-order');
+        Route::post('/initialize-defaults', [BoxesManagementController::class, 'initializeDefaults'])->name('admin.boxes.initialize-defaults');
+    });
 });

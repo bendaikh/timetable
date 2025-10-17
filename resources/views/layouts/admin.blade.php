@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Admin Panel') - Masjid Timetable</title>
+    <title>@yield('title', 'Admin Panel - Masjid Timetable')</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -44,10 +44,18 @@
             padding: 20px;
         }
         
-        .card-header-custom {
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-radius: 10px 10px 0 0 !important;
+            border: none;
         }
         
         .navbar-brand {
@@ -59,8 +67,6 @@
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: white;
-            border-radius: 20px;
-            padding: 8px 20px;
             transition: all 0.3s ease;
         }
         
@@ -69,325 +75,175 @@
             color: white;
         }
         
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
+        .box-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        .box-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
         }
         
-        .table th {
-            background-color: #f8f9fa;
-            border-top: none;
-        }
-        
-        .badge {
-            font-size: 0.85em;
-        }
-        
-        /* Custom Pagination Styles */
-        .pagination {
-            margin-bottom: 0;
-        }
-        
-        .pagination .page-link {
-            color: #667eea;
-            border: 1px solid #dee2e6;
-            padding: 0.5rem 0.75rem;
-            margin: 0 2px;
-            border-radius: 0.375rem;
-            transition: all 0.3s ease;
-        }
-        
-        .pagination .page-link:hover {
-            color: #fff;
-            background-color: #667eea;
-            border-color: #667eea;
-        }
-        
-        .pagination .page-item.active .page-link {
-            background-color: #667eea;
-            border-color: #667eea;
-            color: white;
-        }
-        
-        .pagination .page-item.disabled .page-link {
-            color: #6c757d;
-            background-color: #fff;
-            border-color: #dee2e6;
-        }
-        
-        .pagination .page-item:first-child .page-link,
-        .pagination .page-item:last-child .page-link {
-            border-radius: 0.375rem;
-        }
-        
-        /* Pagination Info Styling */
-        .pagination-info {
-            font-size: 0.9rem;
-            color: #6c757d;
-        }
-        
-        /* Responsive Pagination */
-        @media (max-width: 768px) {
-            .pagination .page-link {
-                padding: 0.375rem 0.5rem;
-                font-size: 0.875rem;
-            }
-            
-            .pagination .page-item:not(:first-child):not(:last-child) .page-link {
-                display: none;
-            }
-            
-            .pagination .page-item:first-child,
-            .pagination .page-item:last-child,
-            .pagination .page-item.active {
-                display: block;
-            }
-        }
-        
-        /* Bulk Actions Styling */
-        #bulk-actions-bar {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            border: 1px solid #90caf9;
-            border-radius: 0.5rem;
-            animation: slideDown 0.3s ease-out;
-        }
-        
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .prayer-time-checkbox {
-            transform: scale(1.1);
-        }
-        
-        .prayer-time-checkbox:checked {
-            background-color: #667eea;
-            border-color: #667eea;
-        }
-        
-        /* Table row selection styling */
-        tr:has(.prayer-time-checkbox:checked) {
-            background-color: rgba(102, 126, 234, 0.1);
-        }
-        
-        /* Responsive bulk actions */
-        @media (max-width: 768px) {
-            #bulk-actions-bar .d-flex {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            #bulk-actions-bar .d-flex > div:last-child {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-                justify-content: center;
-            }
-        }
-        
-        /* Sliding Text Section */
-        .sliding-text-container {
-            background: rgba(255, 255, 255, 0.95);
+        .preview-container {
+            min-height: 200px;
+            border: 2px dashed #ddd;
             border-radius: 8px;
-            padding: 12px 10px;
-            margin: 20px 0;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .sliding-text-wrapper {
+            padding: 15px;
+            background-color: #f9f9f9;
             display: flex;
             align-items: center;
-            white-space: nowrap;
-            animation: slideText 20s linear infinite;
+            justify-content: center;
         }
         
-        .sliding-text {
-            color: #000000;
-            font-weight: 700;
-            font-size: 14px;
-            display: inline-block;
-            padding-right: 100px;
+        .box-preview {
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
         }
         
-        @keyframes slideText {
-            0% {
-                transform: translateX(100%);
-            }
-            100% {
+        .form-control-color {
+            width: 60px;
+            height: 38px;
+            padding: 0;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+        }
+        
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
                 transform: translateX(-100%);
+                transition: transform 0.3s ease;
             }
-        }
-        
-        .sliding-text-container:hover .sliding-text-wrapper {
-            animation-play-state: paused;
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
         }
     </style>
     
-    @yield('styles')
+    @stack('styles')
 </head>
 <body>
-    <!-- Sidebar -->
-    <nav class="sidebar">
-        <div class="p-4">
-            <h4 class="text-white mb-4">
-                <i class="bi bi-house-door-fill me-2"></i>
-                Masjid Admin
-            </h4>
-            
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
-                        <i class="bi bi-speedometer2 me-2"></i>
-                        Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.prayer-times.*') ? 'active' : '' }}" href="{{ route('admin.prayer-times.index') }}">
-                        <i class="bi bi-clock me-2"></i>
-                        Prayer Times
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.announcements.*') ? 'active' : '' }}" href="{{ route('admin.announcements.index') }}">
-                        <i class="bi bi-megaphone me-2"></i>
-                        Announcements
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.hadeeths.*') ? 'active' : '' }}" href="{{ route('admin.hadeeths.index') }}">
-                        <i class="bi bi-book me-2"></i>
-                        Hadeeths
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.media.*') ? 'active' : '' }}" href="{{ route('admin.media.index') }}">
-                        <i class="bi bi-images me-2"></i>
-                        Media Management
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.media-schedules.*') ? 'active' : '' }}" href="{{ route('admin.media-schedules.index') }}">
-                        <i class="bi bi-calendar-event me-2"></i>
-                        Media Schedules
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" href="{{ route('admin.settings.index') }}">
-                        <i class="bi bi-gear me-2"></i>
-                        Settings
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.sliding-texts.*') ? 'active' : '' }}" href="{{ route('admin.sliding-texts.index') }}">
-                        <i class="bi bi-text-left me-2"></i>
-                        Sliding Texts
-                    </a>
-                </li>
-                <li class="nav-item mt-4">
-                    <a class="nav-link" href="{{ route('timetable.index') }}" target="_blank">
-                        <i class="bi bi-eye me-2"></i>
-                        View Timetable
-                    </a>
-                </li>
-            </ul>
-            
-            <!-- Sliding Text Section -->
-            @if(isset($slidingTexts) && $slidingTexts->count() > 0)
-                @foreach($slidingTexts as $slidingText)
-                <div class="sliding-text-container" style="background: {{ $slidingText->background_color }};">
-                    <div class="sliding-text-wrapper" style="animation-duration: {{ $slidingText->animation_speed }}s;">
-                        <span class="sliding-text" style="color: {{ $slidingText->text_color }}; font-size: {{ $slidingText->font_size }}px; font-weight: {{ $slidingText->font_weight }};">{{ $slidingText->text }}</span>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="sidebar col-md-3 col-lg-2 d-md-block">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="navbar-brand text-white">Admin Panel</h4>
+                        <small class="text-white-50">Masjid Timetable</small>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" 
+                               href="{{ route('admin.dashboard') }}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.boxes.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.boxes.index') }}">
+                                <i class="bi bi-grid-3x3-gap"></i> Boxes Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.prayer-times.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.prayer-times.index') }}">
+                                <i class="bi bi-clock"></i> Prayer Times
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.announcements.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.announcements.index') }}">
+                                <i class="bi bi-megaphone"></i> Announcements
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.hadeeths.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.hadeeths.index') }}">
+                                <i class="bi bi-book"></i> Hadeeths
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.media.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.media.index') }}">
+                                <i class="bi bi-image"></i> Media
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.media-schedules.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.media-schedules.index') }}">
+                                <i class="bi bi-calendar-event"></i> Media Schedules
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.sliding-texts.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.sliding-texts.index') }}">
+                                <i class="bi bi-text-paragraph"></i> Sliding Texts
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.settings.index') }}">
+                                <i class="bi bi-gear"></i> Settings
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <a class="nav-link" href="{{ route('timetable.index') }}" target="_blank">
+                                <i class="bi bi-eye"></i> View Timetable
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <div class="mt-auto pt-3">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="btn logout-btn w-100">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </button>
+                        </form>
                     </div>
                 </div>
-                @endforeach
-            @else
-                <div class="sliding-text-container">
-                    <div class="sliding-text-wrapper">
-                        <span class="sliding-text">Welcome to Masjid Admin Panel - Manage your prayer times, announcements, and media schedules</span>
-                    </div>
-                </div>
-            @endif
-            
-            <div class="mt-3">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="btn logout-btn w-100">
-                        <i class="bi bi-box-arrow-right me-2"></i>
-                        Logout
-                    </button>
-                </form>
-            </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="main-content col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                @yield('content')
+            </main>
         </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Navigation -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-white rounded shadow-sm mb-4">
-            <div class="container-fluid">
-                <span class="navbar-brand">
-                    @yield('page-icon')
-                    @yield('page-title', 'Dashboard')
-                </span>
-                <div class="navbar-nav ms-auto">
-                    <span class="nav-item nav-link">
-                        Welcome, {{ auth()->user()->name }}
-                    </span>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Alert Messages -->
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle me-2"></i>
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                <strong>Please fix the following errors:</strong>
-                <ul class="mb-0 mt-2">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        <!-- Page Content -->
-        @yield('content')
     </div>
 
-    <!-- Scripts -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Boxes Management JS -->
+    <script src="{{ asset('js/boxes-management.js') }}"></script>
+    
+    <!-- Mobile sidebar toggle -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                });
+            }
+        });
+    </script>
     
     @yield('scripts')
+    @stack('scripts')
 </body>
 </html>

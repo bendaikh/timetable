@@ -23,80 +23,204 @@
 <!-- Digital Information Board Layout -->
 <div class="container-fluid digital-board">
     <!-- Top Header Row -->
-    <div class="board-header">
-        <div class="row align-items-center">
-            <!-- Current Time -->
-            <div class="col-md-4">
-                <div class="current-time-display">
-                    <div class="time-large" id="current-time">{{ $now->format('h:i') }}</div>
-                </div>
-            </div>
-            
-            <!-- Gregorian Date -->
-            <div class="col-md-4 text-center">
-                <div class="date-display">
-                    <div class="gregorian-date">{{ $now->format('D j M Y') }}</div>
-                </div>
-            </div>
-            
-            <!-- Islamic Date and Fullscreen Button -->
-            <div class="col-md-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="islamic-date-display text-center" style="flex: 1;">
-                        <div class="islamic-date">{{ $islamicDate['day'] }} {{ $islamicDate['month'] }} {{ $islamicDate['year'] }}</div>
+    @if($useBoxesStyling && isset($boxSettings['header_box']))
+        @php
+            $headerBox = $boxSettings['header_box'] ?? null;
+            $headerStyling = $headerBox['styling_settings'] ?? [];
+            $headerContent = $headerBox['content_settings'] ?? [];
+        @endphp
+        <div class="board-header" style="
+            background-color: {{ $headerStyling['background_color'] ?? '#1e4d2b' }};
+            color: {{ $headerStyling['text_color'] ?? '#000000' }};
+            font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
+            border: {{ $headerStyling['border_width'] ?? '2px' }} solid {{ $headerStyling['border_color'] ?? '#0066cc' }};
+            border-radius: {{ $headerStyling['border_radius'] ?? '0px' }};
+            padding: {{ $headerStyling['padding'] ?? '20px' }};
+        ">
+            <div class="row align-items-center">
+                <!-- Current Time -->
+                <div class="col-md-4">
+                    <div class="current-time-display">
+                        <div class="time-large" id="current-time" style="
+                            font-size: {{ $headerStyling['time_font_size'] ?? '48px' }};
+                            font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
+                            color: {{ $headerStyling['text_color'] ?? '#000000' }};
+                        ">{{ $now->format($headerContent['time_format'] ?? 'h:i:s A') }}</div>
                     </div>
-                    <button onclick="toggleFullscreen()" class="btn btn-light btn-sm" id="fullscreenBtn">
-                        <i class="bi bi-arrows-fullscreen"></i>
-                    </button>
+                </div>
+                
+                <!-- Gregorian Date -->
+                <div class="col-md-4 text-center">
+                    <div class="date-display">
+                        <div class="gregorian-date" style="
+                            font-size: {{ $headerStyling['date_font_size'] ?? '18px' }};
+                            font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
+                            color: {{ $headerStyling['text_color'] ?? '#000000' }};
+                        ">{{ $now->format($headerContent['english_date_format'] ?? 'D j M Y') }}</div>
+                    </div>
+                </div>
+                
+                <!-- Islamic Date and Fullscreen Button -->
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="islamic-date-display text-center" style="flex: 1;">
+                            <div class="islamic-date" style="
+                                font-size: {{ $headerStyling['date_font_size'] ?? '18px' }};
+                                font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
+                                color: {{ $headerStyling['text_color'] ?? '#000000' }};
+                            ">{{ $islamicDate['day'] }} {{ $islamicDate['month'] }} {{ $islamicDate['year'] }}</div>
+                        </div>
+                        @if($headerContent['show_fullscreen_button'] ?? true)
+                            <button onclick="toggleFullscreen()" class="btn btn-light btn-sm" id="fullscreenBtn">
+                                <i class="bi bi-arrows-fullscreen"></i>
+                            </button>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    @elseif(!$useBoxesStyling)
+        <!-- Original Clean Header Design -->
+        @if(!isset($activeBoxTypes) || in_array('header_box', $activeBoxTypes))
+        <div class="board-header">
+            <div class="row align-items-center">
+                <!-- Current Time -->
+                <div class="col-md-4">
+                    <div class="current-time-display">
+                        <div class="time-large" id="current-time">{{ $now->format('h:i') }}</div>
+                    </div>
+                </div>
+                
+                <!-- Gregorian Date -->
+                <div class="col-md-4 text-center">
+                    <div class="date-display">
+                        <div class="gregorian-date">{{ $now->format('D j M Y') }}</div>
+                    </div>
+                </div>
+                
+                <!-- Islamic Date and Fullscreen Button -->
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="islamic-date-display text-center" style="flex: 1;">
+                            <div class="islamic-date">{{ $islamicDate['day'] }} {{ $islamicDate['month'] }} {{ $islamicDate['year'] }}</div>
+                        </div>
+                        <button onclick="toggleFullscreen()" class="btn btn-light btn-sm" id="fullscreenBtn">
+                            <i class="bi bi-arrows-fullscreen"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+    @endif
 
     <!-- Main Content Area -->
     <div class="board-main-content">
         <div class="row h-100">
             <!-- Left Column - Prayer Times -->
+            @php $__showPrayer = ($useBoxesStyling ? isset($boxSettings['prayer_times_box']) : (!isset($activeBoxTypes) || in_array('prayer_times_box', $activeBoxTypes))); @endphp
+            @if($__showPrayer)
             <div class="col-md-4">
-                <div class="prayer-times-section" @if($settings['logo_path'] ?? false) style="--logo-bg-image: url('{{ app()->environment('production') ? url('public/storage/' . $settings['logo_path']) : asset('storage/' . $settings['logo_path']) }}')" @endif>
-                    <div class="prayer-header">
-                        <div class="prayer-col-header"></div>
-                        <div class="prayer-col-header">Beginning</div>
-                        <div class="prayer-col-header">Jamaat Time</div>
-                    </div>
+                @if($useBoxesStyling && isset($boxSettings['prayer_times_box']))
+                    @php
+                        $prayerBox = $boxSettings['prayer_times_box'] ?? null;
+                        $prayerStyling = $prayerBox['styling_settings'] ?? [];
+                        $prayerContent = $prayerBox['content_settings'] ?? [];
+                        $prayerLayout = $prayerBox['layout_settings'] ?? [];
+                    @endphp
+                    <div class="prayer-times-section" style="
+                        background-color: {{ $prayerStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
+                        color: {{ $prayerStyling['text_color'] ?? '#000000' }};
+                        font-family: {{ $prayerStyling['font_family'] ?? 'Arial, sans-serif' }};
+                        font-size: {{ $prayerStyling['font_size'] ?? '18px' }};
+                        border: {{ $prayerStyling['border_width'] ?? '1px' }} solid {{ $prayerStyling['border_color'] ?? '#0066cc' }};
+                        border-radius: {{ $prayerStyling['border_radius'] ?? '0px' }};
+                        padding: {{ $prayerStyling['padding'] ?? '15px' }};
+                        @if($settings['logo_path'] ?? false)
+                        --logo-bg-image: url('{{ app()->environment('production') ? url('public/storage/' . $settings['logo_path']) : asset('storage/' . $settings['logo_path']) }}');
+                        @endif
+                    ">
+                        <div class="prayer-header" style="
+                            background-color: {{ $prayerStyling['header_background_color'] ?? 'transparent' }};
+                            color: {{ $prayerStyling['header_text_color'] ?? '#000000' }};
+                            font-size: {{ $prayerStyling['header_font_size'] ?? '1.2rem' }};
+                            margin: -{{ $prayerStyling['padding'] ?? '20px' }} -{{ $prayerStyling['padding'] ?? '20px' }} 10px -{{ $prayerStyling['padding'] ?? '20px' }};
+                            padding: 8px;
+                            text-align: center;
+                            font-weight: bold;
+                            display: grid;
+                            grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }};
+                            gap: 10px;
+                        ">
+                            <div class="prayer-col-header" style="text-align: left;">{{ $prayerContent['table_headers'][0] ?? '' }}</div>
+                            <div class="prayer-col-header" style="text-align: center;">{{ $prayerContent['table_headers'][1] ?? 'Beginning' }}</div>
+                            <div class="prayer-col-header" style="text-align: center;">{{ $prayerContent['table_headers'][2] ?? 'Jamaat Time' }}</div>
+                        </div>
+                @elseif(!$useBoxesStyling)
+                    <div class="prayer-times-section" @if($settings['logo_path'] ?? false) style="--logo-bg-image: url('{{ app()->environment('production') ? url('public/storage/' . $settings['logo_path']) : asset('storage/' . $settings['logo_path']) }}')" @endif>
+                        <div class="prayer-header">
+                            <div class="prayer-col-header"></div>
+                            <div class="prayer-col-header">Beginning</div>
+                            <div class="prayer-col-header">Jamaat Time</div>
+                        </div>
+                @endif
                     
                     @if($prayerTimes)
                         <div class="prayer-list">
-                            <div class="prayer-row">
-                                <div class="prayer-name">Fajr</div>
-                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
+                            <div class="prayer-row" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
+                                <div class="prayer-name" style="text-align: left;">Fajr</div>
+                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') }}</div>
+                                <div class="prayer-jamaat">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') }}</div>
                             </div>
-                            <div class="prayer-row">
-                                <div class="prayer-name">Zohar</div>
-                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
-                                <div class="prayer-jamaat">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
+                            <div class="prayer-row" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
+                                <div class="prayer-name" style="text-align: left;">Zohar</div>
+                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') }}</div>
+                                <div class="prayer-jamaat">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') }}</div>
                             </div>
-                            <div class="prayer-row">
-                                <div class="prayer-name">Asr</div>
-                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
+                            <div class="prayer-row" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
+                                <div class="prayer-name" style="text-align: left;">Asr</div>
+                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') }}</div>
+                                <div class="prayer-jamaat">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') }}</div>
                             </div>
-                            <div class="prayer-row">
-                                <div class="prayer-name">Maghrib</div>
-                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
-                                <div class="prayer-jamaat">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
+                            <div class="prayer-row" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
+                                <div class="prayer-name" style="text-align: left;">Maghrib</div>
+                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') }}</div>
+                                <div class="prayer-jamaat">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') }}</div>
                             </div>
-                            <div class="prayer-row">
-                                <div class="prayer-name">Isha</div>
-                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
-                                <div class="prayer-jamaat">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
+                            <div class="prayer-row" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
+                                <div class="prayer-name" style="text-align: left;">Isha</div>
+                                <div class="prayer-time">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') }}</div>
+                                <div class="prayer-jamaat">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format($useBoxesStyling && isset($prayerContent['time_format']) ? $prayerContent['time_format'] : 'h:i') }}</div>
                             </div>
                         </div>
                         
-                        <div class="next-prayer-info">
-                            <div class="next-prayer-text">Next prayer in:</div>
-                        </div>
+                        @if($useBoxesStyling && isset($boxSettings['note_prayer_box']))
+                            @php
+                                $noteBox = $boxSettings['note_prayer_box'] ?? null;
+                                $noteStyling = $noteBox['styling_settings'] ?? [];
+                                $noteContent = $noteBox['content_settings'] ?? [];
+                            @endphp
+                            <div class="next-prayer-info" style="
+                                background-color: {{ $noteStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
+                                color: {{ $noteStyling['text_color'] ?? '#000000' }};
+                                font-family: {{ $noteStyling['font_family'] ?? 'Arial, sans-serif' }};
+                                font-size: {{ $noteStyling['font_size'] ?? '16px' }};
+                                border: {{ $noteStyling['border_width'] ?? '1px' }} solid {{ $noteStyling['border_color'] ?? '#0066cc' }};
+                                border-radius: {{ $noteStyling['border_radius'] ?? '0px' }};
+                                padding: {{ $noteStyling['padding'] ?? '10px' }};
+                                margin-top: 15px;
+                            ">
+                                <div class="next-prayer-text" style="margin-bottom: 8px; font-weight: bold;">{{ $noteContent['text'] ?? 'Next prayer in:' }}</div>
+                                <div id="next-prayer-countdown" class="next-prayer-countdown" style="font-size: 1.4rem; font-weight: bold;">--:--:--</div>
+                                <div id="next-prayer-name" class="next-prayer-name" style="font-size: 0.9rem; margin-top: 5px; opacity: 0.8;">Calculating...</div>
+                            </div>
+                        @else
+                            <div class="next-prayer-info" style="margin-top: 15px; text-align: center;">
+                                <div class="next-prayer-text" style="margin-bottom: 8px; font-weight: bold;">Next prayer in:</div>
+                                <div id="next-prayer-countdown" class="next-prayer-countdown" style="font-size: 1.4rem; font-weight: bold;">--:--:--</div>
+                                <div id="next-prayer-name" class="next-prayer-name" style="font-size: 0.9rem; margin-top: 5px; opacity: 0.8;">Calculating...</div>
+                            </div>
+                        @endif
                     @else
                         <div class="no-prayer-times">
                             <p>No prayer times available for today</p>
@@ -104,18 +228,72 @@
                     @endif
                 </div>
                 </div>
+            @endif
 
             <!-- Middle Column - Hadeeth of the Day -->
+            @php $__showHadeeth = ($useBoxesStyling ? isset($boxSettings['hadeeth_box']) : (!isset($activeBoxTypes) || in_array('hadeeth_box', $activeBoxTypes))); @endphp
+            @if($__showHadeeth)
             <div class="col-md-4">
-                <div class="hadeeth-section">
-                    <div class="hadeeth-header">Hadeeth Of The Day</div>
+                @if($useBoxesStyling && isset($boxSettings['hadeeth_box']))
+                    @php
+                        $hadeethBox = $boxSettings['hadeeth_box'] ?? null;
+                        $hadeethStyling = $hadeethBox['styling_settings'] ?? [];
+                        $hadeethContent = $hadeethBox['content_settings'] ?? [];
+                        $hadeethLayout = $hadeethBox['layout_settings'] ?? [];
+                    @endphp
+                    <div class="hadeeth-section" style="
+                        background-color: {{ $hadeethStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
+                        color: {{ $hadeethStyling['text_color'] ?? '#000000' }};
+                        font-family: {{ $hadeethStyling['font_family'] ?? 'Arial, sans-serif' }};
+                        font-size: {{ $hadeethStyling['font_size'] ?? '18px' }};
+                        border: {{ $hadeethStyling['border_width'] ?? '1px' }} solid {{ $hadeethStyling['border_color'] ?? '#0066cc' }};
+                        border-radius: {{ $hadeethStyling['border_radius'] ?? '0px' }};
+                        padding: {{ $hadeethStyling['padding'] ?? '20px' }};
+                    ">
+                        <div class="hadeeth-header" style="
+                            color: {{ $hadeethStyling['title_color'] ?? '#000000' }};
+                            font-size: {{ $hadeethStyling['title_font_size'] ?? '20px' }};
+                            font-weight: bold;
+                            margin-bottom: 15px;
+                            text-align: {{ $hadeethLayout['text_alignment'] ?? 'center' }};
+                        ">{{ $hadeethContent['title'] ?? 'Hadeeth Of The Day' }}</div>
+                @elseif(!$useBoxesStyling)
+                    <div class="hadeeth-section">
+                        <div class="hadeeth-header">Hadeeth Of The Day</div>
+                @endif
                     <div class="hadeeth-content" id="hadeeth-content">
                         @if($hadeeths->count() > 0)
                             @foreach($hadeeths as $index => $hadeethItem)
                                 <div class="hadeeth-text rotating-hadeeth" data-index="{{ $index }}" style="{{ $index === 0 ? 'display: block;' : 'display: none;' }}">
-                                    <div class="arabic-hadeeth">{{ $hadeethItem->arabic_text }}</div>
-                                    <div class="english-hadeeth">{{ $hadeethItem->english_translation }}</div>
-                                    <div class="hadeeth-reference">{{ $hadeethItem->reference }}</div>
+                                    @if($useBoxesStyling)
+                                        @if($hadeethContent['show_arabic_text'] ?? true)
+                                            <div class="arabic-hadeeth" style="
+                                                font-family: {{ $hadeethStyling['arabic_font_family'] ?? 'Amiri, serif' }};
+                                                font-size: {{ $hadeethStyling['font_size'] ?? '18px' }};
+                                                text-align: {{ $hadeethLayout['text_alignment'] ?? 'center' }};
+                                                margin-bottom: 10px;
+                                            ">{{ $hadeethItem->arabic_text }}</div>
+                                        @endif
+                                        @if($hadeethContent['show_english_translation'] ?? true)
+                                            <div class="english-hadeeth" style="
+                                                font-family: {{ $hadeethStyling['english_font_family'] ?? 'Arial, sans-serif' }};
+                                                font-size: {{ $hadeethStyling['font_size'] ?? '18px' }};
+                                                text-align: {{ $hadeethLayout['text_alignment'] ?? 'center' }};
+                                                margin-bottom: 5px;
+                                            ">{{ $hadeethItem->english_translation }}</div>
+                                        @endif
+                                        @if($hadeethContent['show_reference'] ?? true)
+                                            <div class="hadeeth-reference" style="
+                                                font-size: 12px;
+                                                color: #666;
+                                                text-align: {{ $hadeethLayout['text_alignment'] ?? 'center' }};
+                                            ">{{ $hadeethItem->reference }}</div>
+                                        @endif
+                                    @else
+                                        <div class="arabic-hadeeth">{{ $hadeethItem->arabic_text }}</div>
+                                        <div class="english-hadeeth">{{ $hadeethItem->english_translation }}</div>
+                                        <div class="hadeeth-reference">{{ $hadeethItem->reference }}</div>
+                                    @endif
                                 </div>
                             @endforeach
                         @else
@@ -126,17 +304,46 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             <!-- Right Column - Announcements -->
+            @php $__showAnnouncements = ($useBoxesStyling ? isset($boxSettings['announcements_box']) : (!isset($activeBoxTypes) || in_array('announcements_box', $activeBoxTypes))); @endphp
+            @if($__showAnnouncements)
             <div class="col-md-4">
-                <div class="announcements-section">
-                    <div class="announcements-header">Announcements</div>
+                @if($useBoxesStyling && isset($boxSettings['announcements_box']))
+                    @php
+                        $announcementsBox = $boxSettings['announcements_box'] ?? null;
+                        $announcementsStyling = $announcementsBox['styling_settings'] ?? [];
+                        $announcementsContent = $announcementsBox['content_settings'] ?? [];
+                        $announcementsLayout = $announcementsBox['layout_settings'] ?? [];
+                        $maxVisible = $announcementsContent['max_visible_announcements'] ?? 2;
+                    @endphp
+                    <div class="announcements-section" style="
+                        background-color: {{ $announcementsStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
+                        color: {{ $announcementsStyling['text_color'] ?? '#000000' }};
+                        font-family: {{ $announcementsStyling['font_family'] ?? 'Arial, sans-serif' }};
+                        font-size: {{ $announcementsStyling['font_size'] ?? '16px' }};
+                        border: {{ $announcementsStyling['border_width'] ?? '1px' }} solid {{ $announcementsStyling['border_color'] ?? '#0066cc' }};
+                        border-radius: {{ $announcementsStyling['border_radius'] ?? '0px' }};
+                        padding: {{ $announcementsStyling['padding'] ?? '15px' }};
+                    ">
+                        <div class="announcements-header" style="
+                            color: {{ $announcementsStyling['title_color'] ?? '#000000' }};
+                            font-size: {{ $announcementsStyling['title_font_size'] ?? '18px' }};
+                            font-weight: bold;
+                            margin-bottom: 15px;
+                            text-align: {{ $announcementsLayout['text_alignment'] ?? 'left' }};
+                        ">{{ $announcementsContent['title'] ?? 'Announcements' }}</div>
+                @elseif(!$useBoxesStyling)
+                    <div class="announcements-section">
+                        <div class="announcements-header">Announcements</div>
+                @endif
                     <div class="announcements-content" id="announcements-content">
                         @if($announcements->count() > 0)
                             @foreach($announcements as $index => $announcement)
-                                <div class="announcement-item rotating-announcement" data-index="{{ $index }}" style="{{ $index < 2 ? 'display: block;' : 'display: none;' }}">
-                                    <div class="announcement-title">{{ $announcement->title }}</div>
-                                    <div class="announcement-text">{{ $announcement->content }}</div>
+                                <div class="announcement-item rotating-announcement" data-index="{{ $index }}" style="{{ $index < ($useBoxesStyling ? ($maxVisible ?? 2) : 2) ? 'display: block;' : 'display: none;' }}">
+                                    <div class="announcement-title" style="font-weight: bold; margin-bottom: 5px;">{{ $announcement->title }}</div>
+                                    <div class="announcement-text" style="font-size: 14px;">{{ $announcement->content }}</div>
                                 </div>
                             @endforeach
                         @else
@@ -147,72 +354,299 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 
     <!-- Bottom Additional Times -->
-    <div class="board-bottom-times">
-        <div class="row">
-            <div class="col">
-                <div class="additional-times">
-                    <div class="time-item">
-                        <div class="time-label">Sehri Ends</div>
-                        <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') : '--:--' }}</div>
+    @php $__showSpecialTimes = (!$useBoxesStyling) ? (!isset($activeBoxTypes) || in_array('special_times_box', $activeBoxTypes)) : isset($boxSettings['special_times_box']); @endphp
+    @if($__showSpecialTimes)
+        @if($useBoxesStyling && isset($boxSettings['special_times_box']))
+            @php
+                $specialBox = $boxSettings['special_times_box'] ?? null;
+                $specialStyling = $specialBox['styling_settings'] ?? [];
+                $specialContent = $specialBox['content_settings'] ?? [];
+                $specialLayout = $specialBox['layout_settings'] ?? [];
+            @endphp
+            <div class="board-bottom-times" style="
+                background-color: {{ $specialStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
+                color: {{ $specialStyling['text_color'] ?? '#000000' }};
+                font-family: {{ $specialStyling['font_family'] ?? 'Courier New, monospace' }};
+                font-size: {{ $specialStyling['font_size'] ?? '1.2rem' }};
+                border: {{ $specialStyling['border_width'] ?? '2px' }} solid {{ $specialStyling['border_color'] ?? '#000000' }};
+                border-radius: {{ $specialStyling['border_radius'] ?? '0px' }};
+                padding: {{ $specialStyling['padding'] ?? '15px' }};
+                text-align: {{ $specialLayout['text_alignment'] ?? 'center' }};
+            ">
+                <div class="row">
+                    <div class="col">
+                        <div class="additional-times" style="
+                            display: grid;
+                            grid-template-columns: {{ implode(' ', $specialLayout['column_widths'] ?? ['14%', '14%', '14%', '14%', '14%', '15%', '15%']) }};
+                            gap: 10px;
+                            align-items: center;
+                        ">
+                            @php
+                                $tableHeaders = $specialContent['table_headers'] ?? ['Sehri Ends', 'Sun Rise', 'Noon', 'Jumu\'ah 1', 'Jumu\'ah 2', 'Eid Prayer 1', 'Eid Prayer 2'];
+                                $timeFormat = $specialContent['time_format'] ?? 'h:i';
+                                $times = [
+                                    $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr)->format($timeFormat) : '--:--',
+                                    $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->sun_rise)->format($timeFormat) : '--:--',
+                                    $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar)->format($timeFormat) : '--:--',
+                                    $prayerTimes && $prayerTimes->jumah_1 ? \Carbon\Carbon::parse($prayerTimes->jumah_1)->format($timeFormat) : '--:--',
+                                    $prayerTimes && $prayerTimes->jumah_2 ? \Carbon\Carbon::parse($prayerTimes->jumah_2)->format($timeFormat) : '--:--',
+                                    $prayerTimes && $prayerTimes->eid_prayer_1 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_1)->format($timeFormat) : '--:--',
+                                    $prayerTimes && $prayerTimes->eid_prayer_2 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_2)->format($timeFormat) : '--:--'
+                                ];
+                            @endphp
+                            @if($specialContent['show_sehri_ends'] ?? true)
+                                <div class="time-item">
+                                    <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ?? '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[0] }}</div>
+                                    <div class="time-value">{{ $times[0] }}</div>
+                                </div>
+                            @endif
+                            @if($specialContent['show_sun_rise'] ?? true)
+                                <div class="time-item">
+                                    <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ?? '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[1] }}</div>
+                                    <div class="time-value">{{ $times[1] }}</div>
+                                </div>
+                            @endif
+                            @if($specialContent['show_noon'] ?? true)
+                                <div class="time-item">
+                                    <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ?? '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[2] }}</div>
+                                    <div class="time-value">{{ $times[2] }}</div>
+                                </div>
+                            @endif
+                            @if($specialContent['show_jumuah_1'] ?? true)
+                                <div class="time-item">
+                                    <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ?? '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[3] }}</div>
+                                    <div class="time-value">{{ $times[3] }}</div>
+                                </div>
+                            @endif
+                            @if($specialContent['show_jumuah_2'] ?? true)
+                                <div class="time-item">
+                                    <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ?? '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[4] }}</div>
+                                    <div class="time-value">{{ $times[4] }}</div>
+                                </div>
+                            @endif
+                            @if($specialContent['show_eid_prayer_1'] ?? true)
+                                <div class="time-item">
+                                    <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ?? '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[5] }}</div>
+                                    <div class="time-value">{{ $times[5] }}</div>
+                                </div>
+                            @endif
+                            @if($specialContent['show_eid_prayer_2'] ?? true)
+                                <div class="time-item">
+                                    <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ?? '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[6] }}</div>
+                                    <div class="time-value">{{ $times[6] }}</div>
+                                </div>
+                            @endif
+                        </div>
                     </div>
-                    <div class="time-item">
-                        <div class="time-label">Sun Rise</div>
-                        <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->sun_rise)->format('h:i') : '--:--' }}</div>
-                    </div>
-                    <div class="time-item">
-                        <div class="time-label">Noon</div>
-                        <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') : '--:--' }}</div>
-                    </div>
-                    <div class="time-item">
-                        <div class="time-label">Jumu'ah 1</div>
-                        <div class="time-value">{{ $prayerTimes && $prayerTimes->jumah_1 ? \Carbon\Carbon::parse($prayerTimes->jumah_1)->format('h:i') : '--:--' }}</div>
-                    </div>
-                    <div class="time-item">
-                        <div class="time-label">Jumu'ah 2</div>
-                        <div class="time-value">{{ $prayerTimes && $prayerTimes->jumah_2 ? \Carbon\Carbon::parse($prayerTimes->jumah_2)->format('h:i') : '--:--' }}</div>
-                    </div>
-                    <div class="time-item">
-                        <div class="time-label">Eid Prayer 1</div>
-                        <div class="time-value">{{ $prayerTimes && $prayerTimes->eid_prayer_1 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_1)->format('h:i') : '--:--' }}</div>
+                </div>
+            </div>
+        @elseif(!$useBoxesStyling)
+            <div class="board-bottom-times">
+                <div class="row">
+                    <div class="col">
+                        <div class="additional-times">
+                            <div class="time-item">
+                                <div class="time-label">Sehri Ends</div>
+                                <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') : '--:--' }}</div>
                             </div>
-                    <div class="time-item">
-                        <div class="time-label">Eid Prayer 2</div>
-                        <div class="time-value">{{ $prayerTimes && $prayerTimes->eid_prayer_2 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_2)->format('h:i') : '--:--' }}</div>
+                            <div class="time-item">
+                                <div class="time-label">Sun Rise</div>
+                                <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->sun_rise)->format('h:i') : '--:--' }}</div>
+                            </div>
+                            <div class="time-item">
+                                <div class="time-label">Noon</div>
+                                <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') : '--:--' }}</div>
+                            </div>
+                            <div class="time-item">
+                                <div class="time-label">Jumu'ah 1</div>
+                                <div class="time-value">{{ $prayerTimes && $prayerTimes->jumah_1 ? \Carbon\Carbon::parse($prayerTimes->jumah_1)->format('h:i') : '--:--' }}</div>
+                            </div>
+                            <div class="time-item">
+                                <div class="time-label">Jumu'ah 2</div>
+                                <div class="time-value">{{ $prayerTimes && $prayerTimes->jumah_2 ? \Carbon\Carbon::parse($prayerTimes->jumah_2)->format('h:i') : '--:--' }}</div>
+                            </div>
+                            <div class="time-item">
+                                <div class="time-label">Eid Prayer 1</div>
+                                <div class="time-value">{{ $prayerTimes && $prayerTimes->eid_prayer_1 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_1)->format('h:i') : '--:--' }}</div>
+                            </div>
+                            <div class="time-item">
+                                <div class="time-label">Eid Prayer 2</div>
+                                <div class="time-value">{{ $prayerTimes && $prayerTimes->eid_prayer_2 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_2)->format('h:i') : '--:--' }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+        @endif
+    @endif
 
-    <!-- Scrolling Text Area -->
-    <div class="scrolling-text-area">
-        <div class="scrolling-content">
-            <div class="scroll-arrow left-arrow">←</div>
-            <div class="scrolling-text">
-                <div class="scroll-wrapper">
-    @if($slidingTexts->count() > 0)
-            @foreach($slidingTexts as $slidingText)
-                        <span class="scroll-item">{{ $slidingText->text }}</span>
-            @endforeach
-                @else
-                    <span class="scroll-item">Welcome to the Masjid - No sliding text configured</span>
-                @endif
-                </div>
-            </div>
-            <div class="scroll-arrow right-arrow">→</div>
+    <!-- Welcome Box (Only shows with boxes styling enabled) -->
+    @if($useBoxesStyling && isset($boxSettings['welcome_box']))
+        @php
+            $welcomeBox = $boxSettings['welcome_box'] ?? null;
+            $welcomeStyling = $welcomeBox['styling_settings'] ?? [];
+            $welcomeContent = $welcomeBox['content_settings'] ?? [];
+        @endphp
+        <div class="welcome-box" style="
+            background-color: {{ $welcomeStyling['background_color'] ?? '#1e4d2b' }};
+            color: {{ $welcomeStyling['text_color'] ?? '#FFD700' }};
+            font-family: {{ $welcomeStyling['font_family'] ?? 'Arial, sans-serif' }};
+            font-size: {{ $welcomeStyling['font_size'] ?? '24px' }};
+            font-weight: {{ $welcomeStyling['font_weight'] ?? 'bold' }};
+            border: {{ $welcomeStyling['border_width'] ?? '2px' }} solid {{ $welcomeStyling['border_color'] ?? '#0066cc' }};
+            border-radius: {{ $welcomeStyling['border_radius'] ?? '0px' }};
+            padding: {{ $welcomeStyling['padding'] ?? '15px' }};
+            text-align: {{ $welcomeBox['layout_settings']['text_alignment'] ?? 'left' }};
+        ">
+            @if($welcomeContent['show_user_name'] ?? true)
+                {{ str_replace('{username}', 'imran', $welcomeContent['welcome_text'] ?? 'Hello imran Welcome to timetable - Manage your prayer times, announcement') }}
+            @else
+                {{ $welcomeContent['welcome_text'] ?? 'Hello imran Welcome to timetable - Manage your prayer times, announcement' }}
+            @endif
         </div>
-    </div>
+    @endif
+
+    @php $__showSliding = ($useBoxesStyling ? isset($boxSettings['sliding_text_box']) : (!isset($activeBoxTypes) || in_array('sliding_text_box', $activeBoxTypes))); @endphp
+    @if($__showSliding)
+    <!-- Scrolling Text Area -->
+    @if($useBoxesStyling && isset($boxSettings['sliding_text_box']))
+        @php
+            $slidingBox = $boxSettings['sliding_text_box'] ?? null;
+            $slidingStyling = $slidingBox['styling_settings'] ?? [];
+            $slidingContent = $slidingBox['content_settings'] ?? [];
+            $slidingLayout = $slidingBox['layout_settings'] ?? [];
+        @endphp
+        <div class="scrolling-text-area" style="
+            background-color: {{ $slidingStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
+            color: {{ $slidingStyling['text_color'] ?? '#000000' }};
+            font-family: {{ $slidingStyling['font_family'] ?? 'Courier New, monospace' }};
+            font-size: {{ $slidingStyling['font_size'] ?? '1.2rem' }};
+            border: {{ $slidingStyling['border_width'] ?? '2px' }} solid {{ $slidingStyling['border_color'] ?? '#000000' }};
+            border-radius: {{ $slidingStyling['border_radius'] ?? '0px' }};
+            padding: {{ $slidingStyling['padding'] ?? '10px' }};
+            text-align: {{ $slidingLayout['text_alignment'] ?? 'left' }};
+        ">
+            <div class="scrolling-content">
+                <div class="scroll-arrow left-arrow">←</div>
+                <div class="scrolling-text">
+                    <div class="scroll-wrapper">
+        @if($slidingTexts->count() > 0)
+                @foreach($slidingTexts as $slidingText)
+                            <span class="scroll-item">{{ $slidingText->text }}</span>
+                @endforeach
+                    @else
+                        <span class="scroll-item">Welcome to the Masjid - No sliding text configured</span>
+                    @endif
+                    </div>
+                </div>
+                <div class="scroll-arrow right-arrow">→</div>
+            </div>
+        </div>
+    @elseif(!$useBoxesStyling)
+        <div class="scrolling-text-area">
+            <div class="scrolling-content">
+                <div class="scroll-arrow left-arrow">←</div>
+                <div class="scrolling-text">
+                    <div class="scroll-wrapper">
+        @if($slidingTexts->count() > 0)
+                @foreach($slidingTexts as $slidingText)
+                            <span class="scroll-item">{{ $slidingText->text }}</span>
+                @endforeach
+                    @else
+                        <span class="scroll-item">Welcome to the Masjid - No sliding text configured</span>
+                    @endif
+                    </div>
+                </div>
+                <div class="scroll-arrow right-arrow">→</div>
+            </div>
+        </div>
+    @endif
+    @endif
 
 </div>
 @endsection
 
 @section('scripts')
+@php
+    $prayerTimesJson = [
+        'fajr' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat ?: $prayerTimes->fajr)->format('H:i') : null,
+        'zohar' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat ?: $prayerTimes->zohar)->format('H:i') : null,
+        'asr' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat ?: $prayerTimes->asr)->format('H:i') : null,
+        'maghrib' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat ?: $prayerTimes->maghrib)->format('H:i') : null,
+        'isha' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat ?: $prayerTimes->isha)->format('H:i') : null,
+    ];
+@endphp
 <script>
-    // Countdown timer for next prayer
+    // Prayer times data from PHP
+    const prayerTimesData = @json($prayerTimesJson);
+
+    // Update next prayer countdown
+    function updateNextPrayerCountdown() {
+        const countdownElement = document.getElementById('next-prayer-countdown');
+        const prayerNameElement = document.getElementById('next-prayer-name');
+        
+        if (!countdownElement || !prayerNameElement) return;
+        
+        const now = new Date();
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        
+        let nextPrayer = null;
+        let nextPrayerTime = null;
+        let nextPrayerMinutes = null;
+        
+        // Convert prayer times to minutes since midnight
+        const prayers = [
+            { name: 'Fajr', time: prayerTimesData.fajr },
+            { name: 'Zohar', time: prayerTimesData.zohar },
+            { name: 'Asr', time: prayerTimesData.asr },
+            { name: 'Maghrib', time: prayerTimesData.maghrib },
+            { name: 'Isha', time: prayerTimesData.isha }
+        ];
+        
+        for (const prayer of prayers) {
+            if (!prayer.time) continue;
+            
+            const [hours, minutes] = prayer.time.split(':').map(Number);
+            const prayerMinutes = hours * 60 + minutes;
+            
+            if (prayerMinutes > currentTime) {
+                nextPrayer = prayer.name;
+                nextPrayerMinutes = prayerMinutes;
+                break;
+            }
+        }
+        
+        // If no prayer found today, next prayer is tomorrow's Fajr
+        if (!nextPrayer && prayerTimesData.fajr) {
+            nextPrayer = 'Fajr';
+            const [hours, minutes] = prayerTimesData.fajr.split(':').map(Number);
+            nextPrayerMinutes = (24 * 60) + (hours * 60 + minutes);
+        }
+        
+        if (nextPrayer && nextPrayerMinutes !== null) {
+            const minutesUntilPrayer = nextPrayerMinutes - currentTime;
+            const hoursUntil = Math.floor(minutesUntilPrayer / 60);
+            const minutesUntil = Math.floor(minutesUntilPrayer % 60);
+            const secondsUntil = 60 - now.getSeconds();
+            
+            countdownElement.textContent = `${hoursUntil.toString().padStart(2, '0')}:${minutesUntil.toString().padStart(2, '0')}:${secondsUntil.toString().padStart(2, '0')}`;
+            prayerNameElement.textContent = nextPrayer;
+        } else {
+            countdownElement.textContent = '--:--:--';
+            prayerNameElement.textContent = 'No prayer times available';
+        }
+    }
+    
+    // Update countdown every second
+    setInterval(updateNextPrayerCountdown, 1000);
+    updateNextPrayerCountdown(); // Initial call
+    
+    // Countdown timer for next prayer (legacy)
     function updateCountdown() {
         const countdownElement = document.querySelector('.countdown-timer');
         if (!countdownElement) return;

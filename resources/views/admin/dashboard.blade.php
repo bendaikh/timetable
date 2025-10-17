@@ -197,6 +197,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.boxes.index') }}">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>
+                        Boxes Management
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.prayer-times.index') }}">
                         <i class="bi bi-clock me-2"></i>
                         Prayer Times
