@@ -25,10 +25,21 @@
         /* Digital Information Board Layout */
         .digital-board {
             height: 100vh;
-            background: linear-gradient(135deg, #0b3d0b 0%, #F8B803 55%, #8B7500 100%);
             display: flex;
             flex-direction: column;
             font-family: 'Courier New', monospace;
+        }
+        
+        /* Unified Container for Consistent Width */
+        .unified-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 15px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         
         /* Top Header */
@@ -37,6 +48,8 @@
             padding: clamp(15px, 3vh, 25px);
             border-bottom: clamp(1px, 0.2vw, 3px) solid #000;
             flex-shrink: 0;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .current-time-display {
@@ -72,10 +85,12 @@
         /* Main Content Area */
         .board-main-content {
             flex-grow: 1;
-            padding: 20px;
+            padding: 20px 0;
             display: flex;
             align-items: stretch;
             gap: 15px;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         /* Prayer Times Section */
@@ -119,7 +134,6 @@
         }
         
         .prayer-col-header {
-            font-size: clamp(0.9rem, 1.2vw, 1.2rem);
         }
         
         .prayer-list {
@@ -229,7 +243,6 @@
             font-weight: bold;
             text-align: center;
             margin-bottom: clamp(15px, 2vh, 20px);
-            color: #000;
         }
         
         .announcements-content {
@@ -240,6 +253,19 @@
             justify-content: flex-start;
             gap: clamp(12px, 1.5vh, 15px);
             padding: clamp(5px, 1vh, 10px);
+            overflow: hidden;
+        }
+        
+        .announcements-content.dynamic-layout {
+            justify-content: space-evenly;
+        }
+        
+        .announcements-content.centered-layout {
+            justify-content: center;
+        }
+        
+        .announcements-content.compact-layout {
+            gap: clamp(8px, 1vh, 12px);
         }
         
         .announcement-item {
@@ -249,19 +275,23 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: clamp(5px, 0.8vh, 8px);
             border-left: clamp(3px, 0.4vw, 5px) solid #0b3d0b;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .announcement-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
         }
         
         .announcement-title {
             font-size: clamp(1rem, 1.3vw, 1.3rem);
             font-weight: bold;
             margin-bottom: clamp(8px, 1vh, 10px);
-            color: #000;
         }
         
         .announcement-text {
-            font-size: clamp(0.9rem, 1.1vw, 1.1rem);
             line-height: 1.4;
-            color: #333;
         }
         
         .announcement-placeholder {
@@ -270,12 +300,51 @@
             font-style: italic;
         }
         
+        /* Subtle visual enhancements for empty space */
+        .announcements-content.centered-layout::before,
+        .announcements-content.centered-layout::after {
+            content: '';
+            flex: 1;
+            min-height: 20px;
+        }
+        
+        .announcements-content.dynamic-layout .announcement-item {
+            flex: 1;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        /* Responsive adjustments for different screen sizes */
+        @media (max-height: 600px) {
+            .announcements-content {
+                gap: clamp(6px, 1vh, 10px);
+            }
+            
+            .announcement-item {
+                padding: clamp(6px, 0.8vh, 10px);
+            }
+        }
+        
+        @media (min-height: 800px) {
+            .announcements-content {
+                gap: clamp(15px, 2vh, 20px);
+            }
+            
+            .announcement-item {
+                padding: clamp(10px, 1.2vh, 15px);
+            }
+        }
+        
         /* Bottom Additional Times */
         .board-bottom-times {
             background: rgba(255, 255, 255, 0.95);
             border-top: clamp(1px, 0.2vw, 3px) solid #000;
-            padding: clamp(12px, 2.5vh, 20px) clamp(15px, 2.5vw, 25px);
+            padding: clamp(12px, 2.5vh, 20px) 0;
             flex-shrink: 0;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .additional-times {
@@ -351,10 +420,8 @@
             margin-right: clamp(50px, 8vw, 100px);
             font-size: clamp(1.5rem, 3vw, 2.5rem);
             font-weight: 900;
-            font-family: 'Arial Black', 'Arial Bold', 'Helvetica Neue', Arial, sans-serif;
             text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
             letter-spacing: 1px;
-            color: #000000;
         }
         
         /* Logo Watermark */
@@ -385,8 +452,12 @@
         
         /* Responsive adjustments for smaller screens */
         @media (max-width: 1200px) {
+            .unified-container {
+                padding: 0 10px;
+            }
+            
             .board-main-content {
-                padding: clamp(10px, 2vh, 20px) clamp(8px, 1.5vw, 20px);
+                padding: clamp(10px, 2vh, 20px) 0;
             }
             
             .prayer-times-section,
@@ -398,8 +469,12 @@
         
         /* Responsive adjustments for very large screens (4K and above) */
         @media (min-width: 2560px) {
+            .unified-container {
+                padding: 0 25px;
+            }
+            
             .board-main-content {
-                padding: 30px 25px;
+                padding: 30px 0;
                 gap: 20px;
             }
             
@@ -435,7 +510,6 @@
             }
             
             .announcement-text {
-                font-size: 1.3rem;
             }
             
             .time-large {
@@ -444,12 +518,16 @@
         }
         
         @media (max-width: 768px) {
+            .unified-container {
+                padding: 0 8px;
+            }
+            
             .board-header {
                 padding: clamp(10px, 2vh, 20px);
             }
             
             .board-main-content {
-                padding: clamp(10px, 2vh, 20px) clamp(8px, 1.5vw, 15px);
+                padding: clamp(10px, 2vh, 20px) 0;
                 flex-direction: column;
                 gap: clamp(8px, 1.5vh, 15px);
             }

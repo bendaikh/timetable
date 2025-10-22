@@ -99,9 +99,15 @@ class BoxesManagementController extends Controller
             $r = hexdec(substr($hex, 1, 2));
             $g = hexdec(substr($hex, 3, 2));
             $b = hexdec(substr($hex, 5, 2));
-            $stylingSettings['background_color'] = $box->box_type === 'header_box' 
-                ? "rgba($r, $g, $b, 0.95)" 
-                : "rgba($r, $g, $b, 0.9)";
+            
+            // For timetable background box, keep as hex for full opacity
+            if ($box->box_type === 'timetable_background_box') {
+                $stylingSettings['background_color'] = $hex;
+            } else {
+                $stylingSettings['background_color'] = $box->box_type === 'header_box' 
+                    ? "rgba($r, $g, $b, 0.95)" 
+                    : "rgba($r, $g, $b, 0.9)";
+            }
         }
 
         $box->update([
@@ -163,9 +169,15 @@ class BoxesManagementController extends Controller
                 $r = hexdec(substr($hex, 1, 2));
                 $g = hexdec(substr($hex, 3, 2));
                 $b = hexdec(substr($hex, 5, 2));
-                $stylingSettings['background_color'] = $box->box_type === 'header_box' 
-                    ? "rgba($r, $g, $b, 0.95)" 
-                    : "rgba($r, $g, $b, 0.9)";
+                
+                // For timetable background box, keep as hex for full opacity
+                if ($box->box_type === 'timetable_background_box') {
+                    $stylingSettings['background_color'] = $hex;
+                } else {
+                    $stylingSettings['background_color'] = $box->box_type === 'header_box' 
+                        ? "rgba($r, $g, $b, 0.95)" 
+                        : "rgba($r, $g, $b, 0.9)";
+                }
             }
             $updateData['styling_settings'] = $stylingSettings;
         }

@@ -33,13 +33,7 @@ class BoxSetting extends Model
         return [
             'header_box' => [
                 'box_name' => 'Header Box',
-                'content_settings' => [
-                    'time_format' => 'h:i',
-                    'english_date_format' => 'D j M Y',
-                    'islamic_date_format' => 'd F Y',
-                    'timezone' => 'Europe/London',
-                    'show_fullscreen_button' => true
-                ],
+                'content_settings' => [],
                 'styling_settings' => [
                     'background_color' => 'rgba(253, 247, 230, 0.95)',
                     'text_color' => '#000000',
@@ -48,29 +42,22 @@ class BoxSetting extends Model
                     'font_family' => 'Courier New, monospace',
                     'border_color' => '#000000',
                     'border_width' => '3px',
-                    'border_radius' => '0px',
                     'padding' => '25px'
                 ],
                 'layout_settings' => [
                     'position' => 'top',
-                    'height' => 'auto',
-                    'text_alignment' => 'center'
+                    'height' => 'auto'
                 ]
             ],
             'sliding_text_box' => [
                 'box_name' => 'Sliding Text',
-                'content_settings' => [
-                    'title' => 'Sliding Messages',
-                    'scroll_speed' => 3
-                ],
+                'content_settings' => [],
                 'styling_settings' => [
                     'background_color' => 'rgba(253, 247, 230, 0.9)',
                     'text_color' => '#000000',
                     'font_family' => 'Courier New, monospace',
-                    'font_size' => '1.2rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',
-                    'border_radius' => '0px',
                     'padding' => '10px'
                 ],
                 'layout_settings' => [
@@ -79,11 +66,7 @@ class BoxSetting extends Model
             ],
             'prayer_times_box' => [
                 'box_name' => 'Prayer Times Table',
-                'content_settings' => [
-                    'show_jamaat_times' => true,
-                    'time_format' => 'h:i',
-                    'table_headers' => ['', 'Beginning', 'Jamaat Time']
-                ],
+                'content_settings' => [],
                 'styling_settings' => [
                     'background_color' => 'rgba(253, 247, 230, 0.9)',
                     'text_color' => '#000000',
@@ -94,84 +77,52 @@ class BoxSetting extends Model
                     'header_font_size' => '1.2rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',
-                    'border_radius' => '0px',
                     'padding' => '20px'
                 ],
                 'layout_settings' => [
                     'position' => 'left_column',
-                    'column_widths' => ['45%', '25%', '25%'],
-                    'text_alignment' => 'center'
+                    'column_widths' => ['45%', '25%', '25%']
                 ]
             ],
             'special_times_box' => [
                 'box_name' => 'Special Times',
-                'content_settings' => [
-                    'time_format' => 'h:i',
-                    'show_sehri_ends' => true,
-                    'show_sun_rise' => true,
-                    'show_noon' => true,
-                    'show_jumuah_1' => true,
-                    'show_jumuah_2' => true,
-                    'show_eid_prayer_1' => true,
-                    'show_eid_prayer_2' => true,
-                    'table_headers' => ['Sehri Ends', 'Sun Rise', 'Noon', 'Jumu\'ah 1', 'Jumu\'ah 2', 'Eid Prayer 1', 'Eid Prayer 2']
-                ],
+                'content_settings' => [],
                 'styling_settings' => [
                     'background_color' => 'rgba(253, 247, 230, 0.9)',
                     'text_color' => '#000000',
-                    'header_background_color' => 'transparent',
                     'header_text_color' => '#000000',
                     'font_family' => 'Courier New, monospace',
                     'font_size' => '1.2rem',
                     'header_font_size' => '1rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',
-                    'border_radius' => '0px',
                     'padding' => '15px'
                 ],
                 'layout_settings' => [
                     'position' => 'bottom',
-                    'column_widths' => ['14%', '14%', '14%', '14%', '14%', '15%', '15%'],
-                    'text_alignment' => 'center'
+                    'column_widths' => ['14%', '14%', '14%', '14%', '14%', '15%', '15%']
                 ]
             ],
             'hadeeth_box' => [
                 'box_name' => 'Hadeeth of The Day',
-                'content_settings' => [
-                    'title' => 'Hadeeth Of The Day',
-                    'show_arabic_text' => true,
-                    'show_english_translation' => true,
-                    'show_reference' => true,
-                    'rotation_duration' => 30
-                ],
+                'content_settings' => [],
                 'styling_settings' => [
                     'background_color' => 'rgba(253, 247, 230, 0.9)',
                     'text_color' => '#000000',
                     'title_color' => '#000000',
-                    'arabic_font_family' => 'Amiri, serif',
-                    'english_font_family' => 'Courier New, monospace',
                     'font_size' => '1.2rem',
                     'title_font_size' => '1.6rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',
-                    'border_radius' => '0px',
-                    'padding' => '20px',
-                    'accent_color' => 'transparent'
+                    'padding' => '20px'
                 ],
                 'layout_settings' => [
-                    'position' => 'middle_column',
-                    'text_alignment' => 'center'
+                    'position' => 'middle_column'
                 ]
             ],
             'announcements_box' => [
                 'box_name' => 'Announcements',
-                'content_settings' => [
-                    'title' => 'Announcements',
-                    'max_visible_announcements' => 2,
-                    'character_limit' => 200,
-                    'show_character_count' => true,
-                    'rotation_duration' => 15
-                ],
+                'content_settings' => [],
                 'styling_settings' => [
                     'background_color' => 'rgba(253, 247, 230, 0.9)',
                     'text_color' => '#000000',
@@ -181,12 +132,10 @@ class BoxSetting extends Model
                     'title_font_size' => '1.4rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',
-                    'border_radius' => '0px',
                     'padding' => '20px'
                 ],
                 'layout_settings' => [
                     'position' => 'right_column',
-                    'text_alignment' => 'center',
                     'height' => 'auto'
                 ]
             ],
@@ -210,6 +159,14 @@ class BoxSetting extends Model
                     'position' => 'below_prayer_times',
                     'text_alignment' => 'center'
                 ]
+            ],
+            'timetable_background_box' => [
+                'box_name' => 'Timetable Background',
+                'content_settings' => [],
+                'styling_settings' => [
+                    'background_color' => '#fdf7e6'
+                ],
+                'layout_settings' => []
             ]
         ];
     }
@@ -307,6 +264,15 @@ class BoxSetting extends Model
     public function getBackgroundColorHex()
     {
         $bgColor = $this->styling_settings['background_color'] ?? null;
+        
+        // If no color is set, return default based on box type
+        if (empty($bgColor)) {
+            if ($this->box_type === 'timetable_background_box') {
+                return '#fdf7e6';
+            }
+            return '#ffffff';
+        }
+        
         return self::rgbaToHex($bgColor);
     }
 }

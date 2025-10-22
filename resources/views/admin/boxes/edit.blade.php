@@ -72,6 +72,7 @@
                                 </div>
 
                                 <!-- Content Settings -->
+                                @if($box->box_type !== 'header_box' && $box->box_type !== 'sliding_text_box' && $box->box_type !== 'prayer_times_box' && $box->box_type !== 'special_times_box' && $box->box_type !== 'hadeeth_box' && $box->box_type !== 'announcements_box' && $box->box_type !== 'timetable_background_box')
                                 <div class="mb-4">
                                     <h6>Content Settings</h6>
                                     <div id="contentSettings">
@@ -84,8 +85,10 @@
                                         @endforeach
                                     </div>
                                 </div>
+                                @endif
 
                                 <!-- Styling Settings -->
+                                @if($box->box_type !== 'timetable_background_box')
                                 <div class="mb-4">
                                     <h6>Styling Settings</h6>
                                     <div class="row">
@@ -115,33 +118,37 @@
                                                 <option value="Amiri, serif" {{ ($box->styling_settings['font_family'] ?? '') == 'Amiri, serif' ? 'selected' : '' }}>Amiri (Arabic)</option>
                                             </select>
                                         </div>
+                                        @if($box->box_type !== 'header_box' && $box->box_type !== 'sliding_text_box')
                                         <div class="col-md-6">
                                             <label for="font_size" class="form-label">Font Size</label>
                                             <input type="text" class="form-control" id="font_size" name="styling_settings[font_size]"
                                                    value="{{ old('styling_settings.font_size', $box->styling_settings['font_size'] ?? '16px') }}"
                                                    placeholder="e.g., 16px, 1.2em">
                                         </div>
+                                        @endif
                                     </div>
 
                                     <div class="row mt-3">
-                                        <div class="col-md-4">
+                                        <div class="col-md-6">
                                             <label for="border_color" class="form-label">Border Color</label>
                                             <input type="color" class="form-control form-control-color" 
                                                    id="border_color" name="styling_settings[border_color]"
                                                    value="{{ old('styling_settings.border_color', $box->styling_settings['border_color'] ?? '#0066cc') }}">
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-6">
                                             <label for="border_width" class="form-label">Border Width</label>
                                             <input type="text" class="form-control" id="border_width" name="styling_settings[border_width]"
                                                    value="{{ old('styling_settings.border_width', $box->styling_settings['border_width'] ?? '1px') }}"
                                                    placeholder="e.g., 1px, 2px">
                                         </div>
+                                        @if($box->box_type !== 'header_box' && $box->box_type !== 'sliding_text_box' && $box->box_type !== 'prayer_times_box' && $box->box_type !== 'special_times_box' && $box->box_type !== 'hadeeth_box' && $box->box_type !== 'announcements_box')
                                         <div class="col-md-4">
                                             <label for="border_radius" class="form-label">Border Radius</label>
                                             <input type="text" class="form-control" id="border_radius" name="styling_settings[border_radius]"
                                                    value="{{ old('styling_settings.border_radius', $box->styling_settings['border_radius'] ?? '0px') }}"
                                                    placeholder="e.g., 0px, 5px">
                                         </div>
+                                        @endif
                                     </div>
 
                                     <div class="row mt-3">
@@ -151,6 +158,7 @@
                                                    value="{{ old('styling_settings.padding', $box->styling_settings['padding'] ?? '15px') }}"
                                                    placeholder="e.g., 15px, 10px 20px">
                                         </div>
+                                        @if($box->box_type !== 'header_box' && $box->box_type !== 'prayer_times_box' && $box->box_type !== 'special_times_box' && $box->box_type !== 'hadeeth_box' && $box->box_type !== 'announcements_box')
                                         <div class="col-md-6">
                                             <label for="text_alignment" class="form-label">Text Alignment</label>
                                             <select class="form-select" id="text_alignment" name="layout_settings[text_alignment]">
@@ -160,8 +168,10 @@
                                                 <option value="justify" {{ ($box->layout_settings['text_alignment'] ?? '') == 'justify' ? 'selected' : '' }}>Justify</option>
                                             </select>
                                         </div>
+                                        @endif
                                     </div>
                                 </div>
+                                @endif
 
                                 <!-- Box-specific settings -->
                                 @if($box->box_type === 'header_box')
@@ -178,6 +188,8 @@
                                     @include('admin.boxes.partials.announcements-box-settings', ['box' => $box])
                                 @elseif($box->box_type === 'welcome_box')
                                     @include('admin.boxes.partials.welcome-box-settings', ['box' => $box])
+                                @elseif($box->box_type === 'timetable_background_box')
+                                    @include('admin.boxes.partials.timetable-background-box-settings', ['box' => $box])
                                 @endif
 
                                 <div class="mt-4">
