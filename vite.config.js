@@ -12,13 +12,7 @@ export default defineConfig({
     ],
     build: {
         // Optimize for production builds with limited resources
-        minify: 'terser',
-        terserOptions: {
-            compress: {
-                drop_console: true,
-                drop_debugger: true,
-            },
-        },
+        minify: 'esbuild',
         // Reduce chunk size to avoid memory issues
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
