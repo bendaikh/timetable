@@ -262,14 +262,19 @@ class GoogleSheetsService
                 Log::info("Row {$rowNumber} - Raw values:", [
                     'date' => $row[$headerMapping['date']] ?? 'NOT FOUND',
                     'fajr' => $row[$headerMapping['fajr']] ?? 'NOT FOUND',
+                    'fajr_adhan' => $row[$headerMapping['fajr_adhan']] ?? 'NOT FOUND',
                     'fajr_jamaat' => $row[$headerMapping['fajr_jamaat']] ?? 'NOT FOUND',
                     'zohar' => $row[$headerMapping['zohar']] ?? 'NOT FOUND',
+                    'zohar_adhan' => $row[$headerMapping['zohar_adhan']] ?? 'NOT FOUND',
                     'zohar_jamaat' => $row[$headerMapping['zohar_jamaat']] ?? 'NOT FOUND',
                     'asr' => $row[$headerMapping['asr']] ?? 'NOT FOUND',
+                    'asr_adhan' => $row[$headerMapping['asr_adhan']] ?? 'NOT FOUND',
                     'asr_jamaat' => $row[$headerMapping['asr_jamaat']] ?? 'NOT FOUND',
                     'maghrib' => $row[$headerMapping['maghrib']] ?? 'NOT FOUND',
+                    'maghrib_adhan' => $row[$headerMapping['maghrib_adhan']] ?? 'NOT FOUND',
                     'maghrib_jamaat' => $row[$headerMapping['maghrib_jamaat']] ?? 'NOT FOUND',
                     'isha' => $row[$headerMapping['isha']] ?? 'NOT FOUND',
+                    'isha_adhan' => $row[$headerMapping['isha_adhan']] ?? 'NOT FOUND',
                     'isha_jamaat' => $row[$headerMapping['isha_jamaat']] ?? 'NOT FOUND',
                 ]);
 
@@ -277,14 +282,19 @@ class GoogleSheetsService
                 $prayerTime = [
                     'date' => $date,
                     'fajr' => $this->parseTime($row[$headerMapping['fajr']] ?? '', $rowNumber, 'Fajr'),
+                    'fajr_adhan' => $this->parseTime($row[$headerMapping['fajr_adhan']] ?? '', $rowNumber, 'Fajr Adhan', true),
                     'fajr_jamaat' => $this->parseTime($row[$headerMapping['fajr_jamaat']] ?? '', $rowNumber, 'Fajr Jamaat', true),
                     'zohar' => $this->parseTime($row[$headerMapping['zohar']] ?? '', $rowNumber, 'Zohar'),
+                    'zohar_adhan' => $this->parseTime($row[$headerMapping['zohar_adhan']] ?? '', $rowNumber, 'Zohar Adhan', true),
                     'zohar_jamaat' => $this->parseTime($row[$headerMapping['zohar_jamaat']] ?? '', $rowNumber, 'Zohar Jamaat', true),
                     'asr' => $this->parseTime($row[$headerMapping['asr']] ?? '', $rowNumber, 'Asr'),
+                    'asr_adhan' => $this->parseTime($row[$headerMapping['asr_adhan']] ?? '', $rowNumber, 'Asr Adhan', true),
                     'asr_jamaat' => $this->parseTime($row[$headerMapping['asr_jamaat']] ?? '', $rowNumber, 'Asr Jamaat', true),
                     'maghrib' => $this->parseTime($row[$headerMapping['maghrib']] ?? '', $rowNumber, 'Maghrib'),
+                    'maghrib_adhan' => $this->parseTime($row[$headerMapping['maghrib_adhan']] ?? '', $rowNumber, 'Maghrib Adhan', true),
                     'maghrib_jamaat' => $this->parseTime($row[$headerMapping['maghrib_jamaat']] ?? '', $rowNumber, 'Maghrib Jamaat', true),
                     'isha' => $this->parseTime($row[$headerMapping['isha']] ?? '', $rowNumber, 'Isha'),
+                    'isha_adhan' => $this->parseTime($row[$headerMapping['isha_adhan']] ?? '', $rowNumber, 'Isha Adhan', true),
                     'isha_jamaat' => $this->parseTime($row[$headerMapping['isha_jamaat']] ?? '', $rowNumber, 'Isha Jamaat', true),
                     'sun_rise' => $this->parseTime($row[$headerMapping['sun_rise']] ?? '', $rowNumber, 'Sun Rise', true),
                     'jumah_1' => $this->parseTime($row[$headerMapping['jumah_1']] ?? '', $rowNumber, 'Jumah 1', true),
@@ -345,6 +355,14 @@ class GoogleSheetsService
                 }
             }
 
+            // Look for fajr adhan column
+            foreach ($headerRow as $index => $header) {
+                if (strpos($header, 'fajr') !== false && (strpos($header, 'adhan') !== false || strpos($header, 'adahn') !== false)) {
+                    $mapping['fajr_adhan'] = $index;
+                    break;
+                }
+            }
+
             // Look for fajr jamaat column
             foreach ($headerRow as $index => $header) {
                 if (strpos($header, 'fajr') !== false && strpos($header, 'jamaat') !== false) {
@@ -357,6 +375,14 @@ class GoogleSheetsService
             foreach ($headerRow as $index => $header) {
                 if ((strpos($header, 'zuhr') !== false || strpos($header, 'zohar') !== false) && (strpos($header, 'begin') !== false || strpos($header, 'beginnin') !== false)) {
                     $mapping['zohar'] = $index;
+                    break;
+                }
+            }
+
+            // Look for zuhr/zohar adhan column
+            foreach ($headerRow as $index => $header) {
+                if ((strpos($header, 'zuhr') !== false || strpos($header, 'zohar') !== false) && (strpos($header, 'adhan') !== false || strpos($header, 'adahn') !== false)) {
+                    $mapping['zohar_adhan'] = $index;
                     break;
                 }
             }
@@ -377,6 +403,14 @@ class GoogleSheetsService
                 }
             }
 
+            // Look for asr adhan column
+            foreach ($headerRow as $index => $header) {
+                if (strpos($header, 'asr') !== false && (strpos($header, 'adhan') !== false || strpos($header, 'adahn') !== false)) {
+                    $mapping['asr_adhan'] = $index;
+                    break;
+                }
+            }
+
             // Look for asr jamaat column
             foreach ($headerRow as $index => $header) {
                 if (strpos($header, 'asr') !== false && strpos($header, 'jamaat') !== false) {
@@ -393,6 +427,14 @@ class GoogleSheetsService
                 }
             }
 
+            // Look for maghrib adhan column
+            foreach ($headerRow as $index => $header) {
+                if (strpos($header, 'maghrib') !== false && (strpos($header, 'adhan') !== false || strpos($header, 'adahn') !== false)) {
+                    $mapping['maghrib_adhan'] = $index;
+                    break;
+                }
+            }
+
             // Look for maghrib jamaat column
             foreach ($headerRow as $index => $header) {
                 if (strpos($header, 'maghrib') !== false && strpos($header, 'jamaat') !== false) {
@@ -405,6 +447,14 @@ class GoogleSheetsService
             foreach ($headerRow as $index => $header) {
                 if (strpos($header, 'isha') !== false && (strpos($header, 'begin') !== false || strpos($header, 'beginnin') !== false)) {
                     $mapping['isha'] = $index;
+                    break;
+                }
+            }
+
+            // Look for isha adhan column
+            foreach ($headerRow as $index => $header) {
+                if (strpos($header, 'isha') !== false && (strpos($header, 'adhan') !== false || strpos($header, 'adahn') !== false)) {
+                    $mapping['isha_adhan'] = $index;
                     break;
                 }
             }

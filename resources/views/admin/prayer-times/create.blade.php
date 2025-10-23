@@ -45,8 +45,8 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="fajr" class="form-label fw-bold">Adhan (Call to Prayer) <span class="text-danger">*</span></label>
+                                <div class="col-md-4 mb-3">
+                                    <label for="fajr" class="form-label fw-bold">Beginning Time <span class="text-danger">*</span></label>
                                     <input type="time" 
                                            class="form-control @error('fajr') is-invalid @enderror" 
                                            id="fajr" 
@@ -58,7 +58,19 @@
                                     @enderror
                                 </div>
                                 
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
+                                    <label for="fajr_adhan" class="form-label fw-bold">Adhan Time</label>
+                                    <input type="time" 
+                                           class="form-control @error('fajr_adhan') is-invalid @enderror" 
+                                           id="fajr_adhan" 
+                                           name="fajr_adhan" 
+                                           value="{{ old('fajr_adhan', '05:25') }}">
+                                    @error('fajr_adhan')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
                                     <label for="fajr_jamaat" class="form-label fw-bold">Jamaat (Congregation)</label>
                                     <input type="time" 
                                            class="form-control @error('fajr_jamaat') is-invalid @enderror" 
@@ -102,8 +114,8 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="zohar" class="form-label fw-bold">Adhan (Call to Prayer) <span class="text-danger">*</span></label>
+                                <div class="col-md-4 mb-3">
+                                    <label for="zohar" class="form-label fw-bold">Beginning Time <span class="text-danger">*</span></label>
                                     <input type="time" 
                                            class="form-control @error('zohar') is-invalid @enderror" 
                                            id="zohar" 
@@ -115,7 +127,19 @@
                                     @enderror
                                 </div>
                                 
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
+                                    <label for="zohar_adhan" class="form-label fw-bold">Adhan Time</label>
+                                    <input type="time" 
+                                           class="form-control @error('zohar_adhan') is-invalid @enderror" 
+                                           id="zohar_adhan" 
+                                           name="zohar_adhan" 
+                                           value="{{ old('zohar_adhan', '13:10') }}">
+                                    @error('zohar_adhan')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
                                     <label for="zohar_jamaat" class="form-label fw-bold">Jamaat (Congregation)</label>
                                     <input type="time" 
                                            class="form-control @error('zohar_jamaat') is-invalid @enderror" 
@@ -137,8 +161,8 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="asr" class="form-label fw-bold">Adhan (Call to Prayer) <span class="text-danger">*</span></label>
+                                <div class="col-md-4 mb-3">
+                                    <label for="asr" class="form-label fw-bold">Beginning Time <span class="text-danger">*</span></label>
                                     <input type="time" 
                                            class="form-control @error('asr') is-invalid @enderror" 
                                            id="asr" 
@@ -150,7 +174,19 @@
                                     @enderror
                                 </div>
                                 
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
+                                    <label for="asr_adhan" class="form-label fw-bold">Adhan Time</label>
+                                    <input type="time" 
+                                           class="form-control @error('asr_adhan') is-invalid @enderror" 
+                                           id="asr_adhan" 
+                                           name="asr_adhan" 
+                                           value="{{ old('asr_adhan', '17:06') }}">
+                                    @error('asr_adhan')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
                                     <label for="asr_jamaat" class="form-label fw-bold">Jamaat (Congregation)</label>
                                     <input type="time" 
                                            class="form-control @error('asr_jamaat') is-invalid @enderror" 
@@ -172,8 +208,8 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="maghrib" class="form-label fw-bold">Adhan (Call to Prayer) <span class="text-danger">*</span></label>
+                                <div class="col-md-4 mb-3">
+                                    <label for="maghrib" class="form-label fw-bold">Beginning Time <span class="text-danger">*</span></label>
                                     <input type="time" 
                                            class="form-control @error('maghrib') is-invalid @enderror" 
                                            id="maghrib" 
@@ -185,7 +221,19 @@
                                     @enderror
                                 </div>
                                 
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
+                                    <label for="maghrib_adhan" class="form-label fw-bold">Adhan Time</label>
+                                    <input type="time" 
+                                           class="form-control @error('maghrib_adhan') is-invalid @enderror" 
+                                           id="maghrib_adhan" 
+                                           name="maghrib_adhan" 
+                                           value="{{ old('maghrib_adhan', '20:29') }}">
+                                    @error('maghrib_adhan')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
                                     <label for="maghrib_jamaat" class="form-label fw-bold">Jamaat (Congregation)</label>
                                     <input type="time" 
                                            class="form-control @error('maghrib_jamaat') is-invalid @enderror" 
@@ -207,8 +255,8 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="isha" class="form-label fw-bold">Adhan (Call to Prayer) <span class="text-danger">*</span></label>
+                                <div class="col-md-4 mb-3">
+                                    <label for="isha" class="form-label fw-bold">Beginning Time <span class="text-danger">*</span></label>
                                     <input type="time" 
                                            class="form-control @error('isha') is-invalid @enderror" 
                                            id="isha" 
@@ -220,7 +268,19 @@
                                     @enderror
                                 </div>
                                 
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
+                                    <label for="isha_adhan" class="form-label fw-bold">Adhan Time</label>
+                                    <input type="time" 
+                                           class="form-control @error('isha_adhan') is-invalid @enderror" 
+                                           id="isha_adhan" 
+                                           name="isha_adhan" 
+                                           value="{{ old('isha_adhan', '21:45') }}">
+                                    @error('isha_adhan')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
                                     <label for="isha_jamaat" class="form-label fw-bold">Jamaat (Congregation)</label>
                                     <input type="time" 
                                            class="form-control @error('isha_jamaat') is-invalid @enderror" 

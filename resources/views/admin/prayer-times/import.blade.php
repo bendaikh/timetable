@@ -22,8 +22,8 @@
                         <li><strong>File Upload (Recommended):</strong> Download your Google Sheet as CSV or Excel and upload it directly</li>
                         <li><strong>URL Import:</strong> Make sure your Google Sheet is publicly accessible (Anyone with the link can view)</li>
                         <li>Your sheet should have columns with prayer time information (the system will auto-detect the correct columns)</li>
-                        <li>Supported column names: Date, Fajr Beginning/Jamaat, Zuhr Beginning/Jamaat, Asr Beginning/Jamaat, Maghrib Beginning/Jamaat, Isha Beginning/Jamaat, Sunrise, Jumma 1/2</li>
-                        <li><strong>Jamaat times are now supported!</strong> The system will automatically detect and import both Beginning and Jamaat times for each prayer.</li>
+                        <li>Supported column names: Date, Fajr Beginning/Adhan/Jamaat, Zuhr Beginning/Adhan/Jamaat, Asr Beginning/Adhan/Jamaat, Maghrib Beginning/Adhan/Jamaat, Isha Beginning/Adhan/Jamaat, Sunrise, Jumma 1/2</li>
+                        <li><strong>Adhan and Jamaat times are now supported!</strong> The system will automatically detect and import Beginning, Adhan, and Jamaat times for each prayer.</li>
                         <li>Date format can be: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY, etc.</li>
                         <li>Time format can be: HH:MM, HH:MM:SS, 12:00 PM, etc.</li>
                         <li>Sunrise, Jumma 1, and Jumma 2 are optional</li>

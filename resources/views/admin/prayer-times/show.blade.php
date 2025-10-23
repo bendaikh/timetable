@@ -35,7 +35,8 @@
                                         <thead class="table-primary">
                                             <tr>
                                                 <th>Prayer</th>
-                                                <th>Adhan (Call to Prayer)</th>
+                                                <th>Beginning Time</th>
+                                                <th>Adhan Time</th>
                                                 <th>Jamaat (Congregation)</th>
                                             </tr>
                                         </thead>
@@ -43,6 +44,13 @@
                                             <tr>
                                                 <td><strong><i class="bi bi-sunrise me-2"></i>Fajr</strong></td>
                                                 <td class="h5 mb-0">{{ \Carbon\Carbon::parse($prayerTime->fajr)->format('g:i A') }}</td>
+                                                <td class="h5 mb-0">
+                                                    @if($prayerTime->fajr_adhan)
+                                                        <span class="badge bg-info">{{ \Carbon\Carbon::parse($prayerTime->fajr_adhan)->format('g:i A') }}</span>
+                                                    @else
+                                                        <span class="text-muted">Not set</span>
+                                                    @endif
+                                                </td>
                                                 <td class="h5 mb-0">
                                                     @if($prayerTime->fajr_jamaat)
                                                         <span class="badge bg-success">{{ \Carbon\Carbon::parse($prayerTime->fajr_jamaat)->format('g:i A') }}</span>
@@ -56,11 +64,19 @@
                                                 <td><strong><i class="bi bi-sun me-2"></i>Sunrise</strong></td>
                                                 <td class="h5 mb-0">{{ \Carbon\Carbon::parse($prayerTime->sun_rise)->format('g:i A') }}</td>
                                                 <td class="text-muted">-</td>
+                                                <td class="text-muted">-</td>
                                             </tr>
                                             @endif
                                             <tr>
                                                 <td><strong><i class="bi bi-brightness-high me-2"></i>Zohar</strong></td>
                                                 <td class="h5 mb-0">{{ \Carbon\Carbon::parse($prayerTime->zohar)->format('g:i A') }}</td>
+                                                <td class="h5 mb-0">
+                                                    @if($prayerTime->zohar_adhan)
+                                                        <span class="badge bg-info">{{ \Carbon\Carbon::parse($prayerTime->zohar_adhan)->format('g:i A') }}</span>
+                                                    @else
+                                                        <span class="text-muted">Not set</span>
+                                                    @endif
+                                                </td>
                                                 <td class="h5 mb-0">
                                                     @if($prayerTime->zohar_jamaat)
                                                         <span class="badge bg-success">{{ \Carbon\Carbon::parse($prayerTime->zohar_jamaat)->format('g:i A') }}</span>
@@ -73,6 +89,13 @@
                                                 <td><strong><i class="bi bi-cloud-sun me-2"></i>Asr</strong></td>
                                                 <td class="h5 mb-0">{{ \Carbon\Carbon::parse($prayerTime->asr)->format('g:i A') }}</td>
                                                 <td class="h5 mb-0">
+                                                    @if($prayerTime->asr_adhan)
+                                                        <span class="badge bg-info">{{ \Carbon\Carbon::parse($prayerTime->asr_adhan)->format('g:i A') }}</span>
+                                                    @else
+                                                        <span class="text-muted">Not set</span>
+                                                    @endif
+                                                </td>
+                                                <td class="h5 mb-0">
                                                     @if($prayerTime->asr_jamaat)
                                                         <span class="badge bg-success">{{ \Carbon\Carbon::parse($prayerTime->asr_jamaat)->format('g:i A') }}</span>
                                                     @else
@@ -84,6 +107,13 @@
                                                 <td><strong><i class="bi bi-sunset me-2"></i>Maghrib</strong></td>
                                                 <td class="h5 mb-0">{{ \Carbon\Carbon::parse($prayerTime->maghrib)->format('g:i A') }}</td>
                                                 <td class="h5 mb-0">
+                                                    @if($prayerTime->maghrib_adhan)
+                                                        <span class="badge bg-info">{{ \Carbon\Carbon::parse($prayerTime->maghrib_adhan)->format('g:i A') }}</span>
+                                                    @else
+                                                        <span class="text-muted">Not set</span>
+                                                    @endif
+                                                </td>
+                                                <td class="h5 mb-0">
                                                     @if($prayerTime->maghrib_jamaat)
                                                         <span class="badge bg-success">{{ \Carbon\Carbon::parse($prayerTime->maghrib_jamaat)->format('g:i A') }}</span>
                                                     @else
@@ -94,6 +124,13 @@
                                             <tr>
                                                 <td><strong><i class="bi bi-moon-stars me-2"></i>Isha</strong></td>
                                                 <td class="h5 mb-0">{{ \Carbon\Carbon::parse($prayerTime->isha)->format('g:i A') }}</td>
+                                                <td class="h5 mb-0">
+                                                    @if($prayerTime->isha_adhan)
+                                                        <span class="badge bg-info">{{ \Carbon\Carbon::parse($prayerTime->isha_adhan)->format('g:i A') }}</span>
+                                                    @else
+                                                        <span class="text-muted">Not set</span>
+                                                    @endif
+                                                </td>
                                                 <td class="h5 mb-0">
                                                     @if($prayerTime->isha_jamaat)
                                                         <span class="badge bg-success">{{ \Carbon\Carbon::parse($prayerTime->isha_jamaat)->format('g:i A') }}</span>
@@ -197,7 +234,8 @@
 
                             <div class="alert alert-info mt-3">
                                 <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Legend</h6>
-                                <p class="mb-1"><strong>Adhan:</strong> Call to Prayer time</p>
+                                <p class="mb-1"><strong>Beginning Time:</strong> Prayer start time</p>
+                                <p class="mb-1"><strong>Adhan Time:</strong> Call to prayer time</p>
                                 <p class="mb-0"><strong>Jamaat:</strong> Congregation start time</p>
                             </div>
 

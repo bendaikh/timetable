@@ -689,6 +689,151 @@
                 font-size: 3rem;
             }
         }
+
+        /* Countdown Popup Styles */
+        .countdown-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: transparent;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .countdown-popup-content {
+            background: linear-gradient(135deg, #1e4d2b 0%, #2d5a3d 50%, #1e4d2b 100%);
+            border: 4px solid #F8B803;
+            border-radius: 20px;
+            padding: 40px 60px;
+            text-align: center;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            animation: countdownPopupAppear 0.8s ease-out;
+            max-width: 500px;
+            width: 90%;
+            pointer-events: auto;
+        }
+
+        .countdown-popup-header {
+            margin-bottom: 20px;
+        }
+
+        .countdown-popup-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            margin-bottom: 10px;
+        }
+
+        .countdown-popup-body {
+            margin: 30px 0;
+        }
+
+        .countdown-popup-timer {
+            font-size: 8rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            color: #F8B803;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+            margin-bottom: 10px;
+            animation: countdownPulse 1s ease-in-out infinite alternate;
+        }
+
+        .countdown-popup-label {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        }
+
+        .countdown-popup-footer {
+            margin-top: 20px;
+        }
+
+        .countdown-popup-prayer {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #F8B803;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        @keyframes countdownPopupAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(-50px);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05) translateY(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes countdownPulse {
+            0% {
+                transform: scale(1);
+                color: #F8B803;
+            }
+            100% {
+                transform: scale(1.1);
+                color: #FFD700;
+            }
+        }
+
+        /* Responsive countdown popup styles */
+        @media (max-width: 1200px) {
+            .countdown-popup-content {
+                padding: 30px 40px;
+                max-width: 400px;
+            }
+            
+            .countdown-popup-title {
+                font-size: 2rem;
+            }
+            
+            .countdown-popup-timer {
+                font-size: 6rem;
+            }
+            
+            .countdown-popup-prayer {
+                font-size: 1.6rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .countdown-popup-content {
+                padding: 20px 30px;
+                max-width: 350px;
+            }
+            
+            .countdown-popup-title {
+                font-size: 1.6rem;
+            }
+            
+            .countdown-popup-timer {
+                font-size: 4.5rem;
+            }
+            
+            .countdown-popup-label {
+                font-size: 1.4rem;
+            }
+            
+            .countdown-popup-prayer {
+                font-size: 1.4rem;
+            }
+        }
     </style>
     
     @yield('styles')

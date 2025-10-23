@@ -20,6 +20,22 @@
     </div>
 </div>
 
+<!-- Countdown Popup (Transparent Overlay) -->
+<div id="countdown-popup" class="countdown-popup" style="display: none;">
+    <div class="countdown-popup-content">
+        <div class="countdown-popup-header">
+            <div id="countdown-popup-title" class="countdown-popup-title"></div>
+        </div>
+        <div class="countdown-popup-body">
+            <div id="countdown-popup-timer" class="countdown-popup-timer">30</div>
+            <div class="countdown-popup-label">seconds</div>
+        </div>
+        <div class="countdown-popup-footer">
+            <div id="countdown-popup-prayer" class="countdown-popup-prayer"></div>
+        </div>
+    </div>
+</div>
+
 <!-- Digital Information Board Layout -->
 @php
     $timetableBgBox = $boxSettings['timetable_background_box'] ?? null;
@@ -79,6 +95,9 @@
                             </div>
                             <button onclick="toggleFullscreen()" class="btn btn-light btn-sm" id="fullscreenBtn">
                                 <i class="bi bi-arrows-fullscreen"></i>
+                            </button>
+                            <button onclick="testCountdownPopup()" class="btn btn-warning btn-sm ms-2" id="testCountdownBtn">
+                                <i class="bi bi-stopwatch"></i> Test Countdown
                             </button>
                         </div>
                     </div>
@@ -557,10 +576,20 @@
         'maghrib' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat ?: $prayerTimes->maghrib)->format('H:i') : null,
         'isha' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat ?: $prayerTimes->isha)->format('H:i') : null,
     ];
+    
+    // Adhan times
+    $adhanTimesJson = [
+        'fajr_adhan' => $prayerTimes && $prayerTimes->fajr_adhan ? \Carbon\Carbon::parse($prayerTimes->fajr_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr)->format('H:i') : null),
+        'zohar_adhan' => $prayerTimes && $prayerTimes->zohar_adhan ? \Carbon\Carbon::parse($prayerTimes->zohar_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar)->format('H:i') : null),
+        'asr_adhan' => $prayerTimes && $prayerTimes->asr_adhan ? \Carbon\Carbon::parse($prayerTimes->asr_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->asr)->format('H:i') : null),
+        'maghrib_adhan' => $prayerTimes && $prayerTimes->maghrib_adhan ? \Carbon\Carbon::parse($prayerTimes->maghrib_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->maghrib)->format('H:i') : null),
+        'isha_adhan' => $prayerTimes && $prayerTimes->isha_adhan ? \Carbon\Carbon::parse($prayerTimes->isha_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->isha)->format('H:i') : null),
+    ];
 @endphp
 <script>
     // Prayer times data from PHP
     const prayerTimesData = @json($prayerTimesJson);
+    const adhanTimesData = @json($adhanTimesJson);
 
     // Update next prayer countdown
     function updateNextPrayerCountdown() {
@@ -1029,10 +1058,120 @@
         clearInterval(countdownTimer);
     }
 
+    // Countdown Popup System
+    let countdownPopupTimer = null;
+    let countdownPopupInterval = null;
+    let currentCountdownSeconds = 30;
+    
+    // Initialize countdown popup system
+    function initCountdownPopup() {
+        checkForCountdownPopups();
+        // Check every second for countdown opportunities
+        setInterval(checkForCountdownPopups, 1000);
+    }
+    
+    // Check if we should show countdown popup
+    function checkForCountdownPopups() {
+        const now = new Date();
+        const currentTimeInSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+        
+        // Check all prayer times for countdown opportunities
+        const allPrayerTimes = [
+            // Adhan times
+            { name: 'Fajr Adhan', time: adhanTimesData.fajr_adhan, type: 'adhan' },
+            { name: 'Zohar Adhan', time: adhanTimesData.zohar_adhan, type: 'adhan' },
+            { name: 'Asr Adhan', time: adhanTimesData.asr_adhan, type: 'adhan' },
+            { name: 'Maghrib Adhan', time: adhanTimesData.maghrib_adhan, type: 'adhan' },
+            { name: 'Isha Adhan', time: adhanTimesData.isha_adhan, type: 'adhan' },
+            // Jamaat times
+            { name: 'Fajr Jamaat', time: prayerTimesData.fajr, type: 'jamaat' },
+            { name: 'Zohar Jamaat', time: prayerTimesData.zohar, type: 'jamaat' },
+            { name: 'Asr Jamaat', time: prayerTimesData.asr, type: 'jamaat' },
+            { name: 'Maghrib Jamaat', time: prayerTimesData.maghrib, type: 'jamaat' },
+            { name: 'Isha Jamaat', time: prayerTimesData.isha, type: 'jamaat' }
+        ];
+        
+        for (const prayer of allPrayerTimes) {
+            if (!prayer.time) continue;
+            
+            const [hours, minutes] = prayer.time.split(':').map(Number);
+            const prayerTimeInSeconds = hours * 3600 + minutes * 60;
+            const timeDifferenceInSeconds = prayerTimeInSeconds - currentTimeInSeconds;
+            
+            // Check if we're within the 30-second window before the prayer time
+            // Show countdown when we're between 30 and 1 seconds before the prayer time
+            if (timeDifferenceInSeconds > 0 && timeDifferenceInSeconds <= 30) {
+                showCountdownPopup(prayer.name, prayer.type, timeDifferenceInSeconds);
+                return; // Only show one popup at a time
+            }
+        }
+    }
+    
+    // Show countdown popup
+    function showCountdownPopup(prayerName, type, initialSeconds = 30) {
+        // Don't show if already showing or if media is displaying
+        if (document.getElementById('countdown-popup').style.display !== 'none' || currentMedia) {
+            return;
+        }
+        
+        const popup = document.getElementById('countdown-popup');
+        const titleElement = document.getElementById('countdown-popup-title');
+        const timerElement = document.getElementById('countdown-popup-timer');
+        const prayerElement = document.getElementById('countdown-popup-prayer');
+        
+        // Set popup content
+        titleElement.textContent = type === 'adhan' ? 'Adhan starting in' : 'Jamaat starting in';
+        prayerElement.textContent = prayerName;
+        timerElement.textContent = initialSeconds;
+        
+        // Show popup
+        popup.style.display = 'flex';
+        
+        // Start countdown with the actual remaining seconds
+        currentCountdownSeconds = initialSeconds;
+        countdownPopupInterval = setInterval(() => {
+            currentCountdownSeconds--;
+            timerElement.textContent = currentCountdownSeconds;
+            
+            if (currentCountdownSeconds <= 0) {
+                hideCountdownPopup();
+            }
+        }, 1000);
+        
+        // Auto-hide after the remaining seconds as backup
+        countdownPopupTimer = setTimeout(() => {
+            hideCountdownPopup();
+        }, initialSeconds * 1000);
+    }
+    
+    // Hide countdown popup
+    function hideCountdownPopup() {
+        const popup = document.getElementById('countdown-popup');
+        popup.style.display = 'none';
+        
+        // Clear timers
+        if (countdownPopupTimer) {
+            clearTimeout(countdownPopupTimer);
+            countdownPopupTimer = null;
+        }
+        if (countdownPopupInterval) {
+            clearInterval(countdownPopupInterval);
+            countdownPopupInterval = null;
+        }
+        
+        currentCountdownSeconds = 30;
+    }
+    
+    // Test function for countdown popup
+    function testCountdownPopup() {
+        showCountdownPopup('Test Prayer', 'adhan', 15);
+    }
+
     // Initialize media display when page loads
     document.addEventListener('DOMContentLoaded', function() {
         initMediaDisplay();
         initContentRotation();
+        initCountdownPopup();
         
         // Reset at midnight each day
         scheduleMidnightReset();

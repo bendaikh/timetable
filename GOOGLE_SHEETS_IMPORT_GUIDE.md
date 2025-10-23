@@ -20,24 +20,26 @@ This guide explains how to use the Google Sheets import feature to automatically
 
 In the first row (Row 1), add these column headers in order:
 
-| Date | Fajr Beginning | Fajr Jamaat | Sunrise | Zuhr Beginning | Zuhr Jamaat | Asr Beginning | Asr Jamaat | Maghrib Beginning | Maghrib Jamaat | Isha Beginning | Isha Jamaat | Jumma 1 | Jumma 2 | hijri_date |
-|------|----------------|-------------|---------|----------------|-------------|---------------|------------|-------------------|---------------|----------------|-------------|---------|---------|------------|
+| Date | Fajr Beginning | Fajr Adhan | Fajr Jamaat | Sunrise | Zuhr Beginning | Zuhr Adhan | Zuhr Jamaat | Asr Beginning | Asr Adhan | Asr Jamaat | Maghrib Beginning | Maghrib Adhan | Maghrib Jamaat | Isha Beginning | Isha Adhan | Isha Jamaat | Jumma 1 | Jumma 2 | hijri_date |
+|------|----------------|------------|-------------|---------|----------------|------------|-------------|---------------|-----------|------------|-------------------|---------------|---------------|----------------|------------|-------------|---------|---------|------------|
 
 ### 3. Add Your Prayer Times Data
 
 Starting from Row 2, add your prayer times data. Here's an example:
 
-| Date       | Fajr Beginning | Fajr Jamaat | Sunrise | Zuhr Beginning | Zuhr Jamaat | Asr Beginning | Asr Jamaat | Maghrib Beginning | Maghrib Jamaat | Isha Beginning | Isha Jamaat | Jumma 1 | Jumma 2 | hijri_date |
-|------------|----------------|-------------|---------|----------------|-------------|---------------|------------|-------------------|---------------|----------------|-------------|---------|---------|------------|
-| 2024-01-01 | 05:30          | 05:45       | 06:45   | 12:15          | 12:30       | 15:45         | 16:00      | 18:20             | 18:25          | 19:50          | 20:05       | 12:30   | 13:30   | 15 Jumada al-Awwal 1445 |
-| 2024-01-02 | 05:29          | 05:44       | 06:46   | 12:15          | 12:30       | 15:46         | 16:01      | 18:21             | 18:26          | 19:51          | 20:06       | 12:30   | 13:30   | 16 Jumada al-Awwal 1445 |
-| 2024-01-03 | 05:28          | 05:43       | 06:47   | 12:16          | 12:31       | 15:47         | 16:02      | 18:22             | 18:27          | 19:52          | 20:07       | 12:30   | 13:30   | 17 Jumada al-Awwal 1445 |
+| Date       | Fajr Beginning | Fajr Adhan | Fajr Jamaat | Sunrise | Zuhr Beginning | Zuhr Adhan | Zuhr Jamaat | Asr Beginning | Asr Adhan | Asr Jamaat | Maghrib Beginning | Maghrib Adhan | Maghrib Jamaat | Isha Beginning | Isha Adhan | Isha Jamaat | Jumma 1 | Jumma 2 | hijri_date |
+|------------|----------------|------------|-------------|---------|----------------|------------|-------------|---------------|-----------|------------|-------------------|---------------|---------------|----------------|------------|-------------|---------|---------|------------|
+| 2024-01-01 | 05:30          | 05:25      | 05:45       | 06:45   | 12:15          | 12:10      | 12:30       | 15:45         | 15:40     | 16:00      | 18:20             | 18:15         | 18:25          | 19:50          | 19:45      | 20:05       | 12:30   | 13:30   | 15 Jumada al-Awwal 1445 |
+| 2024-01-02 | 05:29          | 05:24      | 05:44       | 06:46   | 12:15          | 12:10      | 12:30       | 15:46         | 15:41     | 16:01      | 18:21             | 18:16         | 18:26          | 19:51          | 19:46      | 20:06       | 12:30   | 13:30   | 16 Jumada al-Awwal 1445 |
+| 2024-01-03 | 05:28          | 05:23      | 05:43       | 06:47   | 12:16          | 12:11      | 12:31       | 15:47         | 15:42     | 16:02      | 18:22             | 18:17         | 18:27          | 19:52          | 19:47      | 20:07       | 12:30   | 13:30   | 17 Jumada al-Awwal 1445 |
 
 **Important Notes:**
-- The system will automatically detect and import both "Beginning" and "Jamaat" times for each prayer
-- Jamaat times are now fully supported and will be imported if present in your sheet
+- The system will automatically detect and import "Beginning", "Adhan", and "Jamaat" times for each prayer
+- **Adhan times are now fully supported!** The system will import adhan times if present in your sheet
+- Jamaat times are fully supported and will be imported if present in your sheet
 - The "hijri_date" column is ignored but won't cause errors
 - Sunrise, Jumma 1, and Jumma 2 are optional fields
+- Adhan times are optional - if not provided, they will be left empty
 
 ### 4. Choose Your Import Method
 
