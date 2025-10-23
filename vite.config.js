@@ -10,4 +10,29 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    build: {
+        // Optimize for production builds with limited resources
+        minify: 'terser',
+        terserOptions: {
+            compress: {
+                drop_console: true,
+                drop_debugger: true,
+            },
+        },
+        // Reduce chunk size to avoid memory issues
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            output: {
+                manualChunks: undefined,
+            },
+        },
+    },
+    esbuild: {
+        // Limit concurrent operations
+        target: 'es2020',
+    },
+    // Reduce worker threads
+    worker: {
+        format: 'es',
+    },
 });

@@ -4,6 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
+        "build:low-resource": "NODE_OPTIONS='--max-old-space-size=2048' vite build --mode production",
         "dev": "vite"
     },
     "devDependencies": {
