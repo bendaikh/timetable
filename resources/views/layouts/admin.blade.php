@@ -227,7 +227,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Boxes Management JS -->
-    <script src="{{ asset('js/boxes-management.js') }}"></script>
+    @vite('resources/js/boxes-management.js')
     
     <!-- Mobile sidebar toggle -->
     <script>
