@@ -66,7 +66,10 @@ class BoxSetting extends Model
             ],
             'prayer_times_box' => [
                 'box_name' => 'Prayer Times Table',
-                'content_settings' => [],
+                'content_settings' => [
+                    'beginning_title' => 'Beginning',
+                    'jamaat_time_title' => 'Jamaat Time'
+                ],
                 'styling_settings' => [
                     'background_color' => 'rgba(253, 247, 230, 0.9)',
                     'text_color' => '#000000',
@@ -77,16 +80,31 @@ class BoxSetting extends Model
                     'header_font_size' => '1.2rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',
-                    'padding' => '20px'
+                    'padding' => '20px',
+                    'next_prayer_font_size' => '1.4rem',
+                    'next_prayer_text_color' => '#000000',
+                    'next_prayer_countdown_font_size' => '1.4rem',
+                    'next_prayer_countdown_color' => '#000000',
+                    'next_prayer_name_font_size' => '0.9rem',
+                    'next_prayer_name_color' => '#666666'
                 ],
                 'layout_settings' => [
                     'position' => 'left_column',
-                    'column_widths' => ['45%', '25%', '25%']
+                    'column_widths' => ['45%', '25%', '25%'],
+                    'next_prayer_position' => 'below_table'
                 ]
             ],
             'special_times_box' => [
                 'box_name' => 'Special Times',
-                'content_settings' => [],
+                'content_settings' => [
+                    'sehri_ends_title' => 'Sehri Ends',
+                    'sun_rise_title' => 'Sun Rise',
+                    'noon_title' => 'Noon',
+                    'jumah_1_title' => 'Jumu\'ah 1',
+                    'jumah_2_title' => 'Jumu\'ah 2',
+                    'eid_prayer_1_title' => 'Eid Prayer 1',
+                    'eid_prayer_2_title' => 'Eid Prayer 2'
+                ],
                 'styling_settings' => [
                     'background_color' => 'rgba(253, 247, 230, 0.9)',
                     'text_color' => '#000000',
@@ -105,7 +123,9 @@ class BoxSetting extends Model
             ],
             'hadeeth_box' => [
                 'box_name' => 'Hadeeth of The Day',
-                'content_settings' => [],
+                'content_settings' => [
+                    'title' => 'Hadeeth Of The Day'
+                ],
                 'styling_settings' => [
                     'background_color' => 'rgba(253, 247, 230, 0.9)',
                     'text_color' => '#000000',
@@ -122,7 +142,9 @@ class BoxSetting extends Model
             ],
             'announcements_box' => [
                 'box_name' => 'Announcements',
-                'content_settings' => [],
+                'content_settings' => [
+                    'title' => 'Announcements'
+                ],
                 'styling_settings' => [
                     'background_color' => 'rgba(253, 247, 230, 0.9)',
                     'text_color' => '#000000',

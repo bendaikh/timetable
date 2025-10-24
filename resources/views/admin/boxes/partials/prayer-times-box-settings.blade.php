@@ -1,6 +1,22 @@
 <!-- Prayer Times Box Specific Settings -->
 <div class="mb-4">
     <h6>Prayer Times Table Settings</h6>
+    
+    <!-- Title Settings -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="beginning_title" class="form-label">Beginning Column Title</label>
+            <input type="text" class="form-control" id="beginning_title" name="content_settings[beginning_title]"
+                   value="{{ old('content_settings.beginning_title', $box->content_settings['beginning_title'] ?? 'Beginning') }}"
+                   placeholder="e.g., Beginning, Start Time, etc.">
+        </div>
+        <div class="col-md-6">
+            <label for="jamaat_time_title" class="form-label">Jamaat Time Column Title</label>
+            <input type="text" class="form-control" id="jamaat_time_title" name="content_settings[jamaat_time_title]"
+                   value="{{ old('content_settings.jamaat_time_title', $box->content_settings['jamaat_time_title'] ?? 'Jamaat Time') }}"
+                   placeholder="e.g., Jamaat Time, Congregation Time, etc.">
+        </div>
+    </div>
     <div class="row">
         <div class="col-md-6">
             <label for="header_background_color" class="form-label">Header Background Color</label>
@@ -22,6 +38,66 @@
             <input type="text" class="form-control" id="header_font_size" name="styling_settings[header_font_size]"
                    value="{{ old('styling_settings.header_font_size', $box->styling_settings['header_font_size'] ?? '16px') }}"
                    placeholder="e.g., 16px, 1.1rem">
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        <h6>Next Prayer Countdown Settings</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <label for="next_prayer_font_size" class="form-label">Next Prayer Text Font Size</label>
+                <input type="text" class="form-control" id="next_prayer_font_size" name="styling_settings[next_prayer_font_size]"
+                       value="{{ old('styling_settings.next_prayer_font_size', $box->styling_settings['next_prayer_font_size'] ?? '1.4rem') }}"
+                       placeholder="e.g., 1.4rem, 16px">
+            </div>
+            <div class="col-md-6">
+                <label for="next_prayer_text_color" class="form-label">Next Prayer Text Color</label>
+                <input type="color" class="form-control form-control-color" 
+                       id="next_prayer_text_color" name="styling_settings[next_prayer_text_color]"
+                       value="{{ old('styling_settings.next_prayer_text_color', $box->styling_settings['next_prayer_text_color'] ?? '#000000') }}">
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label for="next_prayer_countdown_font_size" class="form-label">Countdown Timer Font Size</label>
+                <input type="text" class="form-control" id="next_prayer_countdown_font_size" name="styling_settings[next_prayer_countdown_font_size]"
+                       value="{{ old('styling_settings.next_prayer_countdown_font_size', $box->styling_settings['next_prayer_countdown_font_size'] ?? '1.4rem') }}"
+                       placeholder="e.g., 1.4rem, 16px">
+            </div>
+            <div class="col-md-6">
+                <label for="next_prayer_countdown_color" class="form-label">Countdown Timer Color</label>
+                <input type="color" class="form-control form-control-color" 
+                       id="next_prayer_countdown_color" name="styling_settings[next_prayer_countdown_color]"
+                       value="{{ old('styling_settings.next_prayer_countdown_color', $box->styling_settings['next_prayer_countdown_color'] ?? '#000000') }}">
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label for="next_prayer_name_font_size" class="form-label">Prayer Name Font Size</label>
+                <input type="text" class="form-control" id="next_prayer_name_font_size" name="styling_settings[next_prayer_name_font_size]"
+                       value="{{ old('styling_settings.next_prayer_name_font_size', $box->styling_settings['next_prayer_name_font_size'] ?? '0.9rem') }}"
+                       placeholder="e.g., 0.9rem, 12px">
+            </div>
+            <div class="col-md-6">
+                <label for="next_prayer_name_color" class="form-label">Prayer Name Color</label>
+                <input type="color" class="form-control form-control-color" 
+                       id="next_prayer_name_color" name="styling_settings[next_prayer_name_color]"
+                       value="{{ old('styling_settings.next_prayer_name_color', $box->styling_settings['next_prayer_name_color'] ?? '#666666') }}">
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label for="next_prayer_position" class="form-label">Next Prayer Position</label>
+                <select class="form-select" id="next_prayer_position" name="layout_settings[next_prayer_position]">
+                    @php $position = $box->layout_settings['next_prayer_position'] ?? 'below_table'; @endphp
+                    <option value="below_table" {{ $position == 'below_table' ? 'selected' : '' }}>Below Prayer Table</option>
+                    <option value="above_table" {{ $position == 'above_table' ? 'selected' : '' }}>Above Prayer Table</option>
+                    <option value="hidden" {{ $position == 'hidden' ? 'selected' : '' }}>Hidden</option>
+                </select>
+            </div>
         </div>
     </div>
     

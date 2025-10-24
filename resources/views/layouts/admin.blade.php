@@ -227,7 +227,169 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Boxes Management JS -->
-    @vite('resources/js/boxes-management.js')
+    @if(file_exists(public_path('build/manifest.json')))
+        @vite('resources/js/boxes-management.js')
+    @else
+        <script>
+            // Fallback: Inline boxes management functionality
+            console.warn('Vite build not found, using fallback boxes management');
+            
+            class BoxesManager {
+                constructor() {
+                    this.init();
+                }
+
+                init() {
+                    this.setupEventListeners();
+                    this.initializeColorPickers();
+                }
+
+                setupEventListeners() {
+                    document.addEventListener('input', (e) => {
+                        if (e.target.matches('input, select, textarea')) {
+                            this.debounce(() => this.updatePreview(e.target), 300);
+                        }
+                    });
+
+                    document.addEventListener('change', (e) => {
+                        if (e.target.type === 'color') {
+                            this.updatePreview(e.target);
+                        }
+                    });
+                }
+
+                initializeColorPickers() {
+                    const colorInputs = document.querySelectorAll('input[type="color"]');
+                    colorInputs.forEach(input => {
+                        if (!input.value) {
+                            input.value = this.getDefaultColor(input.id);
+                        }
+                    });
+                }
+
+                getDefaultColor(inputId) {
+                    const defaults = {
+                        'background_color': '#f5f5dc',
+                        'text_color': '#000000',
+                        'border_color': '#0066cc',
+                        'header_background_color': '#0066cc',
+                        'header_text_color': '#ffffff',
+                        'title_color': '#000000',
+                        'accent_color': '#90EE90'
+                    };
+                    return defaults[inputId] || '#000000';
+                }
+
+                updatePreview(element) {
+                    const form = element.closest('form');
+                    if (!form) return;
+
+                    const formData = new FormData(form);
+                    const data = this.parseFormData(formData);
+                    this.updateLivePreview(data);
+                }
+
+                parseFormData(formData) {
+                    const data = {};
+                    for (let [key, value] of formData.entries()) {
+                        if (key.includes('[') && key.includes(']')) {
+                            const [parent, child] = key.split('[');
+                            const childKey = child.replace(']', '');
+                            if (!data[parent]) data[parent] = {};
+                            data[parent][childKey] = value;
+                        } else {
+                            data[key] = value;
+                        }
+                    }
+                    return data;
+                }
+
+                updateLivePreview(data) {
+                    const previewElement = document.getElementById('livePreview');
+                    if (!previewElement) return;
+
+                    const boxType = this.getCurrentBoxType();
+                    const previewHTML = this.generatePreviewHTML(data, boxType);
+                    
+                    if (previewHTML) {
+                        previewElement.innerHTML = previewHTML;
+                    }
+                }
+
+                getCurrentBoxType() {
+                    const path = window.location.pathname;
+                    const match = path.match(/\/edit\/([^\/]+)/);
+                    return match ? match[1] : null;
+                }
+
+                generatePreviewHTML(data, boxType) {
+                    const styling = data.styling_settings || {};
+                    const content = data.content_settings || {};
+                    
+                    let styleString = `
+                        background-color: ${styling.background_color || '#f5f5dc'};
+                        color: ${styling.text_color || '#000000'};
+                        font-family: ${styling.font_family || 'Arial, sans-serif'};
+                        font-size: ${styling.font_size || '16px'};
+                        border: ${styling.border_width || '1px'} solid ${styling.border_color || '#0066cc'};
+                        border-radius: ${styling.border_radius || '0px'};
+                        padding: ${styling.padding || '15px'};
+                        text-align: ${data.layout_settings?.text_alignment || 'left'};
+                    `;
+                    
+                    switch(boxType) {
+                        case 'header_box':
+                            return `
+                                <div style="${styleString}">
+                                    <div style="font-size: ${styling.time_font_size || '48px'}; font-weight: bold;">02:24:13 PM</div>
+                                    <div style="font-size: ${styling.date_font_size || '18px'}; margin-top: 5px;">Wed 15 Oct 2025</div>
+                                    <div style="font-size: ${styling.date_font_size || '18px'}; margin-top: 5px;">18 Safar 1447</div>
+                                </div>
+                            `;
+                        case 'prayer_times_box':
+                            return `
+                                <div style="${styleString}">
+                                    <div style="background-color: ${styling.header_background_color || '#0066cc'}; color: ${styling.header_text_color || '#ffffff'}; padding: 8px; margin: -15px -15px 10px -15px; text-align: center; font-weight: bold;">
+                                        Prayer Times
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px;">
+                                        <span>Fajr</span>
+                                        <span>05:38</span>
+                                        <span>06:45</span>
+                                    </div>
+                                </div>
+                            `;
+                        default:
+                            return `
+                                <div style="${styleString}">
+                                    <div style="text-align: center;">Box Preview</div>
+                                </div>
+                            `;
+                    }
+                }
+
+                debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = () => {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+            }
+
+            // Initialize when DOM is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                new BoxesManager();
+            });
+
+            // Export for global use
+            window.BoxesManager = BoxesManager;
+        </script>
+    @endif
     
     <!-- Mobile sidebar toggle -->
     <script>

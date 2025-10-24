@@ -164,7 +164,6 @@
         .next-prayer-info {
             text-align: center;
             font-style: italic;
-            color: #666;
             position: relative;
             z-index: 2;
         }
@@ -345,6 +344,9 @@
             flex-shrink: 0;
             width: 100%;
             box-sizing: border-box;
+            margin: 0;
+            /* Ensure consistent width with sliding text box */
+            max-width: 100%;
         }
         
         .additional-times {
@@ -379,6 +381,11 @@
             padding: clamp(15px, 2.5vh, 25px) 0;
             flex-shrink: 0;
             box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0;
+            /* Ensure consistent width with special times box */
+            max-width: 100%;
         }
         
         .scroll-separator {
@@ -465,6 +472,11 @@
             .announcements-section {
                 padding: clamp(12px, 2.5vh, 25px);
             }
+            
+            .board-bottom-times,
+            .scrolling-text-area {
+                padding: clamp(10px, 2vh, 18px) 0;
+            }
         }
         
         /* Responsive adjustments for very large screens (4K and above) */
@@ -482,6 +494,11 @@
             .hadeeth-section,
             .announcements-section {
                 padding: 30px;
+            }
+            
+            .board-bottom-times,
+            .scrolling-text-area {
+                padding: 25px 0;
             }
             
             .prayer-name {
@@ -530,6 +547,11 @@
                 padding: clamp(10px, 2vh, 20px) 0;
                 flex-direction: column;
                 gap: clamp(8px, 1.5vh, 15px);
+            }
+            
+            .board-bottom-times,
+            .scrolling-text-area {
+                padding: clamp(8px, 1.5vh, 15px) 0;
             }
             
             .prayer-times-section,

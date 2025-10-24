@@ -65,10 +65,16 @@ class TimetableController extends Controller
         // Track active box types even if classic layout is used
         $activeBoxTypes = BoxSetting::where('is_active', true)->pluck('box_type')->toArray();
         
+        // Extract content settings for easy access in the view
+        $prayerContent = $boxSettings['prayer_times_box']['content_settings'] ?? [];
+        $specialTimesContent = $boxSettings['special_times_box']['content_settings'] ?? [];
+        $hadeethContent = $boxSettings['hadeeth_box']['content_settings'] ?? [];
+        $announcementsContent = $boxSettings['announcements_box']['content_settings'] ?? [];
+        
         // Get Islamic date (you may want to integrate with a proper Islamic calendar API)
         $islamicDate = $this->getIslamicDate($now);
         
-        return compact('prayerTimes', 'nextPrayer', 'announcements', 'hadeeth', 'hadeeths', 'slidingTexts', 'settings', 'boxSettings', 'islamicDate', 'now', 'useBoxesStyling', 'activeBoxTypes');
+        return compact('prayerTimes', 'nextPrayer', 'announcements', 'hadeeth', 'hadeeths', 'slidingTexts', 'settings', 'boxSettings', 'islamicDate', 'now', 'useBoxesStyling', 'activeBoxTypes', 'prayerContent', 'specialTimesContent', 'hadeethContent', 'announcementsContent');
     }
     
     private function getIslamicDate($date)
