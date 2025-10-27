@@ -223,18 +223,7 @@ class MediaDisplayService
         }
 
         // If we're in a gap period between media, return null to show timetable momentarily
-        // Or fallback to first active media
-        $firstMedia = $activeMediaItems->first();
-        if (!$firstMedia) {
-            return null;
-        }
-        
-        return [
-            'media' => $firstMedia,
-            'duration' => $firstMedia->pivot->duration,
-            'priority' => $firstMedia->pivot->priority,
-            'schedule' => $schedule
-        ];
+        return null;
     }
 
     /**
