@@ -203,6 +203,12 @@
                                 <i class="bi bi-eye"></i> View Timetable
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.profile.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.profile.edit') }}">
+                                <i class="bi bi-person-circle"></i> My Profile
+                            </a>
+                        </li>
                     </ul>
                     
                     <div class="mt-auto pt-3">

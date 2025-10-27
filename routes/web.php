@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\MediaScheduleController;
 use App\Http\Controllers\Admin\SlidingTextController;
 use App\Http\Controllers\Admin\BoxesManagementController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\MediaDisplayController;
 use App\Http\Controllers\ApiController;
 
@@ -65,6 +66,11 @@ Route::post('/logout', function (Illuminate\Http\Request $request) {
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
+    
+    // Profile management routes
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('admin.profile.password');
     
     // Google Sheets import routes (must come before resource routes)
     Route::get('prayer-times/import', [PrayerTimeController::class, 'showImport'])->name('admin.prayer-times.import');

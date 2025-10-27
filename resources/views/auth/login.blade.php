@@ -159,14 +159,6 @@
                                 </button>
                             </div>
                         </form>
-                        
-                        <div class="text-center mt-4">
-                            <small class="text-muted">
-                                <strong>Demo Credentials:</strong><br>
-                                Email: admin@masjid.com<br>
-                                Password: admin123
-                            </small>
-                        </div>
                     </div>
                 </div>
             </div>
