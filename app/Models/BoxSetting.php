@@ -77,6 +77,8 @@ class BoxSetting extends Model
                     'header_text_color' => '#000000',
                     'font_family' => 'Courier New, monospace',
                     'font_size' => '2rem',
+                    'beginning_font_size' => '2rem',
+                    'jamaat_font_size' => '2rem',
                     'header_font_size' => '1.2rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',

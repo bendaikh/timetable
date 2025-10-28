@@ -139,6 +139,32 @@
     </div>
     
     <div class="mt-4">
+        <h6>Column Font Sizes</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <label for="beginning_font_size" class="form-label">Beginning Time Font Size</label>
+                <input type="text" class="form-control" id="beginning_font_size" name="styling_settings[beginning_font_size]"
+                       value="{{ old('styling_settings.beginning_font_size', $box->styling_settings['beginning_font_size'] ?? '2rem') }}"
+                       placeholder="e.g., 2rem, 24px, 1.5em">
+            </div>
+            <div class="col-md-6">
+                <label for="jamaat_font_size" class="form-label">Jamaat Time Font Size</label>
+                <input type="text" class="form-control" id="jamaat_font_size" name="styling_settings[jamaat_font_size]"
+                       value="{{ old('styling_settings.jamaat_font_size', $box->styling_settings['jamaat_font_size'] ?? '2rem') }}"
+                       placeholder="e.g., 2rem, 24px, 1.5em">
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>Tip:</strong> You can set different font sizes for each column. For example, set Beginning to 2rem and Jamaat Time to 2.5rem to make Jamaat Time bigger.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-4">
         <h6>Column Spacing</h6>
         <div class="row">
             <div class="col-md-6">
