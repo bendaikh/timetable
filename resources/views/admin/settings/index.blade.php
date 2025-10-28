@@ -75,7 +75,17 @@ use App\Models\Setting;
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="text-center">
-                                                    <p class="mb-2"><strong>Current Logo:</strong></p>
+                                                    <div class="d-flex justify-content-center align-items-center mb-2">
+                                                        <p class="mb-0"><strong>Current Logo:</strong></p>
+                                                        @if(Setting::get('logo_path'))
+                                                            <button type="button" 
+                                                                    class="btn btn-sm btn-danger ms-2" 
+                                                                    onclick="deleteLogo()" 
+                                                                    title="Delete Logo">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        @endif
+                                                    </div>
                                                     <div id="logo-preview">
                                                         @if(Setting::get('logo_path'))
                                                             <img src="{{ app()->environment('production') ? url('public/storage/' . Setting::get('logo_path')) : asset('storage/' . Setting::get('logo_path')) }}" 
@@ -212,6 +222,24 @@ use App\Models\Setting;
                 preview.innerHTML = '<img src="' + e.target.result + '" alt="Logo Preview" class="img-thumbnail" style="max-height: 100px; max-width: 200px;">';
             };
             reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Delete logo function
+    function deleteLogo() {
+        if (confirm('Are you sure you want to delete the current logo?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("admin.settings.delete-logo") }}';
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            
+            form.appendChild(csrfToken);
+            document.body.appendChild(form);
+            form.submit();
         }
     }
 

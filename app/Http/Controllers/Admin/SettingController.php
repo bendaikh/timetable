@@ -148,4 +148,33 @@ class SettingController extends Controller
                 ->with('error', 'Failed to update settings: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Delete the logo
+     */
+    public function deleteLogo()
+    {
+        try {
+            $logoPath = Setting::get('logo_path');
+            
+            if ($logoPath) {
+                // Delete from storage
+                \Storage::disk('public')->delete($logoPath);
+                
+                // Delete from database
+                Setting::where('key', 'logo_path')->delete();
+                
+                return redirect()->route('admin.settings.index')
+                    ->with('success', 'Logo deleted successfully.');
+            }
+            
+            return redirect()->route('admin.settings.index')
+                ->with('error', 'No logo to delete.');
+                
+        } catch (\Exception $e) {
+            \Log::error('Logo deletion failed: ' . $e->getMessage());
+            return redirect()->route('admin.settings.index')
+                ->with('error', 'Failed to delete logo: ' . $e->getMessage());
+        }
+    }
 }

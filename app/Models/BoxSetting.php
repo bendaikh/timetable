@@ -91,7 +91,8 @@ class BoxSetting extends Model
                 'layout_settings' => [
                     'position' => 'left_column',
                     'column_widths' => ['45%', '25%', '25%'],
-                    'next_prayer_position' => 'below_table'
+                    'next_prayer_position' => 'below_table',
+                    'beginning_column_spacing' => '0'
                 ]
             ],
             'special_times_box' => [

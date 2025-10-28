@@ -137,4 +137,37 @@
             </div>
         </div>
     </div>
+    
+    <div class="mt-4">
+        <h6>Column Spacing</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <label for="beginning_column_spacing" class="form-label">
+                    Space Between "Beginning" and "Jamaat Time" Columns
+                    <small class="text-muted d-block">Controls the gap between the two columns. Higher values move the "Beginning" column further left.</small>
+                </label>
+                <div class="input-group">
+                    <input type="range" class="form-range" id="beginning_column_spacing" 
+                           name="layout_settings[beginning_column_spacing]"
+                           value="{{ old('layout_settings.beginning_column_spacing', $box->layout_settings['beginning_column_spacing'] ?? '0') }}"
+                           min="0" max="300" step="10"
+                           oninput="document.getElementById('spacing_value').textContent = this.value + 'px'">
+                </div>
+                <div class="mt-2 text-center">
+                    <strong>Current spacing: <span id="spacing_value">{{ $box->layout_settings['beginning_column_spacing'] ?? '0' }}px</span></strong>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info mt-4">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>How it works:</strong><br>
+                    <small>
+                        - The "Jamaat Time" column stays in its position<br>
+                        - Increasing the value moves "Beginning" column to the left<br>
+                        - Recommended range: 0px to 200px
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

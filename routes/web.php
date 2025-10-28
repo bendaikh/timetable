@@ -97,6 +97,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('settings/batch-update', [SettingController::class, 'updateBatch'])
         ->name('admin.settings.batch-update');
     
+    Route::post('settings/delete-logo', [SettingController::class, 'deleteLogo'])
+        ->name('admin.settings.delete-logo');
+    
     // Media management routes
     Route::resource('media', MediaController::class, [
         'as' => 'admin'
