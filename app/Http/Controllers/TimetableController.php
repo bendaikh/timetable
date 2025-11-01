@@ -27,6 +27,9 @@ class TimetableController extends Controller
         // Get today's prayer times
         $prayerTimes = PrayerTime::getTodayPrayerTimes();
         
+        // Get tomorrow's prayer times
+        $tomorrowPrayerTimes = PrayerTime::getTomorrowPrayerTimes();
+        
         // Get next prayer
         $nextPrayer = PrayerTime::getNextPrayer();
         
@@ -74,7 +77,7 @@ class TimetableController extends Controller
         // Get Islamic date (you may want to integrate with a proper Islamic calendar API)
         $islamicDate = $this->getIslamicDate($now);
         
-        return compact('prayerTimes', 'nextPrayer', 'announcements', 'hadeeth', 'hadeeths', 'slidingTexts', 'settings', 'boxSettings', 'islamicDate', 'now', 'useBoxesStyling', 'activeBoxTypes', 'prayerContent', 'specialTimesContent', 'hadeethContent', 'announcementsContent');
+        return compact('prayerTimes', 'tomorrowPrayerTimes', 'nextPrayer', 'announcements', 'hadeeth', 'hadeeths', 'slidingTexts', 'settings', 'boxSettings', 'islamicDate', 'now', 'useBoxesStyling', 'activeBoxTypes', 'prayerContent', 'specialTimesContent', 'hadeethContent', 'announcementsContent');
     }
     
     private function getIslamicDate($date)
@@ -82,8 +85,8 @@ class TimetableController extends Controller
         // Islamic calendar calculation for Saudi Arabia
         // Using Umm al-Qura calendar (Saudi Arabia's official calendar)
         
-        // Convert to Saudi Arabia timezone
-        $saudiDate = $date->copy()->setTimezone('Asia/Riyadh');
+        // Convert to Saudi Arabia timezone and set to midnight for consistent day calculation
+        $saudiDate = $date->copy()->setTimezone('Asia/Riyadh')->startOfDay();
         
         // Islamic months
         $islamicMonths = [
@@ -103,16 +106,13 @@ class TimetableController extends Controller
         
         // Calculate Islamic date (approximate calculation)
         // This is based on the Umm al-Qura calendar used in Saudi Arabia
-        $gregorianYear = $saudiDate->year;
-        $gregorianMonth = $saudiDate->month;
-        $gregorianDay = $saudiDate->day;
         
         // Convert Gregorian to Islamic (approximate)
-        // Using the fact that 1 Muharram 1447 AH = July 19, 2025 CE
-        $epoch = Carbon::create(2025, 7, 19); // 1 Muharram 1447 AH
-        $daysDiff = $saudiDate->diffInDays($epoch);
+        // Using the fact that 1 Muharram 1447 AH = June 27, 2025 CE (calculated based on Umm al-Qura calendar)
+        $epoch = Carbon::create(2025, 6, 27, 0, 0, 0, 'Asia/Riyadh'); // 1 Muharram 1447 AH
+        $daysDiff = $epoch->diffInDays($saudiDate, false);
         
-        // Islamic year 1447 started on July 19, 2025
+        // Islamic year 1447 started on June 27, 2025
         $islamicYear = 1447;
         
         // Calculate Islamic month and day
@@ -143,12 +143,11 @@ class TimetableController extends Controller
             }
         }
         
-        // Based on your research, today should be Rabiʻ II 25, 1447 AH
-        // Let me set it to the correct date you mentioned
+        // Return the calculated Islamic date
         return [
-            'day' => '25',
-            'month' => 'Rabiʻ II',
-            'year' => '1447'
+            'day' => (string)(int)$islamicDay,
+            'month' => $islamicMonths[$islamicMonth],
+            'year' => (string)$islamicYear
         ];
     }
 }

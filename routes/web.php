@@ -21,6 +21,7 @@ Route::get('/', [TimetableController::class, 'index'])->name('timetable.index');
 // API Routes for real-time data
 Route::prefix('api')->group(function () {
     Route::get('/prayer-times', [ApiController::class, 'prayerTimes']);
+    Route::get('/tomorrow-prayer-times', [ApiController::class, 'tomorrowPrayerTimes']);
     Route::get('/announcements', [ApiController::class, 'announcements']);
     Route::get('/hadeeth', [ApiController::class, 'hadeeth']);
     Route::get('/next-prayer', [ApiController::class, 'nextPrayer']);

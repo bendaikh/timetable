@@ -17,6 +17,12 @@ class ApiController extends Controller
         return response()->json($prayerTimes);
     }
 
+    public function tomorrowPrayerTimes()
+    {
+        $prayerTimes = PrayerTime::getTomorrowPrayerTimes();
+        return response()->json($prayerTimes);
+    }
+
     public function announcements()
     {
         $announcements = Announcement::getActiveAnnouncements();

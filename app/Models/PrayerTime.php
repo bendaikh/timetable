@@ -91,6 +91,11 @@ class PrayerTime extends Model
         return self::whereDate('date', Carbon::today())->first();
     }
 
+    public static function getTomorrowPrayerTimes()
+    {
+        return self::whereDate('date', Carbon::tomorrow())->first();
+    }
+
     public static function getNextPrayer()
     {
         $today = self::getTodayPrayerTimes();

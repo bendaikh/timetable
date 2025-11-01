@@ -215,30 +215,30 @@
                             @endif
                         @endif
                         <div class="prayer-list">
-                            <div class="prayer-row" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
+                            <div class="prayer-row" data-prayer-name="fajr" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
                                 <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['font_size'] ?? '18px' }};">Fajr</div>
-                                <div class="prayer-time" style="font-size: {{ $prayerStyling['beginning_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }};">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }};">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
-                            <div class="prayer-row" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
+                            <div class="prayer-row" data-prayer-name="zohar" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
                                 <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['font_size'] ?? '18px' }};">Zohar</div>
-                                <div class="prayer-time" style="font-size: {{ $prayerStyling['beginning_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }};">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }};">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
                             </div>
-                            <div class="prayer-row" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
+                            <div class="prayer-row" data-prayer-name="asr" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
                                 <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['font_size'] ?? '18px' }};">Asr</div>
-                                <div class="prayer-time" style="font-size: {{ $prayerStyling['beginning_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }};">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }};">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
-                            <div class="prayer-row" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
+                            <div class="prayer-row" data-prayer-name="maghrib" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
                                 <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['font_size'] ?? '18px' }};">Maghrib</div>
-                                <div class="prayer-time" style="font-size: {{ $prayerStyling['beginning_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }};">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }};">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
                             </div>
-                            <div class="prayer-row" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
+                            <div class="prayer-row" data-prayer-name="isha" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
                                 <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['font_size'] ?? '18px' }};">Isha</div>
-                                <div class="prayer-time" style="font-size: {{ $prayerStyling['beginning_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }};">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ?? $prayerStyling['font_size'] ?? '18px' }};">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                         </div>
                         
@@ -627,12 +627,49 @@
 
 @section('scripts')
 @php
+    // Today's prayer times (jamaat times)
     $prayerTimesJson = [
         'fajr' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat ?: $prayerTimes->fajr)->format('H:i') : null,
         'zohar' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat ?: $prayerTimes->zohar)->format('H:i') : null,
         'asr' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat ?: $prayerTimes->asr)->format('H:i') : null,
         'maghrib' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat ?: $prayerTimes->maghrib)->format('H:i') : null,
         'isha' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat ?: $prayerTimes->isha)->format('H:i') : null,
+    ];
+    
+    // Today's beginning times
+    $todayBeginningTimesJson = [
+        'fajr' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr)->format('H:i') : null,
+        'zohar' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar)->format('H:i') : null,
+        'asr' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->asr)->format('H:i') : null,
+        'maghrib' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->maghrib)->format('H:i') : null,
+        'isha' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->isha)->format('H:i') : null,
+    ];
+    
+    // Tomorrow's prayer times
+    $tomorrowPrayerTimesJson = [
+        'fajr' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->fajr_jamaat ?: $tomorrowPrayerTimes->fajr)->format('H:i') : null,
+        'zohar' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->zohar_jamaat ?: $tomorrowPrayerTimes->zohar)->format('H:i') : null,
+        'asr' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->asr_jamaat ?: $tomorrowPrayerTimes->asr)->format('H:i') : null,
+        'maghrib' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->maghrib_jamaat ?: $tomorrowPrayerTimes->maghrib)->format('H:i') : null,
+        'isha' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->isha_jamaat ?: $tomorrowPrayerTimes->isha)->format('H:i') : null,
+    ];
+    
+    // Tomorrow's beginning times
+    $tomorrowBeginningTimesJson = [
+        'fajr' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->fajr)->format('H:i') : null,
+        'zohar' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->zohar)->format('H:i') : null,
+        'asr' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->asr)->format('H:i') : null,
+        'maghrib' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->maghrib)->format('H:i') : null,
+        'isha' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->isha)->format('H:i') : null,
+    ];
+    
+    // Jamaat offsets
+    $jamaatOffsetsJson = [
+        'fajr' => (int)($settings['fajr_jamaat_offset'] ?? 10),
+        'zohar' => (int)($settings['zohar_jamaat_offset'] ?? 15),
+        'asr' => (int)($settings['asr_jamaat_offset'] ?? 20),
+        'maghrib' => (int)($settings['maghrib_jamaat_offset'] ?? 0),
+        'isha' => (int)($settings['isha_jamaat_offset'] ?? 10),
     ];
     
     // Adhan times
@@ -647,7 +684,20 @@
 <script>
     // Prayer times data from PHP
     const prayerTimesData = @json($prayerTimesJson);
+    const todayBeginningTimes = @json($todayBeginningTimesJson);
+    const tomorrowPrayerTimesData = @json($tomorrowPrayerTimesJson);
+    const tomorrowBeginningTimes = @json($tomorrowBeginningTimesJson);
+    const jamaatOffsets = @json($jamaatOffsetsJson);
     const adhanTimesData = @json($adhanTimesJson);
+    
+    // Track which prayers have been updated to tomorrow
+    const updatedPrayers = new Set();
+    
+    // Store original today's times
+    const originalTodayTimes = {
+        beginning: { ...todayBeginningTimes },
+        jamaat: { ...prayerTimesData }
+    };
 
     // Update next prayer countdown
     function updateNextPrayerCountdown() {
@@ -706,9 +756,93 @@
         }
     }
     
+    // Function to format time for display (12-hour format without AM/PM)
+    function formatTimeForDisplay(time24) {
+        if (!time24) return '--:--';
+        const [hours, minutes] = time24.split(':').map(Number);
+        let displayHours = hours % 12;
+        if (displayHours === 0) displayHours = 12;
+        const displayMinutes = minutes.toString().padStart(2, '0');
+        return `${displayHours}:${displayMinutes}`;
+    }
+    
+    // Function to convert 24-hour time to minutes since midnight
+    function timeToMinutes(time24) {
+        if (!time24) return null;
+        const [hours, minutes] = time24.split(':').map(Number);
+        return hours * 60 + minutes;
+    }
+    
+    // Function to update a prayer's displayed time to tomorrow's time
+    function updatePrayerToTomorrow(prayerName) {
+        if (updatedPrayers.has(prayerName)) {
+            return; // Already updated
+        }
+        
+        const prayerRow = document.querySelector(`[data-prayer-name="${prayerName}"]`);
+        if (!prayerRow) return;
+        
+        const beginningElement = prayerRow.querySelector('[data-time-type="beginning"]');
+        const jamaatElement = prayerRow.querySelector('[data-time-type="jamaat"]');
+        
+        if (!beginningElement || !jamaatElement) return;
+        
+        // Get tomorrow's times
+        const tomorrowBeginning = tomorrowBeginningTimes[prayerName];
+        const tomorrowJamaat = tomorrowPrayerTimesData[prayerName];
+        
+        if (!tomorrowBeginning || !tomorrowJamaat) return;
+        
+        // Update the displayed times
+        beginningElement.textContent = formatTimeForDisplay(tomorrowBeginning);
+        jamaatElement.textContent = formatTimeForDisplay(tomorrowJamaat);
+        
+        // Update the prayer times data for countdown calculations
+        prayerTimesData[prayerName] = tomorrowJamaat;
+        todayBeginningTimes[prayerName] = tomorrowBeginning;
+        
+        // Mark as updated
+        updatedPrayers.add(prayerName);
+    }
+    
+    // Function to check if jamaat times have passed and update accordingly
+    function checkAndUpdatePrayerTimes() {
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        const currentSeconds = now.getSeconds();
+        
+        // Check each prayer
+        const prayers = ['fajr', 'zohar', 'asr', 'maghrib', 'isha'];
+        
+        prayers.forEach(prayerName => {
+            if (updatedPrayers.has(prayerName)) {
+                return; // Already updated
+            }
+            
+            // Get today's jamaat time for this prayer
+            const todayJamaatTime = originalTodayTimes.jamaat[prayerName];
+            if (!todayJamaatTime) return;
+            
+            const jamaatMinutes = timeToMinutes(todayJamaatTime);
+            if (jamaatMinutes === null) return;
+            
+            // Check if current time has passed the jamaat time (with at least 30 seconds buffer)
+            const timeDifference = currentMinutes * 60 + currentSeconds - (jamaatMinutes * 60);
+            
+            if (timeDifference >= 30) {
+                // Jamaat time has passed by at least 30 seconds, update to tomorrow
+                updatePrayerToTomorrow(prayerName);
+            }
+        });
+    }
+    
     // Update countdown every second
     setInterval(updateNextPrayerCountdown, 1000);
     updateNextPrayerCountdown(); // Initial call
+    
+    // Check and update prayer times every second
+    setInterval(checkAndUpdatePrayerTimes, 1000);
+    checkAndUpdatePrayerTimes(); // Initial call
     
     // Countdown timer for next prayer (legacy)
     function updateCountdown() {
