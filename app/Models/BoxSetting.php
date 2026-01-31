@@ -56,6 +56,7 @@ class BoxSetting extends Model
                     'background_color' => 'rgba(253, 247, 230, 0.9)',
                     'text_color' => '#000000',
                     'font_family' => 'Courier New, monospace',
+                    'font_size' => '5rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',
                     'padding' => '10px'
@@ -113,8 +114,8 @@ class BoxSetting extends Model
                     'text_color' => '#000000',
                     'header_text_color' => '#000000',
                     'font_family' => 'Courier New, monospace',
-                    'font_size' => '1.2rem',
-                    'header_font_size' => '1rem',
+                    'font_size' => '4rem',
+                    'header_font_size' => '4rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',
                     'padding' => '15px'
@@ -251,9 +252,9 @@ class BoxSetting extends Model
         foreach ($boxes as $box) {
             $settings[$box->box_type] = [
                 'box_name' => $box->box_name,
-                'content_settings' => $box->content_settings ?? [],
-                'styling_settings' => $box->styling_settings ?? [],
-                'layout_settings' => $box->layout_settings ?? []
+                'content_settings' => is_string($box->content_settings) ? json_decode($box->content_settings, true) : ($box->content_settings ?? []),
+                'styling_settings' => is_string($box->styling_settings) ? json_decode($box->styling_settings, true) : ($box->styling_settings ?? []),
+                'layout_settings' => is_string($box->layout_settings) ? json_decode($box->layout_settings, true) : ($box->layout_settings ?? [])
             ];
         }
         

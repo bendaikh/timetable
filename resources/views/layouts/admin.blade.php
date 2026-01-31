@@ -74,6 +74,52 @@
             background: rgba(255, 255, 255, 0.2);
             color: white;
         }
+
+        /* Header buttons styling */
+        .card-header .btn {
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header .btn-light {
+            background-color: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            border: none;
+        }
+
+        .card-header .btn-light:hover {
+            background-color: white;
+            color: #764ba2;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-header .btn-outline-light {
+            color: white;
+            border-color: rgba(255, 255, 255, 0.8) !important;
+            background-color: transparent;
+        }
+
+        .card-header .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: white !important;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-header .btn-danger {
+            background-color: #dc3545;
+            border: none;
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+        }
+
+        .card-header .btn-danger:hover {
+            background-color: #c82333;
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+            transform: translateY(-2px);
+        }
         
         .box-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;

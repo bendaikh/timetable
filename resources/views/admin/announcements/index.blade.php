@@ -28,6 +28,7 @@
                                 <tr>
                                     <th>Title</th>
                                     <th>Content</th>
+                                    <th>Font Size</th>
                                     <th>Status</th>
                                     <th>Auto Repeat</th>
                                     <th>Duration</th>
@@ -44,7 +45,20 @@
                                     <td>
                                         <div style="max-width: 300px;">
                                             {{ Str::limit($announcement->content, 80) }}
+                                            @if(strlen($announcement->content) > 300 && $announcement->font_size > 60)
+                                                <div class="alert alert-warning alert-sm py-1 px-2 mt-2 mb-0" style="font-size: 12px;">
+                                                    <i class="bi bi-exclamation-triangle"></i> Long text with large font may be hidden
+                                                </div>
+                                            @endif
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ $announcement->font_size }}px</span>
+                                        @if($announcement->font_size > 80)
+                                            <div style="font-size: 11px; color: #ff6b6b; margin-top: 2px;">
+                                                <i class="bi bi-exclamation-circle"></i> Large font
+                                            </div>
+                                        @endif
                                     </td>
                                     <td>
                                         <span class="badge {{ $announcement->is_active ? 'bg-success' : 'bg-secondary' }}">

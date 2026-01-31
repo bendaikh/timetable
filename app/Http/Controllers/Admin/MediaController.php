@@ -11,6 +11,27 @@ use Illuminate\Support\Str;
 class MediaController extends Controller
 {
     /**
+     * Convert PHP size string (e.g., '2M', '1G') to bytes
+     */
+    private function convertToBytes($value): int
+    {
+        $value = trim($value);
+        $last = strtolower($value[strlen($value)-1]);
+        $value = (int)$value;
+
+        switch($last) {
+            case 'g':
+                $value *= 1024;
+            case 'm':
+                $value *= 1024;
+            case 'k':
+                $value *= 1024;
+        }
+
+        return $value;
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index()
@@ -32,9 +53,16 @@ class MediaController extends Controller
      */
     public function store(Request $request)
     {
+        // Get PHP's upload limit
+        $maxUploadSize = min(
+            $this->convertToBytes(ini_get('upload_max_filesize')),
+            $this->convertToBytes(ini_get('post_max_size'))
+        );
+        $maxUploadSizeKB = intval($maxUploadSize / 1024);
+        
         $request->validate([
             'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,avi,mov|max:102400', // 100MB max
+            'file' => "required|file|mimes:jpg,jpeg,png,gif,mp4,avi,mov|max:$maxUploadSizeKB",
             'description' => 'nullable|string',
             'type' => 'required|in:image,video'
         ]);
@@ -77,9 +105,16 @@ class MediaController extends Controller
      */
     public function update(Request $request, Media $medium)
     {
+        // Get PHP's upload limit
+        $maxUploadSize = min(
+            $this->convertToBytes(ini_get('upload_max_filesize')),
+            $this->convertToBytes(ini_get('post_max_size'))
+        );
+        $maxUploadSizeKB = intval($maxUploadSize / 1024);
+        
         $request->validate([
             'title' => 'required|string|max:255',
-            'file' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,avi,mov|max:102400',
+            'file' => "nullable|file|mimes:jpg,jpeg,png,gif,mp4,avi,mov|max:$maxUploadSizeKB",
             'description' => 'nullable|string',
             'type' => 'required|in:image,video'
         ]);

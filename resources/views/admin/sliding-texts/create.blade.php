@@ -64,8 +64,8 @@
                                     <label for="font_size" class="form-label">Font Size <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control @error('font_size') is-invalid @enderror" 
                                            id="font_size" name="font_size" value="{{ old('font_size', 14) }}" 
-                                           min="10" max="24" required>
-                                    <div class="form-text">Font size (10-24px)</div>
+                                           min="10" max="160" required>
+                                    <div class="form-text">Font size (10-160px / up to 10rem)</div>
                                     @error('font_size')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

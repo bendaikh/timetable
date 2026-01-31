@@ -33,7 +33,12 @@
                                     <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
                                     <textarea class="form-control @error('content') is-invalid @enderror" 
                                               id="content" name="content" rows="6" required>{{ old('content') }}</textarea>
-                                    <div class="form-text">Enter the announcement text that will be displayed</div>
+                                    <div class="form-text">
+                                        Characters: <strong id="char-count">0</strong>/300 recommended
+                                        <div id="char-warning" style="display: none; margin-top: 8px;" class="alert alert-warning py-2 px-3 mb-0">
+                                            <i class="bi bi-exclamation-triangle me-1"></i><span id="warning-text"></span>
+                                        </div>
+                                    </div>
                                     @error('content')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -54,8 +59,8 @@
                                     <label for="font_size" class="form-label">Font Size <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control @error('font_size') is-invalid @enderror" 
                                            id="font_size" name="font_size" value="{{ old('font_size', 24) }}" 
-                                           min="12" max="72" required>
-                                    <div class="form-text">Font size for the announcement text (12-72px)</div>
+                                           min="12" max="160" required>
+                                    <div class="form-text">Font size for the announcement text (12-160px / up to 10rem)</div>
                                     @error('font_size')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -176,6 +181,34 @@
 
 @section('scripts')
 <script>
+// Character counter and warnings
+const contentTextarea = document.getElementById('content');
+const fontSizeInput = document.getElementById('font_size');
+const charCountDisplay = document.getElementById('char-count');
+const charWarningDiv = document.getElementById('char-warning');
+const warningText = document.getElementById('warning-text');
+
+function updateCharacterWarning() {
+    const contentLength = contentTextarea.value.length;
+    const fontSize = parseInt(fontSizeInput.value) || 0;
+    
+    charCountDisplay.textContent = contentLength;
+    
+    // Show warning based on content length and font size
+    if (fontSize > 60 && contentLength > 150) {
+        charWarningDiv.style.display = 'block';
+        warningText.textContent = `Large font size (${fontSize}px) with ${contentLength} characters may cause text to be hidden. Recommended: keep text under 150 characters for fonts above 60px.`;
+    } else if (contentLength > 300) {
+        charWarningDiv.style.display = 'block';
+        warningText.textContent = `Your announcement is ${contentLength} characters long. For optimal display, keep it under 300 characters.`;
+    } else {
+        charWarningDiv.style.display = 'none';
+    }
+}
+
+contentTextarea.addEventListener('input', updateCharacterWarning);
+fontSizeInput.addEventListener('change', updateCharacterWarning);
+
 document.getElementById('auto_repeat').addEventListener('change', function() {
     const repeatDaysSection = document.getElementById('repeat-days-section');
     if (this.checked) {

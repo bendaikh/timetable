@@ -26,6 +26,17 @@
                     </h5>
                 </div>
                 <div class="card-body">
+                    @if(strlen($announcement->content) > 300 && $announcement->font_size > 60)
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>⚠️ Warning:</strong> This announcement has a long text ({{ strlen($announcement->content) }} characters) with a large font size ({{ $announcement->font_size }}px). Some text may be hidden on the display due to the fixed announcement box height. Consider:
+                            <ul class="mb-0 mt-2">
+                                <li>Reducing the font size to fit all text</li>
+                                <li>Shortening the announcement text</li>
+                                <li>Using font size between 12-60px for longer texts</li>
+                            </ul>
+                        </div>
+                    @endif
                     <div class="row">
                         <div class="col-md-8">
                             <div class="mb-4">

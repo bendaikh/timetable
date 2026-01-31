@@ -15,8 +15,8 @@
                     <i class="bi bi-clock me-2"></i>
                     Prayer Times Management
                 </h5>
-                <div class="btn-group">
-                    <a href="{{ route('admin.prayer-times.import') }}" class="btn btn-outline-primary">
+                <div class="d-flex gap-2">
+                    <a href="{{ route('admin.prayer-times.import') }}" class="btn btn-outline-light border-2">
                         <i class="bi bi-cloud-download me-2"></i>
                         Import from Google Sheets
                     </a>
@@ -24,6 +24,12 @@
                         <i class="bi bi-plus-circle me-2"></i>
                         Add Prayer Times
                     </a>
+                    @if($prayerTimes->total() > 0)
+                    <button type="button" class="btn btn-danger" id="delete-all-btn" onclick="deleteAllRecords()">
+                        <i class="bi bi-trash me-2"></i>
+                        Delete All
+                    </button>
+                    @endif
                 </div>
             </div>
             <div class="card-body">
@@ -59,19 +65,22 @@
                 @if($prayerTimes->count() > 0)
                     <!-- Bulk Actions Bar -->
                     <div id="bulk-actions-bar" class="alert alert-info d-none mb-3" role="alert">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            <div class="mb-2 mb-md-0">
                                 <i class="bi bi-check-square me-2"></i>
                                 <span id="selected-count">0</span> prayer time(s) selected
+                                <span id="select-all-pages-link" class="ms-2 d-none">
+                                    | <a href="#" id="select-all-pages-btn" class="text-info">Select all {{ $prayerTimes->total() }} records</a>
+                                </span>
                             </div>
                             <div>
                                 <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="select-all-btn">
                                     <i class="bi bi-check-all me-1"></i>
-                                    Select All
+                                    Select Page
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="select-none-btn">
                                     <i class="bi bi-x-square me-1"></i>
-                                    Select None
+                                    Clear
                                 </button>
                                 <button type="button" class="btn btn-sm btn-danger" id="bulk-delete-btn" disabled>
                                     <i class="bi bi-trash me-1"></i>
@@ -181,6 +190,48 @@
 
 @section('scripts')
 <script>
+// Delete all records function
+function deleteAllRecords() {
+    const totalRecords = {{ $prayerTimes->total() }};
+    
+    // Show confirmation dialog with count
+    const confirmMessage = `⚠️ WARNING!\n\nYou are about to PERMANENTLY DELETE all ${totalRecords} prayer time records.\n\nThis action CANNOT be undone.\n\nAre you absolutely sure?`;
+    
+    if (confirm(confirmMessage)) {
+        // Double confirmation for safety
+        if (confirm(`Please confirm again: Delete all ${totalRecords} records?`)) {
+            // Create and submit the form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("admin.prayer-times.bulk-delete") }}';
+            
+            // Add CSRF token
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+            
+            // Add method override
+            const methodField = document.createElement('input');
+            methodField.type = 'hidden';
+            methodField.name = '_method';
+            methodField.value = 'DELETE';
+            form.appendChild(methodField);
+            
+            // Add delete all flag
+            const deleteAllField = document.createElement('input');
+            deleteAllField.type = 'hidden';
+            deleteAllField.name = 'delete_all';
+            deleteAllField.value = 'true';
+            form.appendChild(deleteAllField);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const selectAllCheckbox = document.getElementById('select-all-checkbox');
     const prayerTimeCheckboxes = document.querySelectorAll('.prayer-time-checkbox');
@@ -189,13 +240,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
     const selectAllBtn = document.getElementById('select-all-btn');
     const selectNoneBtn = document.getElementById('select-none-btn');
+    const selectAllPagesLink = document.getElementById('select-all-pages-link');
+    const selectAllPagesBtn = document.getElementById('select-all-pages-btn');
+    
+    // Store selected IDs across pages in sessionStorage
+    const storageKey = 'prayerTimesSelectedIds';
+    let selectedIds = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+    let selectAllPages = sessionStorage.getItem('prayerTimesSelectAllPages') === 'true';
+
+    // Initialize checkboxes based on stored selection
+    function initializeCheckboxes() {
+        prayerTimeCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectedIds.includes(parseInt(checkbox.value));
+        });
+    }
+
+    // Save selected IDs to storage
+    function saveSelection() {
+        sessionStorage.setItem(storageKey, JSON.stringify(selectedIds));
+        sessionStorage.setItem('prayerTimesSelectAllPages', selectAllPages);
+    }
 
     // Update bulk actions bar visibility and count
     function updateBulkActions() {
         const checkedBoxes = document.querySelectorAll('.prayer-time-checkbox:checked');
-        const count = checkedBoxes.length;
+        const count = selectAllPages ? {{ $prayerTimes->total() }} : checkedBoxes.length;
         
         selectedCountSpan.textContent = count;
+        
+        // Show "select all records" link if we have selected items but haven't selected all pages
+        if (checkedBoxes.length > 0 && checkedBoxes.length < prayerTimeCheckboxes.length && !selectAllPages) {
+            selectAllPagesLink.classList.remove('d-none');
+        } else {
+            selectAllPagesLink.classList.add('d-none');
+        }
         
         if (count > 0) {
             bulkActionsBar.classList.remove('d-none');
@@ -203,13 +281,14 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             bulkActionsBar.classList.add('d-none');
             bulkDeleteBtn.disabled = true;
+            selectAllPagesLink.classList.add('d-none');
         }
         
         // Update select all checkbox state
-        if (count === 0) {
+        if (checkedBoxes.length === 0) {
             selectAllCheckbox.indeterminate = false;
             selectAllCheckbox.checked = false;
-        } else if (count === prayerTimeCheckboxes.length) {
+        } else if (checkedBoxes.length === prayerTimeCheckboxes.length) {
             selectAllCheckbox.indeterminate = false;
             selectAllCheckbox.checked = true;
         } else {
@@ -221,24 +300,64 @@ document.addEventListener('DOMContentLoaded', function() {
     selectAllCheckbox.addEventListener('change', function() {
         prayerTimeCheckboxes.forEach(checkbox => {
             checkbox.checked = this.checked;
+            if (this.checked) {
+                if (!selectedIds.includes(parseInt(checkbox.value))) {
+                    selectedIds.push(parseInt(checkbox.value));
+                }
+            } else {
+                selectedIds = selectedIds.filter(id => id !== parseInt(checkbox.value));
+            }
         });
+        selectAllPages = false;
+        saveSelection();
         updateBulkActions();
     });
 
     // Individual checkbox functionality
     prayerTimeCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateBulkActions);
+        checkbox.addEventListener('change', function() {
+            const id = parseInt(this.value);
+            if (this.checked) {
+                if (!selectedIds.includes(id)) {
+                    selectedIds.push(id);
+                }
+            } else {
+                selectedIds = selectedIds.filter(x => x !== id);
+                selectAllPages = false;
+            }
+            saveSelection();
+            updateBulkActions();
+        });
     });
 
-    // Select all button
+    // Select all on current page button
     selectAllBtn.addEventListener('click', function() {
         prayerTimeCheckboxes.forEach(checkbox => {
             checkbox.checked = true;
+            const id = parseInt(checkbox.value);
+            if (!selectedIds.includes(id)) {
+                selectedIds.push(id);
+            }
         });
         selectAllCheckbox.checked = true;
         selectAllCheckbox.indeterminate = false;
+        selectAllPages = false;
+        saveSelection();
         updateBulkActions();
     });
+
+    // Select all records across all pages
+    if (selectAllPagesBtn) {
+        selectAllPagesBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            selectAllPages = true;
+            selectedIds = []; // Clear individual selections
+            saveSelection();
+            selectedCountSpan.textContent = {{ $prayerTimes->total() }};
+            selectAllPagesLink.classList.add('d-none');
+            updateBulkActions();
+        });
+    }
 
     // Select none button
     selectNoneBtn.addEventListener('click', function() {
@@ -247,20 +366,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         selectAllCheckbox.checked = false;
         selectAllCheckbox.indeterminate = false;
+        selectedIds = [];
+        selectAllPages = false;
+        saveSelection();
         updateBulkActions();
     });
 
     // Bulk delete functionality
     bulkDeleteBtn.addEventListener('click', function() {
         const checkedBoxes = document.querySelectorAll('.prayer-time-checkbox:checked');
-        const selectedIds = Array.from(checkedBoxes).map(checkbox => checkbox.value);
+        let idsToDelete = [];
         
-        if (selectedIds.length === 0) {
+        if (selectAllPages) {
+            // Delete all records
+            idsToDelete = 'all';
+        } else {
+            idsToDelete = Array.from(checkedBoxes).map(checkbox => checkbox.value);
+        }
+        
+        if ((selectAllPages && {{ $prayerTimes->total() }} === 0) || 
+            (!selectAllPages && idsToDelete.length === 0)) {
             alert('Please select at least one prayer time to delete.');
             return;
         }
         
-        const confirmMessage = `Are you sure you want to delete ${selectedIds.length} prayer time(s)? This action cannot be undone.`;
+        const deleteCount = selectAllPages ? {{ $prayerTimes->total() }} : idsToDelete.length;
+        const confirmMessage = `Are you sure you want to delete ${deleteCount} prayer time(s)? This action cannot be undone.`;
         
         if (confirm(confirmMessage)) {
             // Create a form to submit the bulk delete request
@@ -282,21 +413,30 @@ document.addEventListener('DOMContentLoaded', function() {
             methodField.value = 'DELETE';
             form.appendChild(methodField);
             
-            // Add selected IDs
-            selectedIds.forEach(id => {
-                const idField = document.createElement('input');
-                idField.type = 'hidden';
-                idField.name = 'prayer_time_ids[]';
-                idField.value = id;
-                form.appendChild(idField);
-            });
+            // Add selected IDs or delete all flag
+            if (selectAllPages) {
+                const deleteAllField = document.createElement('input');
+                deleteAllField.type = 'hidden';
+                deleteAllField.name = 'delete_all';
+                deleteAllField.value = 'true';
+                form.appendChild(deleteAllField);
+            } else {
+                idsToDelete.forEach(id => {
+                    const idField = document.createElement('input');
+                    idField.type = 'hidden';
+                    idField.name = 'prayer_time_ids[]';
+                    idField.value = id;
+                    form.appendChild(idField);
+                });
+            }
             
             document.body.appendChild(form);
             form.submit();
         }
     });
 
-    // Initialize bulk actions state
+    // Initialize
+    initializeCheckboxes();
     updateBulkActions();
 });
 </script>

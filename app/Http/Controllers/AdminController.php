@@ -23,7 +23,11 @@ class AdminController extends Controller
         ];
 
         $recent_announcements = Announcement::latest()->take(5)->get();
-        $today_prayer_times = PrayerTime::getTodayPrayerTimes();
+        
+        // Force fresh database query without cache to ensure real-time updates
+        $today_prayer_times = PrayerTime::whereDate('date', Carbon::today())
+            ->first();
+        
         $next_prayer = PrayerTime::getNextPrayer();
 
         return view('admin.dashboard', compact('stats', 'recent_announcements', 'today_prayer_times', 'next_prayer'));

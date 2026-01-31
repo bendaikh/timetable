@@ -85,8 +85,8 @@ class TimetableController extends Controller
         // Islamic calendar calculation for Saudi Arabia
         // Using Umm al-Qura calendar (Saudi Arabia's official calendar)
         
-        // Convert to Saudi Arabia timezone and set to midnight for consistent day calculation
-        $saudiDate = $date->copy()->setTimezone('Asia/Riyadh')->startOfDay();
+        // Convert to Saudi Arabia timezone for accurate Islamic date
+        $saudiDate = $date->copy()->setTimezone('Asia/Riyadh');
         
         // Islamic months
         $islamicMonths = [
@@ -104,49 +104,74 @@ class TimetableController extends Controller
             12 => 'Dhu al-Hijjah'
         ];
         
-        // Calculate Islamic date (approximate calculation)
-        // This is based on the Umm al-Qura calendar used in Saudi Arabia
+        // Manual Julian Day Number Calculation (since toJulianDay() is not available in all Carbon versions)
+        $year = (int)$saudiDate->format('Y');
+        $month = (int)$saudiDate->format('m');
+        $day = (int)$saudiDate->format('d');
         
-        // Convert Gregorian to Islamic (approximate)
-        // Using the fact that 1 Muharram 1447 AH = June 27, 2025 CE (calculated based on Umm al-Qura calendar)
-        $epoch = Carbon::create(2025, 6, 27, 0, 0, 0, 'Asia/Riyadh'); // 1 Muharram 1447 AH
-        $daysDiff = $epoch->diffInDays($saudiDate, false);
+        // Julian Day Number formula
+        $a = intdiv((14 - $month), 12);
+        $y = $year + 4800 - $a;
+        $m = $month + 12 * $a - 3;
         
-        // Islamic year 1447 started on June 27, 2025
-        $islamicYear = 1447;
+        $jd = $day + intdiv((153 * $m + 2), 5) + 365 * $y + intdiv($y, 4) - intdiv($y, 100) + intdiv($y, 400) - 32045;
+        
+        // Umm Al-Qura Calendar Conversion
+        // Reference: 1 Muharram 1 AH = July 16, 622 CE (JD = 1948440)
+        $islamicEpochJD = 1948440;
+        
+        $daysSinceEpoch = $jd - $islamicEpochJD;
+        
+        // Calculate Islamic year (average Islamic year = 354.36667 days)
+        $islamicYear = intdiv($daysSinceEpoch, 354) + 1;
+        
+        // Days in each Islamic month: alternates 30 and 29
+        $monthDays = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
+        
+        // Calculate position within Islamic year
+        $dayInYear = $daysSinceEpoch % 354;
+        if ($dayInYear < 0) {
+            $dayInYear += 354;
+            $islamicYear -= 1;
+        }
         
         // Calculate Islamic month and day
-        $islamicDay = 1;
-        $islamicMonth = 1; // Muharram
+        $islamicMonth = 1;
+        $islamicDay = $dayInYear + 1;
         
-        // Add days to get current Islamic date
-        $remainingDays = $daysDiff;
+        // Adjust for leap years in Umm al-Qura calendar
+        // Years 2, 5, 7, 10, 13, 16, 18, 21, 24, 26, 29 (mod 30) have 30 days in month 12
+        $yearInCycle = $islamicYear % 30;
+        $leapYears = [2, 5, 7, 10, 13, 16, 18, 21, 24, 26, 29];
         
-        // Islamic months have 29 or 30 days (approximate)
-        $daysInIslamicMonths = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29]; // Muharram to Dhu al-Hijjah
+        if (in_array($yearInCycle, $leapYears) || $yearInCycle === 0) {
+            $monthDays[11] = 30; // Month 12 has 30 days in leap years
+        }
         
-        while ($remainingDays > 0) {
-            $daysInCurrentMonth = $daysInIslamicMonths[($islamicMonth - 1) % 12];
-            
-            if ($islamicDay + $remainingDays > $daysInCurrentMonth) {
-                $remainingDays -= ($daysInCurrentMonth - $islamicDay + 1);
-                $islamicDay = 1;
-                $islamicMonth++;
-                
-                if ($islamicMonth > 12) {
-                    $islamicMonth = 1;
-                    $islamicYear++;
-                }
-            } else {
-                $islamicDay += $remainingDays;
-                $remainingDays = 0;
+        // Determine which month and day
+        foreach ($monthDays as $index => $daysInMonth) {
+            if ($islamicDay <= $daysInMonth) {
+                $islamicMonth = $index + 1;
+                break;
             }
+            $islamicDay -= $daysInMonth;
+        }
+        
+        // Ensure valid values
+        if ($islamicMonth > 12) {
+            $islamicMonth = 12;
+        }
+        if ($islamicDay > 30) {
+            $islamicDay = 30;
+        }
+        if ($islamicDay < 1) {
+            $islamicDay = 1;
         }
         
         // Return the calculated Islamic date
         return [
             'day' => (string)(int)$islamicDay,
-            'month' => $islamicMonths[$islamicMonth],
+            'month' => $islamicMonths[$islamicMonth] ?? 'Unknown',
             'year' => (string)$islamicYear
         ];
     }

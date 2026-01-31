@@ -276,6 +276,26 @@ class PrayerTimeController extends Controller
      */
     public function bulkDelete(Request $request)
     {
+        // Handle delete all records
+        if ($request->delete_all === 'true') {
+            try {
+                $totalCount = PrayerTime::count();
+                PrayerTime::truncate();
+                
+                $message = $totalCount === 1 
+                    ? "Successfully deleted 1 prayer time." 
+                    : "Successfully deleted {$totalCount} prayer times.";
+                    
+                return redirect()->route('admin.prayer-times.index')
+                    ->with('success', $message);
+            } catch (\Exception $e) {
+                Log::error('Bulk delete all error: ' . $e->getMessage());
+                return redirect()->back()
+                    ->with('error', 'Bulk delete failed. Please try again.');
+            }
+        }
+        
+        // Handle delete specific records
         $request->validate([
             'prayer_time_ids' => 'required|array|min:1',
             'prayer_time_ids.*' => 'exists:prayer_times,id',

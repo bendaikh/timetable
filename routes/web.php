@@ -66,7 +66,7 @@ Route::post('/logout', function (Illuminate\Http\Request $request) {
 
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
-    Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard')->middleware('no-cache-dashboard');
     
     // Profile management routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile.edit');

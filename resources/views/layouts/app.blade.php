@@ -13,13 +13,18 @@
     
     <!-- Custom CSS -->
     <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            width: 100%;
+        }
+        
         body {
             font-family: {{ $settings['display_font_family'] ?? 'Arial, sans-serif' }};
             background-color: {{ $settings['display_background_color'] ?? '#ffffff' }};
             color: {{ $settings['display_text_color'] ?? '#000000' }};
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
         }
         
         /* Digital Information Board Layout */
@@ -28,25 +33,27 @@
             display: flex;
             flex-direction: column;
             font-family: 'Courier New', monospace;
+            overflow: hidden;
         }
         
         /* Unified Container for Consistent Width */
         .unified-container {
             width: 100%;
             max-width: 100%;
-            margin: 0 auto;
+            margin: 0;
             padding: 0 15px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            height: 100%;
+            height: 100vh;
+            overflow: hidden;
         }
         
         /* Top Header */
         .board-header {
             background: rgba(255, 255, 255, 0.95);
-            padding: clamp(15px, 3vh, 25px);
-            border-bottom: clamp(1px, 0.2vw, 3px) solid #000;
+            padding: clamp(20px, 4vh, 35px) clamp(15px, 3vw, 30px);
+            border-bottom: 3px solid #000;
             flex-shrink: 0;
             width: 100%;
             box-sizing: border-box;
@@ -84,22 +91,25 @@
         
         /* Main Content Area */
         .board-main-content {
-            flex-grow: 1;
-            padding: 20px 0;
+            flex: 1;
+            padding: clamp(10px, 2vh, 20px) 0;
             display: flex;
             align-items: stretch;
-            gap: 15px;
+            gap: clamp(12px, 2vw, 20px);
             width: 100%;
             box-sizing: border-box;
+            min-height: 0;
+            overflow: hidden;
         }
         
         /* Prayer Times Section */
         .prayer-times-section {
             background: rgba(255, 255, 255, 0.9);
             border: 2px solid #000;
-            padding: 20px;
+            padding: clamp(15px, 2.5vh, 25px);
             height: 100%;
             position: relative;
+            overflow-y: auto;
         }
         
         /* Logo Background for Prayer Times Section */
@@ -172,10 +182,10 @@
         .hadeeth-section {
             background: rgba(255, 255, 255, 0.9);
             border: 2px solid #000;
-            padding: 20px;
+            padding: clamp(15px, 2.5vh, 25px);
             height: 100%;
             position: relative;
-            overflow: hidden;
+            overflow-y: auto;
         }
         
         .hadeeth-header {
@@ -233,8 +243,9 @@
         .announcements-section {
             background: rgba(255, 255, 255, 0.9);
             border: 2px solid #000;
-            padding: 20px;
+            padding: clamp(15px, 2.5vh, 25px);
             height: 100%;
+            overflow-y: auto;
         }
         
         .announcements-header {
@@ -376,16 +387,20 @@
         
         /* Scrolling Text Area */
         .scrolling-text-area {
-            background: #F8B803;
-            color: #fff;
-            padding: clamp(15px, 2.5vh, 25px) 0;
+            padding: clamp(15px, 2.5vh, 25px) 0 !important;
             flex-shrink: 0;
-            box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.2);
             width: 100%;
             box-sizing: border-box;
             margin: 0;
-            /* Ensure consistent width with special times box */
             max-width: 100%;
+            min-height: 80px !important;
+            display: flex !important;
+            align-items: center;
+            justify-content: flex-start;
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
         }
         
         .scroll-separator {
@@ -397,8 +412,13 @@
         .scrolling-content {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: clamp(20px, 3vw, 35px);
+            justify-content: flex-start;
+            width: 100%;
+            padding: 0 clamp(15px, 2vw, 30px);
+            box-sizing: border-box;
+            height: auto;
+            min-height: 50px;
+            overflow: hidden;
         }
         
         .scroll-arrow {
@@ -410,25 +430,44 @@
         
         .scrolling-text {
             flex-grow: 1;
-            overflow: hidden;
             white-space: nowrap;
             position: relative;
+            width: 100%;
+            height: auto;
+            display: flex;
+            align-items: center;
+            line-height: 1.2;
+            overflow: hidden !important;
+            min-width: 0;
         }
         
         .scroll-wrapper {
-            display: inline-block;
-            animation: scroll-left 45s linear infinite;
+            display: inline-flex;
             white-space: nowrap;
+            animation: scroll-left 40s linear infinite !important;
             will-change: transform;
+            gap: 80px;
+            min-width: fit-content;
+        }
+        
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(100vw);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
         }
         
         .scroll-item {
             display: inline-block;
-            margin-right: clamp(50px, 8vw, 100px);
-            font-size: clamp(1.5rem, 3vw, 2.5rem);
-            font-weight: 900;
-            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
-            letter-spacing: 1px;
+            margin-right: clamp(80px, 10vw, 120px);
+            font-size: clamp(1rem, 2vw, 1.6rem);
+            font-weight: 600;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         
         /* Logo Watermark */
@@ -449,7 +488,7 @@
         
         /* Fullscreen styles */
         .fullscreen-mode {
-            background: linear-gradient(135deg, #0b3d0b 0%, #F8B803 55%, #8B7500 100%) !important;
+            background: #fdf7e6 !important;
         }
         
         /* Hide header fullscreen button in fullscreen mode */
@@ -567,21 +606,11 @@
             }
         }
         
-        /* Animation for scrolling text */
-        @keyframes scroll-left {
-            0% { 
-                transform: translateX(0%); 
-            }
-            100% { 
-                transform: translateX(-100%); 
-            }
+        /* Pause scrolling animation on hover */
+        .scrolling-text:hover .scroll-wrapper {
+            animation-play-state: paused !important;
         }
         
-        /* Pause animation on hover */
-        .scrolling-text:hover .scroll-wrapper {
-            animation-play-state: paused;
-        }
-
         /* Media Display Overlay Styles */
         .media-overlay {
             position: fixed;

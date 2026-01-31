@@ -505,18 +505,19 @@ class GoogleSheetsService
         Log::info("Parsing date: '{$dateString}' for row {$rowNumber}");
 
         // Try different date formats
+        // NOTE: d/m/Y should come before m/d/Y to properly handle dates like 13/01/2026
         $formats = [
             'Y-m-d',           // 2025-01-01
-            'm/d/Y',           // 1/1/2025
-            'd/m/Y',           // 1/1/2025
+            'd/m/Y',           // 1/1/2025 (DD/MM/YYYY - tries this first to handle invalid months)
+            'm/d/Y',           // 1/1/2025 (MM/DD/YYYY - fallback if day > 12)
             'Y/m/d',           // 2025/1/1
-            'm-d-Y',           // 1-1-2025
             'd-m-Y',           // 1-1-2025
+            'm-d-Y',           // 1-1-2025
             'Y-m-d H:i:s',     // 2025-01-01 00:00:00
-            'm/d/Y H:i:s',     // 1/1/2025 00:00:00
             'd/m/Y H:i:s',     // 1/1/2025 00:00:00
-            'n/j/Y',           // 1/1/2025 (no leading zeros)
-            'j/n/Y',           // 1/1/2025 (no leading zeros)
+            'm/d/Y H:i:s',     // 1/1/2025 00:00:00
+            'j/n/Y',           // 1/1/2025 (no leading zeros - DD/MM)
+            'n/j/Y',           // 1/1/2025 (no leading zeros - MM/DD)
         ];
 
         foreach ($formats as $format) {
