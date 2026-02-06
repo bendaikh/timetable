@@ -215,12 +215,6 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.hadeeths.index') }}">
-                        <i class="bi bi-book me-2"></i>
-                        Hadeeths
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.media.index') }}">
                         <i class="bi bi-images me-2"></i>
                         Media Management

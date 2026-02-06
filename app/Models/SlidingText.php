@@ -20,7 +20,7 @@ class SlidingText extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'animation_speed' => 'integer',
-        'font_size' => 'integer',
+        'font_size' => 'float', // Updated to allow decimal values for rem
         'display_order' => 'integer'
     ];
 

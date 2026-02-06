@@ -62,11 +62,11 @@
 
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="font_size" class="form-label">Font Size <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control @error('font_size') is-invalid @enderror" 
+                                    <label for="font_size" class="form-label">Font Size (rem) <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('font_size') is-invalid @enderror" 
                                            id="font_size" name="font_size" value="{{ old('font_size', $slidingText->font_size) }}" 
-                                           min="10" max="160" required>
-                                    <div class="form-text">Font size (10-160px / up to 10rem)</div>
+                                           placeholder="e.g., 3, 5.5, 10" pattern="^[0-9]+(\.[0-9]+)?$" required>
+                                    <div class="form-text">Enter the font size in rem units (e.g., 3rem, 10rem)</div>
                                     @error('font_size')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

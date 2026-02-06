@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\PrayerTime;
 use App\Models\Announcement;
-use App\Models\Hadeeth;
 use App\Models\Setting;
 use Carbon\Carbon;
 
@@ -29,12 +28,6 @@ class ApiController extends Controller
         return response()->json($announcements);
     }
 
-    public function hadeeth()
-    {
-        $hadeeth = Hadeeth::getTodayHadeeth();
-        return response()->json($hadeeth);
-    }
-
     public function nextPrayer()
     {
         $nextPrayer = PrayerTime::getNextPrayer();
@@ -51,7 +44,6 @@ class ApiController extends Controller
             'display_text_color' => Setting::get('display_text_color', '#000000'),
             'prayer_time_font_size' => Setting::get('prayer_time_font_size', '24'),
             'announcement_scroll_speed' => Setting::get('announcement_scroll_speed', '3'),
-            'hadeeth_display_duration' => Setting::get('hadeeth_display_duration', '30'),
             'auto_refresh_interval' => Setting::get('auto_refresh_interval', '60'),
         ];
         

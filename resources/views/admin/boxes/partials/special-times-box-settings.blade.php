@@ -65,10 +65,12 @@
                    value="{{ old('styling_settings.header_text_color', $box->styling_settings['header_text_color'] ?? '#000000') }}">
         </div>
         <div class="col-md-6">
-            <label for="header_font_size" class="form-label">Header Font Size</label>
+            <label for="header_font_size" class="form-label">Header Font Size (rem)</label>
             <input type="text" class="form-control" id="header_font_size" name="styling_settings[header_font_size]"
                    value="{{ old('styling_settings.header_font_size', $box->styling_settings['header_font_size'] ?? '1rem') }}"
-                   placeholder="e.g., 1rem, 16px">
+                   placeholder="e.g., 0.8, 1, 1.2"
+                   pattern="^[0-9]+(\.[0-9]+)?$">
+            <div class="form-text">Enter font size in rem units. Example: 1rem = 16px</div>
         </div>
     </div>
 </div>

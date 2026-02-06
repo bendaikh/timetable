@@ -156,7 +156,7 @@
                         background-color: {{ $prayerStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                         color: {{ $prayerStyling['text_color'] ?? '#000000' }};
                         font-family: {{ $prayerStyling['font_family'] ?? 'Arial, sans-serif' }};
-                        font-size: {{ $prayerStyling['font_size'] ?? '3.5rem' }};
+                        font-size: {{ $prayerStyling['font_size'] ?? '3.5rem' }}; /* Ensure rem values are applied directly */
                         border: {{ $prayerStyling['border_width'] ?? '1px' }} solid {{ $prayerStyling['border_color'] ?? '#0066cc' }};
                         padding: 10px 15px;
                         margin: 0;
@@ -167,7 +167,7 @@
                         <div class="prayer-header" style="
                             background-color: {{ $prayerStyling['header_background_color'] ?? 'transparent' }};
                             color: {{ $prayerStyling['header_text_color'] ?? '#000000' }};
-                            font-size: {{ $prayerStyling['header_font_size'] ?? '3.5rem' }};
+                            font-size: {{ $prayerStyling['header_font_size'] ? (strpos($prayerStyling['header_font_size'], 'rem') !== false ? $prayerStyling['header_font_size'] : $prayerStyling['header_font_size'] . 'rem') : '1rem' }};
                             margin: 0 0 10px 0;
                             padding: 8px;
                             text-align: center;
@@ -202,16 +202,16 @@
                                     <div class="next-prayer-text" style="
                                         margin-bottom: 8px; 
                                         font-weight: bold;
-                                        font-size: {{ $prayerStyling['next_prayer_font_size'] ?? '1.4rem' }} !important;
+                                        font-size: {{ $prayerStyling['next_prayer_font_size'] ? (strpos($prayerStyling['next_prayer_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_font_size'] : $prayerStyling['next_prayer_font_size'] . 'rem') : '1.4rem' }} !important;
                                         color: {{ $prayerStyling['next_prayer_text_color'] ?? '#000000' }} !important;
                                     ">Next prayer in:</div>
                                     <div id="next-prayer-countdown" class="next-prayer-countdown" style="
-                                        font-size: {{ $prayerStyling['next_prayer_countdown_font_size'] ?? '1.4rem' }} !important; 
+                                        font-size: {{ $prayerStyling['next_prayer_countdown_font_size'] ? (strpos($prayerStyling['next_prayer_countdown_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_countdown_font_size'] : $prayerStyling['next_prayer_countdown_font_size'] . 'rem') : '1.4rem' }} !important; 
                                         font-weight: bold;
                                         color: {{ $prayerStyling['next_prayer_countdown_color'] ?? '#000000' }} !important;
                                     ">--:--:--</div>
                                     <div id="next-prayer-name" class="next-prayer-name" style="
-                                        font-size: {{ $prayerStyling['next_prayer_name_font_size'] ?? '0.9rem' }} !important; 
+                                        font-size: {{ $prayerStyling['next_prayer_name_font_size'] ? (strpos($prayerStyling['next_prayer_name_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_name_font_size'] : $prayerStyling['next_prayer_name_font_size'] . 'rem') : '0.9rem' }} !important; 
                                         margin-top: 5px; 
                                         opacity: 0.8;
                                         color: {{ $prayerStyling['next_prayer_name_color'] ?? '#666666' }} !important;
@@ -222,28 +222,28 @@
                         <div class="prayer-list">
                             <div class="prayer-row" data-prayer-name="fajr" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
                                 <div class="prayer-name" style="text-align: left; font-size: 3rem; font-weight: bold;">Fajr</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: 3rem; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: 3rem;">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="zohar" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
                                 <div class="prayer-name" style="text-align: left; font-size: 3rem; font-weight: bold;">Zohar</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: 3rem; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: 3rem;">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="asr" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
                                 <div class="prayer-name" style="text-align: left; font-size: 3rem; font-weight: bold;">Asr</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: 3rem; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: 3rem;">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="maghrib" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
                                 <div class="prayer-name" style="text-align: left; font-size: 3rem; font-weight: bold;">Maghrib</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: 3rem; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: 3rem;">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="isha" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
                                 <div class="prayer-name" style="text-align: left; font-size: 3rem; font-weight: bold;">Isha</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: 3rem; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: 3rem;">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                         </div>
                         
@@ -259,16 +259,16 @@
                                     <div class="next-prayer-text" style="
                                         margin-bottom: 8px; 
                                         font-weight: bold;
-                                        font-size: {{ $prayerStyling['next_prayer_font_size'] ?? '1.4rem' }} !important;
+                                        font-size: {{ $prayerStyling['next_prayer_font_size'] ? (strpos($prayerStyling['next_prayer_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_font_size'] : $prayerStyling['next_prayer_font_size'] . 'rem') : '1.4rem' }} !important;
                                         color: {{ $prayerStyling['next_prayer_text_color'] ?? '#000000' }} !important;
                                     ">Next prayer in:</div>
                                     <div id="next-prayer-countdown" class="next-prayer-countdown" style="
-                                        font-size: {{ $prayerStyling['next_prayer_countdown_font_size'] ?? '1.4rem' }} !important; 
+                                        font-size: {{ $prayerStyling['next_prayer_countdown_font_size'] ? (strpos($prayerStyling['next_prayer_countdown_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_countdown_font_size'] : $prayerStyling['next_prayer_countdown_font_size'] . 'rem') : '1.4rem' }} !important; 
                                         font-weight: bold;
                                         color: {{ $prayerStyling['next_prayer_countdown_color'] ?? '#000000' }} !important;
                                     ">--:--:--</div>
                                     <div id="next-prayer-name" class="next-prayer-name" style="
-                                        font-size: {{ $prayerStyling['next_prayer_name_font_size'] ?? '0.9rem' }} !important; 
+                                        font-size: {{ $prayerStyling['next_prayer_name_font_size'] ? (strpos($prayerStyling['next_prayer_name_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_name_font_size'] : $prayerStyling['next_prayer_name_font_size'] . 'rem') : '0.9rem' }} !important; 
                                         margin-top: 5px; 
                                         opacity: 0.8;
                                         color: {{ $prayerStyling['next_prayer_name_color'] ?? '#666666' }} !important;
@@ -327,35 +327,66 @@
                         background-color: {{ $announcementsStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                         color: {{ $announcementsStyling['text_color'] ?? '#000000' }};
                         font-family: {{ $announcementsStyling['font_family'] ?? 'Arial, sans-serif' }};
-                        font-size: {{ $announcementsStyling['font_size'] ?? '3rem' }};
                         border: {{ $announcementsStyling['border_width'] ?? '1px' }} solid {{ $announcementsStyling['border_color'] ?? '#0066cc' }};
                         border-radius: 0px;
-                        padding: 10px 15px;
+                        padding: {{ $announcementsStyling['padding'] ?? '15' }}px;
                         margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        height: 100%;
                     ">
                         <div class="announcements-header" style="
                             color: {{ $announcementsStyling['title_color'] ?? '#000000' }};
-                            font-size: {{ $announcementsStyling['title_font_size'] ?? '3.5rem' }};
+                            font-size: {{ $announcementsStyling['title_font_size'] ? (strpos($announcementsStyling['title_font_size'], 'rem') !== false ? $announcementsStyling['title_font_size'] : $announcementsStyling['title_font_size'] . 'rem') : '1.4rem' }};
                             font-weight: bold;
-                            margin-bottom: 15px;
                             text-align: center;
-                            margin: 0 0 10px 0;
+                            margin: 0 0 15px 0;
+                            flex-shrink: 0;
                         ">{{ $announcementsContent['title'] ?? 'Announcements' }}</div>
                 @elseif(!$useBoxesStyling)
                     <div class="announcements-section" style=\"padding: 10px 15px; margin: 0;\">
                         <div class="announcements-header" style=\"font-size: 3.5rem; margin: 0 0 10px 0;\">{{ $announcementsContent['title'] ?? 'Announcements' }}</div>
                 @endif
-                    <div class="announcements-content" id="announcements-content" style="margin: 0;">
+                    <div class="announcements-content" id="announcements-content" style="
+                        margin: 0;
+                        flex: 1;
+                        overflow-y: auto;
+                        display: flex;
+                        flex-direction: column;
+                    ">
                         @if($announcements->count() > 0)
                             @foreach($announcements as $index => $announcement)
-                                <div class="announcement-item rotating-announcement" data-index="{{ $index }}" style="display: none; margin: 0;">
-                                    <div class="announcement-title" style="font-weight: bold; margin-bottom: 5px; color: {{ $announcementsStyling['text_color'] ?? '#000000' }}; font-size: 2.5rem;">{{ $announcement->title }}</div>
-                                    <div class="announcement-text" style="font-size: 2.5rem; color: {{ $announcementsStyling['text_color'] ?? '#000000' }}; max-height: 180px; overflow: hidden; word-wrap: break-word; margin: 0;">{{ Str::limit($announcement->content, 300, '...') }}</div>
+                                <div class="announcement-item rotating-announcement" data-index="{{ $index }}" style="
+                                    display: none;
+                                    margin: 0;
+                                    padding: 0;
+                                    word-wrap: break-word;
+                                    word-break: break-word;
+                                    overflow: hidden;
+                                ">
+                                    <div class="announcement-title" style="
+                                        font-weight: bold;
+                                        margin-bottom: 8px;
+                                        color: {{ $announcementsStyling['text_color'] ?? '#000000' }};
+                                        font-size: {{ $announcementsStyling['font_size'] ? (strpos($announcementsStyling['font_size'], 'rem') !== false ? $announcementsStyling['font_size'] : $announcementsStyling['font_size'] . 'rem') : '1.2rem' }};
+                                        line-height: 1.3;
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                    ">{{ $announcement->title }}</div>
+                                    <div class="announcement-text" style="
+                                        font-size: {{ $announcementsStyling['font_size'] ? (strpos($announcementsStyling['font_size'], 'rem') !== false ? $announcementsStyling['font_size'] : $announcementsStyling['font_size'] . 'rem') : '1rem' }};
+                                        color: {{ $announcementsStyling['text_color'] ?? '#000000' }};
+                                        max-height: {{ $announcementsLayout['max_height'] ?? '400' }}px;
+                                        overflow: hidden;
+                                        word-wrap: break-word;
+                                        line-height: 1.4;
+                                        margin: 0;
+                                    ">{{ Str::limit($announcement->content, 300, '...') }}</div>
                                 </div>
                             @endforeach
                         @else
-                            <div class="announcement-placeholder">
-                                <p>Announcements should be centered in large and clear text.</p>
+                            <div class="announcement-placeholder" style="text-align: center; padding: 20px;">
+                                <p style="margin: 0; font-size: 0.9rem;">No announcements currently.</p>
                             </div>
                         @endif
                     </div>
@@ -378,7 +409,7 @@
                 background-color: {{ $specialStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                 color: {{ $specialStyling['text_color'] ?? '#000000' }};
                 font-family: {{ $specialStyling['font_family'] ?? 'Courier New, monospace' }};
-                font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }};
+                font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }};
                 border: {{ $specialStyling['border_width'] ?? '2px' }} solid {{ $specialStyling['border_color'] ?? '#000000' }};
                 border-radius: 0px;
                 padding: 10px 15px;
@@ -392,6 +423,7 @@
                             grid-template-columns: {{ implode(' ', $specialLayout['column_widths'] ?? ['14%', '14%', '14%', '14%', '14%', '15%', '15%']) }};
                             gap: 10px;
                             align-items: center;
+                            font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; /* Ensure font size is applied */
                         ">
                             @php
                                 $tableHeaders = [
@@ -415,32 +447,32 @@
                                 ];
                             @endphp
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[0] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; font-weight: bold;">{{ $times[0] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[0] }}</div>
+                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[0] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[1] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; font-weight: bold;">{{ $times[1] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[1] }}</div>
+                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[1] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[2] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; font-weight: bold;">{{ $times[2] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[2] }}</div>
+                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[2] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[3] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; font-weight: bold;">{{ $times[3] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[3] }}</div>
+                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[3] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[4] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; font-weight: bold;">{{ $times[4] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[4] }}</div>
+                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[4] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[5] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; font-weight: bold;">{{ $times[5] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[5] }}</div>
+                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[5] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[6] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ?? '2.5rem' }}; font-weight: bold;">{{ $times[6] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[6] }}</div>
+                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[6] }}</div>
                             </div>
                         </div>
                     </div>
@@ -536,10 +568,28 @@
                         <div class="scroll-wrapper">
                             @if($slidingTexts->count() > 0)
                                 @foreach($slidingTexts as $slidingText)
-                                <span class="scroll-item">{{ $slidingText->text }}</span>
+                                    @php
+                                        $slidingFontSize = $slidingText->font_size
+                                            ? $slidingText->font_size . 'rem'
+                                            : ($slidingStyling['font_size'] ?? '3rem');
+                                        $slidingFontWeight = $slidingText->font_weight
+                                            ?? ($slidingStyling['font_weight'] ?? '700');
+                                        $slidingTextColor = $slidingText->text_color
+                                            ?? ($slidingStyling['text_color'] ?? '#000000');
+                                    @endphp
+                                    <span class="scroll-item" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
                                 @endforeach
                                 @foreach($slidingTexts as $slidingText)
-                                <span class="scroll-item">{{ $slidingText->text }}</span>
+                                    @php
+                                        $slidingFontSize = $slidingText->font_size
+                                            ? $slidingText->font_size . 'rem'
+                                            : ($slidingStyling['font_size'] ?? '3rem');
+                                        $slidingFontWeight = $slidingText->font_weight
+                                            ?? ($slidingStyling['font_weight'] ?? '700');
+                                        $slidingTextColor = $slidingText->text_color
+                                            ?? ($slidingStyling['text_color'] ?? '#000000');
+                                    @endphp
+                                    <span class="scroll-item" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
                                 @endforeach
                             @else
                                 <span class="scroll-item">Welcome to the Masjid - No sliding text configured</span>
@@ -556,10 +606,24 @@
                         <div class="scroll-wrapper">
                             @if($slidingTexts->count() > 0)
                                 @foreach($slidingTexts as $slidingText)
-                                <span class="scroll-item">{{ $slidingText->text }}</span>
+                                    @php
+                                        $slidingFontSize = $slidingText->font_size
+                                            ? $slidingText->font_size . 'rem'
+                                            : '3rem';
+                                        $slidingFontWeight = $slidingText->font_weight ?? '700';
+                                        $slidingTextColor = $slidingText->text_color ?? '#000000';
+                                    @endphp
+                                    <span class="scroll-item" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
                                 @endforeach
                                 @foreach($slidingTexts as $slidingText)
-                                <span class="scroll-item">{{ $slidingText->text }}</span>
+                                    @php
+                                        $slidingFontSize = $slidingText->font_size
+                                            ? $slidingText->font_size . 'rem'
+                                            : '3rem';
+                                        $slidingFontWeight = $slidingText->font_weight ?? '700';
+                                        $slidingTextColor = $slidingText->text_color ?? '#000000';
+                                    @endphp
+                                    <span class="scroll-item" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
                                 @endforeach
                             @else
                                 <span class="scroll-item">Welcome to the Masjid - No sliding text configured</span>
@@ -574,6 +638,86 @@
     </div>
 
 </div>
+
+<style>
+    /* Next Prayer Info Container - Prevent overflow and ensure proper spacing */
+    .next-prayer-info {
+        max-height: 350px !important;
+        overflow: hidden !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        line-height: 1.3 !important;
+    }
+
+    /* Next Prayer Text - Prevent font size from pushing content */
+    .next-prayer-text {
+        display: block !important;
+        white-space: normal !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+    }
+
+    /* Countdown Timer - Handle large font sizes */
+    .next-prayer-countdown {
+        display: block !important;
+        word-break: break-all !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        line-height: 1.2 !important;
+        padding: 0 5px !important;
+    }
+
+    /* Prayer Name - Ensure it fits */
+    .next-prayer-name {
+        display: block !important;
+        white-space: normal !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+        margin-top: 5px !important;
+    }
+
+    /* Announcements Section - Overflow Management */
+    .announcements-section {
+        display: flex !important;
+        flex-direction: column !important;
+        min-height: 0 !important;
+    }
+
+    .announcements-content {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        min-height: 0 !important;
+    }
+
+    .announcement-item {
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow: hidden !important;
+        flex-shrink: 0 !important;
+    }
+
+    .announcement-title {
+        overflow: hidden !important;
+        white-space: normal !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+    }
+
+    .announcement-text {
+        overflow: hidden !important;
+        white-space: normal !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 6 !important;
+        -webkit-box-orient: vertical !important;
+    }
+</style>
+
 @endsection
 
 @section('scripts')
@@ -1547,5 +1691,30 @@
             }, 250);
         });
     }
+
+    // ===== LIVE UPDATE FUNCTIONALITY =====
+    // Poll for changes every 5 seconds and refresh the page
+    (function initLiveUpdates() {
+        let lastUpdateTime = new Date().getTime();
+        
+        // Check for updates every 5 seconds
+        setInterval(() => {
+            fetch('/api/settings')
+                .then(response => response.json())
+                .then(data => {
+                    // Check if any box settings have been updated
+                    // by comparing a timestamp or hash
+                    const currentTime = new Date().getTime();
+                    
+                    // Reload the page if more than 5 seconds have passed
+                    // This ensures we get the latest data
+                    if (currentTime - lastUpdateTime > 4000) {
+                        // Use a soft reload that preserves scroll position where possible
+                        location.reload();
+                    }
+                })
+                .catch(error => console.log('Live update check failed:', error));
+        }, 5000);
+    })();
 </script>
 @endsection

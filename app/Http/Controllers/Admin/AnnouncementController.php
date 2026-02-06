@@ -22,7 +22,7 @@ class AnnouncementController extends Controller
      */
     public function create()
     {
-        return view('admin.announcements.create');
+        return view('admin.announcements.form');
     }
 
     /**
@@ -32,35 +32,26 @@ class AnnouncementController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'is_active' => 'boolean',
-            'auto_repeat' => 'boolean',
-            'repeat_days' => 'nullable|array',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'display_duration' => 'required|integer|min:1|max:120',
-            'font_size' => 'required|integer|min:12|max:160',
-            'text_color' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
-            'background_color' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
-            'scroll_speed' => 'required|integer|min:1|max:10',
+            'content' => 'required|string|max:250',
+            'active' => 'boolean',
+            'priority' => 'nullable|integer|between:1,3',
         ]);
 
-        $data = $request->all();
-        $data['is_active'] = $request->has('is_active');
-        $data['auto_repeat'] = $request->has('auto_repeat');
-
-        Announcement::create($data);
+        Announcement::create([
+            'title' => $request->title,
+            'content' => $request->content,
+            'active' => $request->has('active'),
+            'priority' => $request->priority ?? 1,
+            'is_active' => $request->has('active'),
+            'display_duration' => 10,
+            'font_size' => 48,
+            'text_color' => '#000000',
+            'background_color' => '#ffffff',
+            'scroll_speed' => 5,
+        ]);
 
         return redirect()->route('admin.announcements.index')
             ->with('success', 'Announcement created successfully.');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Announcement $announcement)
-    {
-        return view('admin.announcements.show', compact('announcement'));
     }
 
     /**
@@ -68,7 +59,7 @@ class AnnouncementController extends Controller
      */
     public function edit(Announcement $announcement)
     {
-        return view('admin.announcements.edit', compact('announcement'));
+        return view('admin.announcements.form', compact('announcement'));
     }
 
     /**
@@ -78,24 +69,18 @@ class AnnouncementController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'is_active' => 'boolean',
-            'auto_repeat' => 'boolean',
-            'repeat_days' => 'nullable|array',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'display_duration' => 'required|integer|min:1|max:120',
-            'font_size' => 'required|integer|min:12|max:160',
-            'text_color' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
-            'background_color' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
-            'scroll_speed' => 'required|integer|min:1|max:10',
+            'content' => 'required|string|max:250',
+            'active' => 'boolean',
+            'priority' => 'nullable|integer|between:1,3',
         ]);
 
-        $data = $request->all();
-        $data['is_active'] = $request->has('is_active');
-        $data['auto_repeat'] = $request->has('auto_repeat');
-
-        $announcement->update($data);
+        $announcement->update([
+            'title' => $request->title,
+            'content' => $request->content,
+            'active' => $request->has('active'),
+            'is_active' => $request->has('active'),
+            'priority' => $request->priority ?? 1,
+        ]);
 
         return redirect()->route('admin.announcements.index')
             ->with('success', 'Announcement updated successfully.');

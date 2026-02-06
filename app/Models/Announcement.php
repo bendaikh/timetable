@@ -11,6 +11,8 @@ class Announcement extends Model
         'title',
         'content',
         'is_active',
+        'active',
+        'priority',
         'auto_repeat',
         'repeat_days',
         'start_date',
@@ -24,14 +26,22 @@ class Announcement extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'active' => 'boolean',
         'auto_repeat' => 'boolean',
         'repeat_days' => 'array',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'display_duration' => 'integer',
         'font_size' => 'integer',
-        'scroll_speed' => 'integer'
+        'scroll_speed' => 'integer',
+        'priority' => 'integer'
     ];
+
+    // Accessor for 'active' field (defaults to is_active if not set)
+    public function getActiveAttribute($value)
+    {
+        return $value !== null ? $value : $this->is_active;
+    }
 
     public static function getActiveAnnouncements()
     {

@@ -15,11 +15,15 @@
 
             <div class="card">
                 <div class="card-body">
+                    <!-- Layout: Form on left, Preview on right -->
+                    <div class="row">
+                        <div class="col-md-6">
+                    
                     <form action="{{ route('admin.announcements.store') }}" method="POST">
                         @csrf
                         
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="mb-3">
                                     <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control @error('title') is-invalid @enderror" 
@@ -32,15 +36,18 @@
                                 <div class="mb-3">
                                     <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
                                     <textarea class="form-control @error('content') is-invalid @enderror" 
-                                              id="content" name="content" rows="6" required>{{ old('content') }}</textarea>
-                                    <div class="form-text">
-                                        Characters: <strong id="char-count">0</strong>/300 recommended
-                                        <div id="char-warning" style="display: none; margin-top: 8px;" class="alert alert-warning py-2 px-3 mb-0">
-                                            <i class="bi bi-exclamation-triangle me-1"></i><span id="warning-text"></span>
-                                        </div>
+                                              id="content" name="content" rows="6" maxlength="300" required>{{ old('content') }}</textarea>
+                                    <div class="form-text d-flex justify-content-between align-items-center mt-2">
+                                        <span>
+                                            Characters: <strong id="char-count">0</strong>/300
+                                        </span>
+                                        <small id="char-remaining" class="text-success">300 remaining</small>
+                                    </div>
+                                    <div id="char-warning" style="display: none; margin-top: 8px;" class="alert alert-warning py-2 px-3 mb-0">
+                                        <i class="bi bi-exclamation-triangle me-1"></i><span id="warning-text"></span>
                                     </div>
                                     @error('content')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
 
@@ -57,23 +64,35 @@
 
                                 <div class="mb-3">
                                     <label for="font_size" class="form-label">Font Size <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control @error('font_size') is-invalid @enderror" 
-                                           id="font_size" name="font_size" value="{{ old('font_size', 24) }}" 
-                                           min="12" max="160" required>
-                                    <div class="form-text">Font size for the announcement text (12-160px / up to 10rem)</div>
+                                    <div class="d-flex gap-2">
+                                        <input type="range" class="form-range flex-grow-1" 
+                                               id="font_size_range" min="12" max="160" value="{{ old('font_size', 24) }}">
+                                        <input type="number" class="form-control" style="width: 80px;" 
+                                               id="font_size" name="font_size" value="{{ old('font_size', 24) }}" 
+                                               min="12" max="160" required>
+                                        <span class="input-group-text" id="font-size-label">px</span>
+                                    </div>
+                                    <small class="form-text d-block mt-2">
+                                        <span id="font-size-info"></span> 
+                                        <small id="font-size-warning" style="display: none; color: #ff6b6b;">Large font size - limit text to 150 chars</small>
+                                    </small>
                                     @error('font_size')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="scroll_speed" class="form-label">Scroll Speed <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control @error('scroll_speed') is-invalid @enderror" 
-                                           id="scroll_speed" name="scroll_speed" value="{{ old('scroll_speed', 3) }}" 
-                                           min="1" max="10" required>
-                                    <div class="form-text">How fast the text scrolls (1=slow, 10=fast)</div>
+                                    <div class="d-flex gap-2">
+                                        <input type="range" class="form-range flex-grow-1" 
+                                               id="scroll_speed_range" min="1" max="10" value="{{ old('scroll_speed', 3) }}">
+                                        <input type="number" class="form-control" style="width: 60px;" 
+                                               id="scroll_speed" name="scroll_speed" value="{{ old('scroll_speed', 3) }}" 
+                                               min="1" max="10" required>
+                                    </div>
+                                    <small id="scroll-speed-label" class="form-text d-block mt-2"></small>
                                     @error('scroll_speed')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
@@ -167,11 +186,65 @@
 
                         <div class="d-flex justify-content-end gap-2">
                             <a href="{{ route('admin.announcements.index') }}" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="submit-btn">
                                 <i class="bi bi-save"></i> Save Announcement
                             </button>
                         </div>
                     </form>
+                        </div>
+
+                        <!-- Preview Column (Right Side) -->
+                        <div class="col-md-6">
+                            <div class="card sticky-top" style="top: 20px;">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="bi bi-eye"></i> 85" TV Display Preview</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="announcement-preview-box" class="p-4" style="
+                                        background-color: rgba(253, 247, 230, 0.9);
+                                        border: 2px solid #000;
+                                        border-radius: 8px;
+                                        min-height: 300px;
+                                        display: flex;
+                                        flex-direction: column;
+                                        align-items: center;
+                                        justify-content: center;
+                                        text-align: center;
+                                        overflow: hidden;
+                                        font-family: Arial, sans-serif;
+                                    ">
+                                        <div id="preview-title" style="
+                                            font-size: 1.5rem;
+                                            font-weight: bold;
+                                            margin-bottom: 15px;
+                                            width: 100%;
+                                        ">Announcement Title</div>
+                                        <div id="preview-text" style="
+                                            font-size: 24px;
+                                            word-wrap: break-word;
+                                            width: 100%;
+                                            overflow: hidden;
+                                            display: -webkit-box;
+                                            -webkit-line-clamp: 3;
+                                            -webkit-box-orient: vertical;
+                                        ">Announcement text will appear here...</div>
+                                    </div>
+
+                                    <div class="alert alert-info mt-4 mb-0">
+                                        <strong>Display Info:</strong>
+                                        <div class="small mt-2">
+                                            <p><strong>Font Size:</strong> <span id="preview-font-size">24px</span></p>
+                                            <p><strong>Character Count:</strong> <span id="preview-char-count">0</span>/300</p>
+                                            <p><strong>Estimated Lines:</strong> <span id="preview-lines">1</span></p>
+                                            <p id="preview-fit-warning" style="display: none; color: #ff6b6b; margin-top: 10px;">
+                                                <i class="bi bi-exclamation-triangle"></i> Text may be truncated on TV!
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -180,35 +253,251 @@
 @endsection
 
 @section('scripts')
+<script src="{{ asset('js/announcement-validation.js') }}"></script>
 <script>
-// Character counter and warnings
+// ==================== ENHANCED VALIDATION & PREVIEW ====================
+
+const MAX_CHARS = 300;
+const WARNING_THRESHOLD = 250;
+
+// Elements
 const contentTextarea = document.getElementById('content');
 const fontSizeInput = document.getElementById('font_size');
+const fontSizeRange = document.getElementById('font_size_range');
+const scrollSpeedInput = document.getElementById('scroll_speed');
+const scrollSpeedRange = document.getElementById('scroll_speed_range');
 const charCountDisplay = document.getElementById('char-count');
+const charRemainingDisplay = document.getElementById('char-remaining');
 const charWarningDiv = document.getElementById('char-warning');
 const warningText = document.getElementById('warning-text');
+const titleInput = document.getElementById('title');
 
-function updateCharacterWarning() {
-    const contentLength = contentTextarea.value.length;
-    const fontSize = parseInt(fontSizeInput.value) || 0;
+// Preview elements
+const previewBox = document.getElementById('announcement-preview-box');
+const previewTitle = document.getElementById('preview-title');
+const previewText = document.getElementById('preview-text');
+const previewFontSize = document.getElementById('preview-font-size');
+const previewCharCount = document.getElementById('preview-char-count');
+const previewLines = document.getElementById('preview-lines');
+const previewFitWarning = document.getElementById('preview-fit-warning');
+
+// Font size info
+const fontSizeInfo = document.getElementById('font-size-info');
+const fontSizeWarning = document.getElementById('font-size-warning');
+
+// Scroll speed label
+const scrollSpeedLabel = document.getElementById('scroll-speed-label');
+const speedDescriptions = {
+    1: '🐌 Very Slow',
+    2: '🐢 Slow', 
+    3: '⏱️ Normal',
+    4: '🏃 Fast',
+    5: '⚡ Very Fast',
+    6: '🚀 Super Fast',
+    7: '💨 Extreme',
+    8: '🔥 Ultra',
+    9: '⚙️ Insane',
+    10: '💥 Maximum'
+};
+
+/**
+ * Update character counter and validation status
+ */
+function updateCharCounter() {
+    const charCount = contentTextarea.value.length;
+    const fontSize = parseInt(fontSizeInput.value) || 12;
     
-    charCountDisplay.textContent = contentLength;
+    // Update display
+    charCountDisplay.textContent = charCount;
+    const remaining = Math.max(0, MAX_CHARS - charCount);
+    charRemainingDisplay.textContent = remaining + ' remaining';
     
-    // Show warning based on content length and font size
-    if (fontSize > 60 && contentLength > 150) {
+    // Update preview
+    previewCharCount.textContent = charCount;
+    
+    // Show/hide warning
+    if (charCount > WARNING_THRESHOLD) {
         charWarningDiv.style.display = 'block';
-        warningText.textContent = `Large font size (${fontSize}px) with ${contentLength} characters may cause text to be hidden. Recommended: keep text under 150 characters for fonts above 60px.`;
-    } else if (contentLength > 300) {
-        charWarningDiv.style.display = 'block';
-        warningText.textContent = `Your announcement is ${contentLength} characters long. For optimal display, keep it under 300 characters.`;
+        
+        if (charCount > MAX_CHARS) {
+            warningText.textContent = `⚠️ Character limit exceeded! Maximum ${MAX_CHARS} characters allowed.`;
+            charWarningDiv.className = 'alert alert-danger py-2 px-3 mb-0';
+            document.getElementById('submit-btn').disabled = true;
+        } else {
+            warningText.textContent = `${remaining} characters remaining`;
+            charWarningDiv.className = 'alert alert-warning py-2 px-3 mb-0';
+            document.getElementById('submit-btn').disabled = false;
+        }
     } else {
         charWarningDiv.style.display = 'none';
+        document.getElementById('submit-btn').disabled = false;
+    }
+    
+    // Check if text fits on TV
+    updateTextFitWarning(charCount, fontSize);
+    
+    // Update preview
+    updatePreview();
+}
+
+/**
+ * Prevent typing beyond MAX_CHARS
+ */
+contentTextarea.addEventListener('input', function(e) {
+    if (this.value.length > MAX_CHARS) {
+        this.value = this.value.substring(0, MAX_CHARS);
+        charCountDisplay.textContent = MAX_CHARS;
+    }
+    updateCharCounter();
+});
+
+/**
+ * Validate on paste
+ */
+contentTextarea.addEventListener('paste', function(e) {
+    setTimeout(() => {
+        if (this.value.length > MAX_CHARS) {
+            this.value = this.value.substring(0, MAX_CHARS);
+        }
+        updateCharCounter();
+    }, 0);
+});
+
+/**
+ * Update font size display and preview
+ */
+function updateFontSize() {
+    const fontSize = parseInt(fontSizeInput.value) || 12;
+    
+    // Sync range and input
+    fontSizeRange.value = fontSize;
+    fontSizeInput.value = fontSize;
+    
+    // Update info text
+    if (fontSize > 100) {
+        fontSizeInfo.textContent = '🔤 Extra Large';
+    } else if (fontSize > 60) {
+        fontSizeInfo.textContent = '📢 Large';
+    } else if (fontSize > 40) {
+        fontSizeInfo.textContent = '📝 Medium';
+    } else {
+        fontSizeInfo.textContent = '📄 Small';
+    }
+    
+    // Update warning
+    if (fontSize > 60) {
+        fontSizeWarning.style.display = 'inline';
+    } else {
+        fontSizeWarning.style.display = 'none';
+    }
+    
+    previewFontSize.textContent = fontSize + 'px';
+    previewText.style.fontSize = fontSize + 'px';
+    
+    updateCharCounter();
+}
+
+fontSizeInput.addEventListener('input', updateFontSize);
+fontSizeInput.addEventListener('change', updateFontSize);
+fontSizeRange.addEventListener('input', function() {
+    fontSizeInput.value = this.value;
+    updateFontSize();
+});
+
+/**
+ * Update scroll speed display
+ */
+function updateScrollSpeed() {
+    const speed = parseInt(scrollSpeedInput.value) || 1;
+    
+    // Sync range and input
+    scrollSpeedRange.value = speed;
+    scrollSpeedInput.value = speed;
+    
+    scrollSpeedLabel.textContent = speedDescriptions[speed] || 'Normal';
+}
+
+scrollSpeedInput.addEventListener('change', updateScrollSpeed);
+scrollSpeedRange.addEventListener('input', function() {
+    scrollSpeedInput.value = this.value;
+    updateScrollSpeed();
+});
+
+/**
+ * Check if text will fit on TV
+ */
+function updateTextFitWarning(charCount, fontSize) {
+    const willFit = (fontSize > 60 ? charCount <= 150 : charCount <= 300);
+    
+    if (!willFit && charCount > 0) {
+        previewFitWarning.style.display = 'block';
+    } else {
+        previewFitWarning.style.display = 'none';
+    }
+    
+    // Update estimated lines
+    const charsPerLine = fontSize > 60 ? 20 : 50;
+    const estimatedLines = Math.ceil(charCount / charsPerLine);
+    previewLines.textContent = Math.max(1, estimatedLines);
+}
+
+/**
+ * Update preview in real-time
+ */
+function updatePreview() {
+    if (titleInput) {
+        previewTitle.textContent = titleInput.value || 'Announcement Title';
+    }
+    previewText.textContent = contentTextarea.value || 'Announcement text will appear here...';
+    
+    // Update background and text colors
+    const bgColorInput = document.getElementById('background_color');
+    const textColorInput = document.getElementById('text_color');
+    
+    if (bgColorInput) {
+        previewBox.style.backgroundColor = bgColorInput.value;
+    }
+    if (textColorInput) {
+        previewText.style.color = textColorInput.value;
+        previewTitle.style.color = textColorInput.value;
     }
 }
 
-contentTextarea.addEventListener('input', updateCharacterWarning);
-fontSizeInput.addEventListener('change', updateCharacterWarning);
+if (titleInput) titleInput.addEventListener('input', updatePreview);
+contentTextarea.addEventListener('input', updatePreview);
 
+document.getElementById('background_color').addEventListener('change', updatePreview);
+document.getElementById('text_color').addEventListener('change', updatePreview);
+
+/**
+ * Form submission validation
+ */
+const form = contentTextarea.closest('form');
+if (form) {
+    form.addEventListener('submit', function(e) {
+        const charCount = contentTextarea.value.length;
+        
+        if (charCount === 0) {
+            e.preventDefault();
+            alert('Please enter some content for the announcement.');
+            contentTextarea.focus();
+            return false;
+        }
+
+        if (charCount > MAX_CHARS) {
+            e.preventDefault();
+            alert(`Announcement cannot exceed ${MAX_CHARS} characters. Current: ${charCount} characters.`);
+            contentTextarea.focus();
+            return false;
+        }
+
+        return true;
+    });
+}
+
+/**
+ * Show/hide repeat days section
+ */
 document.getElementById('auto_repeat').addEventListener('change', function() {
     const repeatDaysSection = document.getElementById('repeat-days-section');
     if (this.checked) {
@@ -218,14 +507,22 @@ document.getElementById('auto_repeat').addEventListener('change', function() {
     }
 });
 
-// Initialize the repeat days section visibility based on current state
+/**
+ * Initialize on page load
+ */
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize repeat days section visibility
     const autoRepeatCheckbox = document.getElementById('auto_repeat');
     const repeatDaysSection = document.getElementById('repeat-days-section');
-    
-    if (autoRepeatCheckbox.checked) {
+    if (autoRepeatCheckbox && autoRepeatCheckbox.checked) {
         repeatDaysSection.style.display = 'block';
     }
+    
+    // Initialize all displays
+    updateCharCounter();
+    updateFontSize();
+    updateScrollSpeed();
+    updatePreview();
 });
 </script>
 @endsection

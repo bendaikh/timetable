@@ -125,25 +125,6 @@ class BoxSetting extends Model
                     'column_widths' => ['14%', '14%', '14%', '14%', '14%', '15%', '15%']
                 ]
             ],
-            'hadeeth_box' => [
-                'box_name' => 'Hadeeth of The Day',
-                'content_settings' => [
-                    'title' => 'Hadeeth Of The Day'
-                ],
-                'styling_settings' => [
-                    'background_color' => 'rgba(253, 247, 230, 0.9)',
-                    'text_color' => '#000000',
-                    'title_color' => '#000000',
-                    'font_size' => '1.2rem',
-                    'title_font_size' => '1.6rem',
-                    'border_color' => '#000000',
-                    'border_width' => '2px',
-                    'padding' => '20px'
-                ],
-                'layout_settings' => [
-                    'position' => 'middle_column'
-                ]
-            ],
             'announcements_box' => [
                 'box_name' => 'Announcements',
                 'content_settings' => [
@@ -266,22 +247,35 @@ class BoxSetting extends Model
      */
     public static function rgbaToHex($rgba)
     {
+        // If null or empty, return default
+        if (empty($rgba)) {
+            return '#fdf7e6';
+        }
+        
+        // If already hex, return as-is
+        if (strpos($rgba, '#') === 0) {
+            return $rgba;
+        }
+        
+        // If not RGBA format, return as-is (might be another format)
         if (strpos($rgba, 'rgba') !== 0) {
-            return $rgba; // Already hex or other format
+            return $rgba;
         }
         
         // Extract RGBA values: rgba(253, 247, 230, 0.9)
-        preg_match('/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)/', $rgba, $matches);
-        
-        if (count($matches) === 4) {
-            $r = intval($matches[1]);
-            $g = intval($matches[2]);
-            $b = intval($matches[3]);
-            
-            return sprintf('#%02x%02x%02x', $r, $g, $b);
+        // More flexible regex that handles spaces better
+        if (preg_match('/rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*[\d.]+\s*\)/', $rgba, $matches)) {
+            if (count($matches) === 4) {
+                $r = intval($matches[1]);
+                $g = intval($matches[2]);
+                $b = intval($matches[3]);
+                
+                return sprintf('#%02x%02x%02x', $r, $g, $b);
+            }
         }
         
-        return '#fdf7e6'; // Default fallback
+        // If regex fails, return the original value (don't use default fallback)
+        return $rgba;
     }
 
     /**

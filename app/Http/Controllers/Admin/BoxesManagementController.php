@@ -92,8 +92,17 @@ class BoxesManagementController extends Controller
                 ->withInput();
         }
 
+        // Merge styling settings with existing ones (don't replace them)
+        // Ensure existing settings are arrays, not strings
+        $existingStyleSettings = is_array($box->styling_settings) ? $box->styling_settings : (is_string($box->styling_settings) ? json_decode($box->styling_settings, true) ?? [] : []);
+        $requestStyleSettings = is_array($request->styling_settings) ? $request->styling_settings : (is_string($request->styling_settings) ? json_decode($request->styling_settings, true) ?? [] : []);
+        
+        $stylingSettings = array_merge(
+            $existingStyleSettings,
+            $requestStyleSettings
+        );
+        
         // Convert hex background color to RGBA for storage
-        $stylingSettings = $request->styling_settings ?? $box->styling_settings;
         if (isset($stylingSettings['background_color']) && strpos($stylingSettings['background_color'], '#') === 0) {
             $hex = $stylingSettings['background_color'];
             $r = hexdec(substr($hex, 1, 2));
@@ -110,11 +119,31 @@ class BoxesManagementController extends Controller
             }
         }
 
+        // Merge content settings with existing ones
+        // Ensure existing settings are arrays, not strings
+        $existingContentSettings = is_array($box->content_settings) ? $box->content_settings : (is_string($box->content_settings) ? json_decode($box->content_settings, true) ?? [] : []);
+        $requestContentSettings = is_array($request->content_settings) ? $request->content_settings : (is_string($request->content_settings) ? json_decode($request->content_settings, true) ?? [] : []);
+        
+        $contentSettings = array_merge(
+            $existingContentSettings,
+            $requestContentSettings
+        );
+
+        // Merge layout settings with existing ones
+        // Ensure existing settings are arrays, not strings
+        $existingLayoutSettings = is_array($box->layout_settings) ? $box->layout_settings : (is_string($box->layout_settings) ? json_decode($box->layout_settings, true) ?? [] : []);
+        $requestLayoutSettings = is_array($request->layout_settings) ? $request->layout_settings : (is_string($request->layout_settings) ? json_decode($request->layout_settings, true) ?? [] : []);
+        
+        $layoutSettings = array_merge(
+            $existingLayoutSettings,
+            $requestLayoutSettings
+        );
+
         $box->update([
             'box_name' => $request->box_name,
-            'content_settings' => $request->content_settings ?? $box->content_settings,
+            'content_settings' => $contentSettings,
             'styling_settings' => $stylingSettings,
-            'layout_settings' => $request->layout_settings ?? $box->layout_settings,
+            'layout_settings' => $layoutSettings,
             'is_active' => $request->input('is_active', 0) == 1
         ]);
 

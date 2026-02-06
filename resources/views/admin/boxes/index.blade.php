@@ -117,9 +117,6 @@
                                     
                                     <h6>Next Prayer Note</h6>
                                     <p class="text-muted">Displays countdown to next prayer time.</p>
-                                    
-                                    <h6>Hadeeth of The Day</h6>
-                                    <p class="text-muted">Rotating display of Islamic hadiths with Arabic text and translations.</p>
                                 </div>
                                 <div class="col-md-6">
                                     <h6>Announcements</h6>
@@ -175,8 +172,13 @@
 
     // Load preview for a specific box
     function loadBoxPreview(boxType) {
-        fetch(`/admin/boxes/preview/${boxType}`)
-            .then(response => response.json())
+        fetch(`/admin/boxes/${boxType}/preview`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 const previewElement = document.getElementById(`preview-${boxType}`);
                 if (previewElement && data) {
@@ -229,16 +231,7 @@
                 `;
                 break;
                 
-            case 'hadeeth_box':
-                previewHTML = `
-                    <div style="background-color: ${styling.background_color || '#fdf7e6'}; color: ${styling.text_color || '#000000'}; padding: 10px; border-radius: 5px; text-align: center;">
-                        <div style="font-weight: bold; margin-bottom: 5px;">${content.title || 'Hadeeth Of The Day'}</div>
-                        <div style="font-size: 12px; font-family: serif;">قَالَ رَسُولُ اللَّهِ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ</div>
-                        <div style="font-size: 11px;">"Actions are but by intention"</div>
-                    </div>
-                `;
-                break;
-                
+            
             case 'announcements_box':
                 previewHTML = `
                     <div style="background-color: ${styling.background_color || '#fdf7e6'}; color: ${styling.text_color || '#000000'}; padding: 10px; border-radius: 5px;">

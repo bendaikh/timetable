@@ -5,7 +5,7 @@ use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Admin\PrayerTimeController;
 use App\Http\Controllers\Admin\AnnouncementController;
-use App\Http\Controllers\Admin\HadeethController;
+
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\MediaScheduleController;
@@ -23,7 +23,7 @@ Route::prefix('api')->group(function () {
     Route::get('/prayer-times', [ApiController::class, 'prayerTimes']);
     Route::get('/tomorrow-prayer-times', [ApiController::class, 'tomorrowPrayerTimes']);
     Route::get('/announcements', [ApiController::class, 'announcements']);
-    Route::get('/hadeeth', [ApiController::class, 'hadeeth']);
+
     Route::get('/next-prayer', [ApiController::class, 'nextPrayer']);
     Route::get('/settings', [ApiController::class, 'settings']);
     
@@ -87,10 +87,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         'as' => 'admin'
     ]);
     
-    Route::resource('hadeeths', HadeethController::class, [
-        'as' => 'admin'
-    ]);
-    
     Route::resource('settings', SettingController::class, [
         'as' => 'admin'
     ]);
@@ -129,15 +125,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     
     // Boxes management routes
     Route::prefix('boxes')->group(function () {
+        // Static routes must come BEFORE dynamic routes
         Route::get('/', [BoxesManagementController::class, 'index'])->name('admin.boxes.index');
+        Route::get('/all', [BoxesManagementController::class, 'getAllBoxes'])->name('admin.boxes.all');
+        Route::post('/update-order', [BoxesManagementController::class, 'updateOrder'])->name('admin.boxes.update-order');
+        Route::post('/initialize-defaults', [BoxesManagementController::class, 'initializeDefaults'])->name('admin.boxes.initialize-defaults');
+        
+        // Dynamic routes
         Route::get('/{boxType}/edit', [BoxesManagementController::class, 'edit'])->name('admin.boxes.edit');
+        Route::get('/{boxType}/preview', [BoxesManagementController::class, 'getPreview'])->name('admin.boxes.preview');
         Route::put('/{boxType}', [BoxesManagementController::class, 'update'])->name('admin.boxes.update');
         Route::post('/{boxType}/update-ajax', [BoxesManagementController::class, 'updateAjax'])->name('admin.boxes.update-ajax');
         Route::post('/{boxType}/toggle', [BoxesManagementController::class, 'toggleActive'])->name('admin.boxes.toggle');
         Route::post('/{boxType}/reset', [BoxesManagementController::class, 'reset'])->name('admin.boxes.reset');
-        Route::get('/{boxType}/preview', [BoxesManagementController::class, 'getPreview'])->name('admin.boxes.preview');
-        Route::get('/all', [BoxesManagementController::class, 'getAllBoxes'])->name('admin.boxes.all');
-        Route::post('/update-order', [BoxesManagementController::class, 'updateOrder'])->name('admin.boxes.update-order');
-        Route::post('/initialize-defaults', [BoxesManagementController::class, 'initializeDefaults'])->name('admin.boxes.initialize-defaults');
     });
 });

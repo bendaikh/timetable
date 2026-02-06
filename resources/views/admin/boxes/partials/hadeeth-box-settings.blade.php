@@ -14,10 +14,12 @@
     
     <div class="row">
         <div class="col-md-6">
-            <label for="title_font_size" class="form-label">Title Font Size</label>
+            <label for="title_font_size" class="form-label">Title Font Size (rem)</label>
             <input type="text" class="form-control" id="title_font_size" name="styling_settings[title_font_size]"
                    value="{{ old('styling_settings.title_font_size', $box->styling_settings['title_font_size'] ?? '1.6rem') }}"
-                   placeholder="e.g., 1.6rem, 20px">
+                   placeholder="e.g., 1.2, 1.6, 2"
+                   pattern="^[0-9]+(\.[0-9]+)?$">
+            <div class="form-text">Enter font size in rem units</div>
         </div>
         <div class="col-md-6">
             <label for="title_color" class="form-label">Title Color</label>

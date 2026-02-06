@@ -72,7 +72,7 @@
                                 </div>
 
                                 <!-- Content Settings -->
-                                @if($box->box_type !== 'header_box' && $box->box_type !== 'sliding_text_box' && $box->box_type !== 'prayer_times_box' && $box->box_type !== 'special_times_box' && $box->box_type !== 'hadeeth_box' && $box->box_type !== 'announcements_box' && $box->box_type !== 'timetable_background_box')
+                                @if($box->box_type !== 'header_box' && $box->box_type !== 'sliding_text_box' && $box->box_type !== 'prayer_times_box' && $box->box_type !== 'special_times_box' && $box->box_type !== 'announcements_box' && $box->box_type !== 'timetable_background_box')
                                 <div class="mb-4">
                                     <h6>Content Settings</h6>
                                     <div id="contentSettings">
@@ -141,7 +141,7 @@
                                                    value="{{ old('styling_settings.border_width', $box->styling_settings['border_width'] ?? '1px') }}"
                                                    placeholder="e.g., 1px, 2px">
                                         </div>
-                                        @if($box->box_type !== 'header_box' && $box->box_type !== 'sliding_text_box' && $box->box_type !== 'prayer_times_box' && $box->box_type !== 'special_times_box' && $box->box_type !== 'hadeeth_box' && $box->box_type !== 'announcements_box')
+                                        @if($box->box_type !== 'header_box' && $box->box_type !== 'sliding_text_box' && $box->box_type !== 'prayer_times_box' && $box->box_type !== 'special_times_box' && $box->box_type !== 'announcements_box')
                                         <div class="col-md-4">
                                             <label for="border_radius" class="form-label">Border Radius</label>
                                             <input type="text" class="form-control" id="border_radius" name="styling_settings[border_radius]"
@@ -158,7 +158,7 @@
                                                    value="{{ old('styling_settings.padding', $box->styling_settings['padding'] ?? '15px') }}"
                                                    placeholder="e.g., 15px, 10px 20px">
                                         </div>
-                                        @if($box->box_type !== 'header_box' && $box->box_type !== 'prayer_times_box' && $box->box_type !== 'special_times_box' && $box->box_type !== 'hadeeth_box' && $box->box_type !== 'announcements_box')
+                                        @if($box->box_type !== 'header_box' && $box->box_type !== 'prayer_times_box' && $box->box_type !== 'special_times_box' && $box->box_type !== 'announcements_box')
                                         <div class="col-md-6">
                                             <label for="text_alignment" class="form-label">Text Alignment</label>
                                             <select class="form-select" id="text_alignment" name="layout_settings[text_alignment]">
@@ -182,8 +182,6 @@
                                     @include('admin.boxes.partials.note-prayer-box-settings', ['box' => $box])
                                 @elseif($box->box_type === 'special_times_box')
                                     @include('admin.boxes.partials.special-times-box-settings', ['box' => $box])
-                                @elseif($box->box_type === 'hadeeth_box')
-                                    @include('admin.boxes.partials.hadeeth-box-settings', ['box' => $box])
                                 @elseif($box->box_type === 'announcements_box')
                                     @include('admin.boxes.partials.announcements-box-settings', ['box' => $box])
                                 @elseif($box->box_type === 'welcome_box')

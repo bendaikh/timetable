@@ -1,0 +1,545 @@
+/**
+ * Fullscreen Display Layout CSS
+ * Mosque Prayer Time Web App - 85" TV Display
+ * Optimized for 16:9 fullscreen layout
+ */
+
+/* ============================================================================
+   LAYOUT STRUCTURE - 2/3 Prayer Times + 1/3 Announcements
+   ============================================================================ */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+}
+
+.digital-board {
+    width: 100%;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto auto;
+    gap: 0;
+    overflow: hidden;
+    background-color: #fdf7e6;
+}
+
+.unified-container {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+    width: 100%;
+    gap: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* ============================================================================
+   MAIN CONTENT GRID - 2/3 LEFT (PRAYER TIMES) + 1/3 RIGHT (ANNOUNCEMENTS)
+   ============================================================================ */
+
+.board-main-content {
+    display: grid;
+    grid-template-columns: 66.666% 33.334%;
+    gap: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+.board-main-content .row {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    gap: 0;
+}
+
+.board-main-content .col-md-8,
+.board-main-content .col-md-4 {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.board-main-content .col-md-8 {
+    width: 66.666%;
+}
+
+.board-main-content .col-md-4 {
+    width: 33.334%;
+}
+
+/* ============================================================================
+   PRAYER TIMES SECTION (2/3 WIDTH - LEFT SIDE)
+   ============================================================================ */
+
+.prayer-times-section {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(253, 247, 230, 0.9);
+    border: 2px solid #000;
+    border-right: none;
+    padding: clamp(15px, 2.5vh, 25px);
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+.prayer-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #000;
+    padding-bottom: 10px;
+    flex-shrink: 0;
+    font-size: clamp(1.5rem, 2.5vw, 3.5rem);
+}
+
+.prayer-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.5vh, 15px);
+}
+
+/* Hide scrollbar but keep functionality */
+.prayer-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.prayer-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.prayer-list::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+
+.prayer-list::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+.prayer-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    padding: clamp(10px, 1.5vh, 15px);
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    text-align: center;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: clamp(2rem, 3vw, 3rem);
+}
+
+.prayer-name {
+    text-align: left;
+    font-weight: bold;
+    font-size: clamp(1.8rem, 2.8vw, 3rem);
+}
+
+.prayer-time,
+.prayer-jamaat {
+    font-weight: bold;
+    font-size: clamp(2rem, 3vw, 3rem);
+}
+
+/* ============================================================================
+   ANNOUNCEMENTS SECTION (1/3 WIDTH - RIGHT SIDE) - FIXED HEIGHT
+   ============================================================================ */
+
+.announcements-section {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(253, 247, 230, 0.9);
+    border: 2px solid #000;
+    padding: clamp(15px, 2.5vh, 25px);
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+.announcements-header {
+    font-size: clamp(2rem, 2.8vw, 3.5rem);
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: clamp(15px, 2vh, 25px);
+    flex-shrink: 0;
+    word-wrap: break-word;
+    max-width: 100%;
+}
+
+.announcements-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: clamp(5px, 1vh, 10px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.5vh, 15px);
+    box-sizing: border-box;
+    min-height: 0;
+}
+
+/* Hide scrollbar but keep functionality */
+.announcements-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.announcements-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.announcements-content::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+
+.announcements-content::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+.announcement-item {
+    padding: clamp(10px, 1.5vh, 15px);
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    border-left: 4px solid #0b3d0b;
+    flex-shrink: 0;
+    word-wrap: break-word;
+    overflow: hidden;
+}
+
+.announcement-title {
+    font-size: clamp(1.5rem, 2.2vw, 2.5rem);
+    font-weight: bold;
+    margin-bottom: clamp(8px, 1vh, 10px);
+    word-wrap: break-word;
+    max-width: 100%;
+}
+
+.announcement-text {
+    font-size: clamp(1.2rem, 1.8vw, 2.5rem);
+    line-height: 1.4;
+    word-wrap: break-word;
+    max-width: 100%;
+    max-height: 150px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.announcement-placeholder {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: clamp(20px, 5vh, 40px) 10px;
+}
+
+/* ============================================================================
+   BOTTOM SECTIONS - SPECIAL TIMES & SLIDING TEXT
+   ============================================================================ */
+
+.board-bottom-times {
+    background-color: rgba(253, 247, 230, 0.9);
+    border: 2px solid #000;
+    border-top: none;
+    padding: clamp(10px, 1.5vh, 15px);
+    flex-shrink: 0;
+}
+
+.additional-times {
+    display: grid;
+    gap: 10px;
+    text-align: center;
+    align-items: center;
+}
+
+.time-item {
+    padding: clamp(8px, 1vh, 10px);
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+}
+
+.time-label {
+    font-size: clamp(1rem, 1.5vw, 2rem);
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.time-value {
+    font-size: clamp(1.2rem, 1.8vw, 2.2rem);
+    font-weight: bold;
+}
+
+/* Scrolling text area - MUST STAY VISIBLE */
+.scrolling-text-area {
+    background-color: #2c3e50;
+    color: #fff;
+    border: 2px solid #000;
+    border-top: none;
+    padding: clamp(10px, 1.5vh, 15px);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.scrolling-content {
+    width: 100%;
+    overflow: hidden;
+}
+
+.scrolling-text {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.scroll-wrapper {
+    display: flex;
+    gap: 40px;
+    white-space: nowrap;
+    animation: scroll-infinite linear infinite;
+}
+
+.scroll-item {
+    font-size: clamp(1.5rem, 2.2vw, 2.5rem);
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+@keyframes scroll-infinite {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* ============================================================================
+   HEADER SECTION
+   ============================================================================ */
+
+.board-header {
+    background-color: #1e4d2b;
+    color: #fff;
+    border-bottom: 3px solid #000;
+    padding: clamp(15px, 2vh, 25px);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.board-header .row {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: clamp(10px, 2vw, 20px);
+    align-items: center;
+}
+
+.board-header .col-md-4 {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.current-time-display {
+    text-align: left;
+}
+
+.time-large {
+    font-size: clamp(2rem, 4vw, 5rem);
+    font-weight: bold;
+    line-height: 1;
+    margin: 0;
+}
+
+.date-display,
+.islamic-date-display {
+    text-align: center;
+}
+
+.gregorian-date,
+.islamic-date {
+    font-size: clamp(1.5rem, 2.5vw, 4rem);
+    font-weight: bold;
+    line-height: 1;
+    margin: 0;
+}
+
+#fullscreenBtn {
+    background-color: #fff;
+    color: #000;
+    border: none;
+    padding: clamp(8px, 1vh, 12px) clamp(10px, 1.5vw, 15px);
+    font-size: clamp(1rem, 1.5vw, 1.5rem);
+    cursor: pointer;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+#fullscreenBtn:hover {
+    background-color: #f0f0f0;
+}
+
+/* ============================================================================
+   NEXT PRAYER INFO
+   ============================================================================ */
+
+.next-prayer-info {
+    padding: clamp(10px, 1.5vh, 15px);
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.next-prayer-text {
+    font-size: clamp(1.2rem, 1.8vw, 2rem);
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.next-prayer-countdown {
+    font-size: clamp(1.5rem, 2.2vw, 2.5rem);
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.next-prayer-name {
+    font-size: clamp(0.9rem, 1.3vw, 1.5rem);
+    opacity: 0.8;
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================ */
+
+/* Extra large screens (4K) */
+@media (min-width: 2000px) {
+    .prayer-row,
+    .announcement-item {
+        font-size: clamp(3rem, 4vw, 4rem);
+    }
+
+    .board-header {
+        padding: 30px;
+    }
+}
+
+/* Small screens - ensure bottom items stay visible */
+@media (max-height: 720px) {
+    .board-main-content {
+        grid-template-columns: 60% 40%;
+    }
+
+    .prayer-row {
+        padding: clamp(8px, 1vh, 10px);
+    }
+
+    .announcement-item {
+        padding: clamp(8px, 1vh, 10px);
+    }
+
+    .board-header {
+        padding: clamp(10px, 1.5vh, 15px);
+    }
+}
+
+/* Fullscreen mode */
+.digital-board.fullscreen-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    border-radius: 0;
+}
+
+/* ============================================================================
+   FONT SCALING UTILITY CLASSES
+   ============================================================================ */
+
+.text-scale-1 { font-size: clamp(0.8rem, 1vw, 1rem); }
+.text-scale-2 { font-size: clamp(1rem, 1.2vw, 1.2rem); }
+.text-scale-3 { font-size: clamp(1.2rem, 1.5vw, 1.5rem); }
+.text-scale-4 { font-size: clamp(1.5rem, 2vw, 2rem); }
+.text-scale-5 { font-size: clamp(2rem, 2.5vw, 2.5rem); }
+.text-scale-6 { font-size: clamp(2.5rem, 3vw, 3rem); }
+.text-scale-7 { font-size: clamp(3rem, 4vw, 4rem); }
+.text-scale-8 { font-size: clamp(4rem, 5vw, 5rem); }
+.text-scale-9 { font-size: clamp(5rem, 7vw, 7rem); }
+.text-scale-10 { font-size: clamp(7rem, 10vw, 10rem); }
+
+/* ============================================================================
+   OVERFLOW SAFETY - PREVENT LAYOUT SHIFTS
+   ============================================================================ */
+
+* {
+    box-sizing: border-box;
+}
+
+/* Ensure no parent hides bottom content */
+.digital-board,
+.unified-container,
+.board-main-content {
+    overflow: visible;
+}
+
+/* Prayer times section - must allow internal scroll only */
+.prayer-times-section {
+    overflow: hidden;
+}
+
+.prayer-times-section .prayer-list {
+    overflow-y: scroll;
+}
+
+/* Announcements section - must allow internal scroll only */
+.announcements-section {
+    overflow: hidden;
+}
+
+.announcements-section .announcements-content {
+    overflow-y: scroll;
+}
+
+/* ============================================================================
+   UTILITY CLASSES FOR CONTROL
+   ============================================================================ */
+
+.force-visible {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.no-shrink {
+    flex-shrink: 0 !important;
+}
+
+.max-width-safe {
+    max-width: 100%;
+    word-wrap: break-word;
+}

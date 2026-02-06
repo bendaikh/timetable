@@ -215,12 +215,6 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.hadeeths.*') ? 'active' : '' }}" 
-                               href="{{ route('admin.hadeeths.index') }}">
-                                <i class="bi bi-book"></i> Hadeeths
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('admin.media.*') ? 'active' : '' }}" 
                                href="{{ route('admin.media.index') }}">
                                 <i class="bi bi-image"></i> Media
