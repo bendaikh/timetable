@@ -15,6 +15,19 @@
         body {
             background-color: #f8f9fa;
         }
+
+        body.admin-zoomed {
+            zoom: 0.67;
+        }
+
+        @supports not (zoom: 1) {
+            body.admin-zoomed {
+                transform: scale(0.67);
+                transform-origin: top left;
+                width: calc(100% / 0.67);
+                height: calc(100% / 0.67);
+            }
+        }
         
         .sidebar {
             background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
@@ -448,6 +461,18 @@
                     sidebar.classList.toggle('show');
                 });
             }
+        });
+    </script>
+
+    <script>
+        function applyAdminZoom() {
+            const isLaptop = window.innerWidth <= 1440 || window.innerHeight <= 900;
+            document.body.classList.toggle('admin-zoomed', isLaptop);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            applyAdminZoom();
+            window.addEventListener('resize', applyAdminZoom);
         });
     </script>
     

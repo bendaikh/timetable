@@ -19,15 +19,69 @@
         html, body {
             margin: 0;
             padding: 0;
-            height: 100vh;
-            overflow: hidden;
             width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
         
         body {
             font-family: {{ $settings['display_font_family'] ?? 'Arial, sans-serif' }};
             background-color: {{ $settings['display_background_color'] ?? '#ffffff' }};
             color: {{ $settings['display_text_color'] ?? '#000000' }};
+        }
+        
+        /* Laptop auto-scaling - render a 3840x2160 canvas and scale to fit */
+        @media (max-width: 3839px) {
+            #tv-display-wrapper {
+                --tv-preview-scale: 0.33;
+                width: 3840px;
+                height: 2160px;
+                transform: scale(var(--tv-preview-scale));
+                transform-origin: top left;
+                position: relative;
+            }
+
+            #tv-display-wrapper .digital-board,
+            #tv-display-wrapper .unified-container {
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            /* Laptop preview header: reduce height and keep dates on one row */
+            #tv-display-wrapper .board-header {
+                padding: clamp(8px, 1.2vh, 12px) clamp(10px, 1.5vw, 16px);
+            }
+
+            #tv-display-wrapper .board-header .row {
+                flex-wrap: nowrap;
+                align-items: center;
+            }
+
+            #tv-display-wrapper .header-right {
+                flex-wrap: nowrap;
+                gap: 8px;
+            }
+
+            #tv-display-wrapper .gregorian-date,
+            #tv-display-wrapper .islamic-date {
+                white-space: nowrap;
+                line-height: 1.05;
+            }
+
+            /* Laptop preview media overlay should cover the scaled TV canvas */
+            #tv-display-wrapper .media-overlay {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+            }
+        }
+        
+        /* TV screens (4K+) - no wrapper, no scaling, nothing */
+        @media (min-width: 3840px) {
+            #tv-display-wrapper {
+                /* Original behavior - no changes */
+            }
         }
         
         /* Digital Information Board Layout */
@@ -893,7 +947,10 @@
     @yield('styles')
 </head>
 <body>
-    @yield('content')
+    <!-- TV Display Wrapper for scaling on laptops -->
+    <div id="tv-display-wrapper">
+        @yield('content')
+    </div>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -952,6 +1009,33 @@
         
         setInterval(updateCurrentTime, 1000);
         updateCurrentTime(); // Initial call
+    </script>
+
+    <script>
+        // Laptop preview scaling: fit a 3840x2160 canvas to the current viewport.
+        (function () {
+            const wrapper = document.getElementById('tv-display-wrapper');
+            if (!wrapper) return;
+
+            const targetWidth = 3840;
+            const targetHeight = 2160;
+
+            function updateTvPreviewScale() {
+                if (window.innerWidth >= targetWidth && window.innerHeight >= targetHeight) {
+                    return;
+                }
+
+                const scale = Math.min(
+                    window.innerWidth / targetWidth,
+                    window.innerHeight / targetHeight
+                );
+
+                wrapper.style.setProperty('--tv-preview-scale', scale.toFixed(4));
+            }
+
+            updateTvPreviewScale();
+            window.addEventListener('resize', updateTvPreviewScale);
+        })();
     </script>
     
     @yield('scripts')

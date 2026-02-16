@@ -305,6 +305,31 @@
         };
     }
 
+    function normalizeCssValue(value, fallbackUnit = '') {
+        if (value === null || typeof value === 'undefined' || value === '') {
+            return '';
+        }
+
+        if (typeof value === 'number') {
+            return `${value}${fallbackUnit}`;
+        }
+
+        const trimmed = String(value).trim();
+        if (!trimmed) {
+            return '';
+        }
+
+        if (!fallbackUnit) {
+            return trimmed;
+        }
+
+        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+            return `${trimmed}${fallbackUnit}`;
+        }
+
+        return trimmed;
+    }
+
     // Update live preview
     function updatePreview() {
         const formData = new FormData(document.getElementById('boxEditForm'));
@@ -497,10 +522,13 @@
                 `;
                 
             case 'announcements_box':
+                const titleFontSize = normalizeCssValue(styling.title_font_size, 'px') || '28px';
+                const titleColor = styling.title_color || '#000000';
+                const titleText = content.title || 'Announcements';
                 return `
                     <div style="${styleString}">
-                        <div style="font-weight: bold; margin-bottom: 10px;">
-                            ${content.title || 'Announcements'}
+                        <div style="font-weight: bold; margin-bottom: 10px; font-size: ${titleFontSize}; color: ${titleColor};">
+                            ${titleText}
                         </div>
                         <div style="margin-bottom: 8px;">
                             <strong>Community Iftar</strong><br>

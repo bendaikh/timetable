@@ -1592,6 +1592,10 @@
             }
         });
 
+        if (typeof orderMap.header_box === 'undefined') {
+            orderMap.header_box = -1;
+        }
+
         return orderMap;
     }
 
@@ -1718,7 +1722,7 @@
                 }
                 setStyleValue(section, 'padding', styling.padding, 'px');
                 setStyleValue(header, 'color', styling.title_color);
-                setStyleValue(header, 'font-size', styling.title_font_size, 'rem');
+                setStyleValue(header, 'font-size', styling.title_font_size, 'px');
                 if (header && content.title) {
                     header.textContent = content.title;
                 }
@@ -2560,6 +2564,34 @@
 
     let lastAnnouncementDisplayMode = null;
 
+    let lastConfigHash = null;
+
+    function checkForConfigChanges() {
+        fetch('/api/screen-config?v=' + Date.now())
+            .then(response => response.json())
+            .then(data => {
+                const configStr = JSON.stringify(data);
+                const currentHash = hashCode(configStr);
+                
+                if (lastConfigHash !== null && lastConfigHash !== currentHash) {
+                    console.log('Config changed, reloading page...');
+                    window.location.reload(true);
+                }
+                lastConfigHash = currentHash;
+            })
+            .catch(err => console.error('Config check failed:', err));
+    }
+
+    function hashCode(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return hash;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         initMediaDisplay();
         initContentRotation();
@@ -2570,6 +2602,10 @@
         timetablePollingTimer = setInterval(requestTimetableSync, POLL_INTERVALS.timetable);
         announcementsPollingTimer = setInterval(requestAnnouncementsSync, POLL_INTERVALS.announcements);
         screenConfigPollingTimer = setInterval(requestScreenConfigSync, POLL_INTERVALS.screenConfig);
+        
+        // Check for admin config changes every 3 seconds
+        checkForConfigChanges();
+        setInterval(checkForConfigChanges, 3000);
         
         // Listen for display mode changes from admin panel
         window.addEventListener('storage', function(e) {
