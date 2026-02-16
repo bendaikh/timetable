@@ -61,7 +61,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Duration:</strong></td>
-                                    <td>{{ $medium->display_duration }} seconds</td>
+                                    <td>{{ $medium->display_duration }} minutes</td>
                                 </tr>
                                 <tr>
                                                     <td><strong>ID:</strong></td>

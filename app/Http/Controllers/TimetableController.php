@@ -62,11 +62,15 @@ class TimetableController extends Controller
             'isha_jamaat_offset' => Setting::get('isha_jamaat_offset', '10'),
         ];
         
-        // Get box settings
+        // Get box settings (full state: active/inactive + sort order)
         $useBoxesStyling = Setting::get('use_boxes_styling', 'enabled') === 'enabled';
-        $boxSettings = $useBoxesStyling ? BoxSetting::getAllActiveSettings() : [];
+        $boxSettings = $this->getCompleteBoxSettings();
         // Track active box types even if classic layout is used
-        $activeBoxTypes = BoxSetting::where('is_active', true)->pluck('box_type')->toArray();
+        $activeBoxTypes = collect($boxSettings)
+            ->filter(fn ($box) => (bool)($box['is_active'] ?? false))
+            ->keys()
+            ->values()
+            ->toArray();
         
         // Extract content settings for easy access in the view
         $prayerContent = $boxSettings['prayer_times_box']['content_settings'] ?? [];
@@ -79,23 +83,80 @@ class TimetableController extends Controller
         
         return compact('prayerTimes', 'tomorrowPrayerTimes', 'nextPrayer', 'announcements', 'hadeeth', 'hadeeths', 'slidingTexts', 'settings', 'boxSettings', 'islamicDate', 'now', 'useBoxesStyling', 'activeBoxTypes', 'prayerContent', 'specialTimesContent', 'hadeethContent', 'announcementsContent');
     }
+
+    private function getCompleteBoxSettings(): array
+    {
+        $defaults = BoxSetting::getDefaultBoxSettings();
+        $storedBoxes = BoxSetting::orderBy('sort_order')->get()->keyBy('box_type');
+        $result = [];
+
+        foreach ($defaults as $boxType => $default) {
+            $stored = $storedBoxes->get($boxType);
+
+            if ($stored) {
+                $result[$boxType] = [
+                    'box_name' => $stored->box_name ?: ($default['box_name'] ?? $boxType),
+                    'is_active' => (bool) $stored->is_active,
+                    'sort_order' => (int) $stored->sort_order,
+                    'content_settings' => is_string($stored->content_settings) ? (json_decode($stored->content_settings, true) ?: []) : ($stored->content_settings ?? []),
+                    'styling_settings' => is_string($stored->styling_settings) ? (json_decode($stored->styling_settings, true) ?: []) : ($stored->styling_settings ?? []),
+                    'layout_settings' => is_string($stored->layout_settings) ? (json_decode($stored->layout_settings, true) ?: []) : ($stored->layout_settings ?? []),
+                ];
+                continue;
+            }
+
+            $result[$boxType] = [
+                'box_name' => $default['box_name'] ?? $boxType,
+                'is_active' => true,
+                'sort_order' => count($result),
+                'content_settings' => $default['content_settings'] ?? [],
+                'styling_settings' => $default['styling_settings'] ?? [],
+                'layout_settings' => $default['layout_settings'] ?? [],
+            ];
+        }
+
+        foreach ($storedBoxes as $boxType => $stored) {
+            if (isset($result[$boxType])) {
+                continue;
+            }
+
+            $result[$boxType] = [
+                'box_name' => $stored->box_name ?: $boxType,
+                'is_active' => (bool) $stored->is_active,
+                'sort_order' => (int) $stored->sort_order,
+                'content_settings' => is_string($stored->content_settings) ? (json_decode($stored->content_settings, true) ?: []) : ($stored->content_settings ?? []),
+                'styling_settings' => is_string($stored->styling_settings) ? (json_decode($stored->styling_settings, true) ?: []) : ($stored->styling_settings ?? []),
+                'layout_settings' => is_string($stored->layout_settings) ? (json_decode($stored->layout_settings, true) ?: []) : ($stored->layout_settings ?? []),
+            ];
+        }
+
+        uasort($result, fn ($a, $b) => ((int)($a['sort_order'] ?? 0)) <=> ((int)($b['sort_order'] ?? 0)));
+
+        return $result;
+    }
     
     private function getIslamicDate($date)
     {
-        // Islamic calendar calculation for Saudi Arabia
-        // Using Umm al-Qura calendar (Saudi Arabia's official calendar)
+        // Convert to Saudi Arabia timezone (UTC+3)
+        $date = $date->copy()->setTimezone('Asia/Riyadh');
         
-        // Convert to Saudi Arabia timezone for accurate Islamic date
-        $saudiDate = $date->copy()->setTimezone('Asia/Riyadh');
+        $gregorianDate = $date->format('Y-m-d');
+        $cacheKey = "islamic_date_" . $gregorianDate;
         
-        // Islamic months
+        // Check cache first
+        $cached = cache()->get($cacheKey);
+        if ($cached) {
+            return $cached;
+        }
+        
+        // Islamic months names
         $islamicMonths = [
             1 => 'Muharram',
-            2 => 'Safar', 
-            3 => 'Rabiʻ I',
-            4 => 'Rabiʻ II',
-            5 => 'Jumada I',
-            6 => 'Jumada II',
+            2 => 'Safar',
+            3 => 'Rabiʻ al-Awwal',
+            4 => 'Rabiʻ al-Thani',
+            5 => 'Jumada al-Awwal',
+            6 => 'Jumada al-Thani',
             7 => 'Rajab',
             8 => 'Shaʻban',
             9 => 'Ramadan',
@@ -104,75 +165,142 @@ class TimetableController extends Controller
             12 => 'Dhu al-Hijjah'
         ];
         
-        // Manual Julian Day Number Calculation (since toJulianDay() is not available in all Carbon versions)
-        $year = (int)$saudiDate->format('Y');
-        $month = (int)$saudiDate->format('m');
-        $day = (int)$saudiDate->format('d');
-        
-        // Julian Day Number formula
-        $a = intdiv((14 - $month), 12);
-        $y = $year + 4800 - $a;
-        $m = $month + 12 * $a - 3;
-        
-        $jd = $day + intdiv((153 * $m + 2), 5) + 365 * $y + intdiv($y, 4) - intdiv($y, 100) + intdiv($y, 400) - 32045;
-        
-        // Umm Al-Qura Calendar Conversion
-        // Reference: 1 Muharram 1 AH = July 16, 622 CE (JD = 1948440)
-        $islamicEpochJD = 1948440;
-        
-        $daysSinceEpoch = $jd - $islamicEpochJD;
-        
-        // Calculate Islamic year (average Islamic year = 354.36667 days)
-        $islamicYear = intdiv($daysSinceEpoch, 354) + 1;
-        
-        // Days in each Islamic month: alternates 30 and 29
-        $monthDays = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
-        
-        // Calculate position within Islamic year
-        $dayInYear = $daysSinceEpoch % 354;
-        if ($dayInYear < 0) {
-            $dayInYear += 354;
-            $islamicYear -= 1;
+        $hijri = $this->getHijriFromUmmAlQuraCalendar($date);
+
+        // Fallback to Aladhan API (best-effort)
+        if (!$hijri) {
+            $hijri = $this->getHijriFromPrayerAPI($date);
         }
         
-        // Calculate Islamic month and day
-        $islamicMonth = 1;
-        $islamicDay = $dayInYear + 1;
-        
-        // Adjust for leap years in Umm al-Qura calendar
-        // Years 2, 5, 7, 10, 13, 16, 18, 21, 24, 26, 29 (mod 30) have 30 days in month 12
-        $yearInCycle = $islamicYear % 30;
-        $leapYears = [2, 5, 7, 10, 13, 16, 18, 21, 24, 26, 29];
-        
-        if (in_array($yearInCycle, $leapYears) || $yearInCycle === 0) {
-            $monthDays[11] = 30; // Month 12 has 30 days in leap years
+        // If API fails, use local calculation
+        if (!$hijri) {
+            $hijri = $this->gregorianToHijri(
+                (int)$date->format('Y'),
+                (int)$date->format('m'),
+                (int)$date->format('d')
+            );
         }
         
-        // Determine which month and day
-        foreach ($monthDays as $index => $daysInMonth) {
-            if ($islamicDay <= $daysInMonth) {
-                $islamicMonth = $index + 1;
-                break;
+        $result = [
+            'day' => (string)$hijri['day'],
+            'month' => $islamicMonths[$hijri['month']] ?? 'Unknown',
+            'year' => (string)$hijri['year']
+        ];
+        
+        // Cache for 24 hours
+        cache()->put($cacheKey, $result, 86400);
+        
+        return $result;
+    }
+
+    private function getHijriFromUmmAlQuraCalendar($date): ?array
+    {
+        if (!class_exists(\IntlCalendar::class)) {
+            return null;
+        }
+
+        try {
+            $timezone = $date->getTimezone()->getName();
+            $calendar = \IntlCalendar::createInstance($timezone, 'en_US@calendar=islamic-umalqura');
+
+            if (!$calendar) {
+                return null;
             }
-            $islamicDay -= $daysInMonth;
+
+            $calendar->setTime(((int) $date->getTimestamp()) * 1000);
+
+            $day = (int) $calendar->get(\IntlCalendar::FIELD_DAY_OF_MONTH);
+            $monthZeroBased = (int) $calendar->get(\IntlCalendar::FIELD_MONTH);
+            $year = (int) $calendar->get(\IntlCalendar::FIELD_YEAR);
+
+            $month = $monthZeroBased + 1;
+            if ($day < 1 || $month < 1 || $month > 12 || $year < 1) {
+                return null;
+            }
+
+            return [
+                'day' => $day,
+                'month' => $month,
+                'year' => $year,
+            ];
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+    
+    private function getHijriFromPrayerAPI($date)
+    {
+        try {
+            // Use Aladhan prayer times API which includes Islamic date
+            $dateStr = $date->format('d-m-Y');
+            $url = "https://api.aladhan.com/v1/gToH?date=" . $dateStr;
+            
+            $context = stream_context_create([
+                'http' => ['timeout' => 3, 'user_agent' => 'Mozilla/5.0'],
+                'https' => ['timeout' => 3]
+            ]);
+            
+            $response = @file_get_contents($url, false, $context);
+            
+            if ($response !== false) {
+                $data = json_decode($response, true);
+                
+                if (isset($data['data']['hijri']) && is_array($data['data']['hijri'])) {
+                    $hijri = $data['data']['hijri'];
+                    
+                    // API returns month as object with 'number' key or as integer
+                    $month = is_array($hijri['month']) ? (int)$hijri['month']['number'] : (int)$hijri['month'];
+                    
+                    return [
+                        'day' => (int)$hijri['day'],
+                        'month' => $month,
+                        'year' => (int)$hijri['year']
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            // Silently continue to local calculation
+        }
+        
+        return null;
+    }
+    
+    private function gregorianToHijri($gy, $gm, $gd)
+    {
+        // Simple conversion - days since epoch
+        $epoch = 1948440; // Julian day for 1/1/1 AH
+        
+        // Calculate Julian day from Gregorian date
+        $a = (int)(((14 - $gm) / 12));
+        $y = $gy + 4800 - $a;
+        $m = $gm + 12 * $a - 3;
+        
+        $jd = $gd + (int)(((153 * $m + 2) / 5)) + 365 * $y + (int)(($y / 4)) - (int)(($y / 100)) + (int)(($y / 400)) - 32045;
+        
+        // Calculate Islamic date from days since epoch
+        $days = $jd - $epoch;
+        
+        // Islamic year (approximate)
+        $iy = (int)(($days * 30) / 10631) + 1;
+        
+        // Days into Islamic year  
+        $month_num = (int)((($days % 10631) * 12) / 10631) + 1;
+        if ($month_num > 12) $month_num = 12;
+        
+        // Day of month
+        $days_per_month = ($month_num % 2 == 1) ? 30 : 29;
+        $id = (int)(($days % (int)(10631 / 12))) + 1;
+        if ($id > $days_per_month) {
+            $id = $days_per_month;
         }
         
         // Ensure valid values
-        if ($islamicMonth > 12) {
-            $islamicMonth = 12;
-        }
-        if ($islamicDay > 30) {
-            $islamicDay = 30;
-        }
-        if ($islamicDay < 1) {
-            $islamicDay = 1;
-        }
-        
-        // Return the calculated Islamic date
-        return [
-            'day' => (string)(int)$islamicDay,
-            'month' => $islamicMonths[$islamicMonth] ?? 'Unknown',
-            'year' => (string)$islamicYear
-        ];
+        if ($iy < 1) $iy = 1;
+        if ($month_num < 1) $month_num = 1;
+        if ($month_num > 12) $month_num = 12;
+        if ($id < 1) $id = 1;
+        if ($id > 30) $id = 30;
+
+        return ['day' => $id, 'month' => $month_num, 'year' => $iy];
     }
 }

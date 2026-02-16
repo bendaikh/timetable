@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Announcement Display Modes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .button-group {
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .info {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        .iframe-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        iframe {
+            flex: 1;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Announcement Display Mode Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <div class="button-group">
+            <button onclick="setMode('rotation')">Set Rotation Mode</button>
+            <button onclick="setMode('show-all')">Set Show All Mode</button>
+        </div>
+        <div class="info">
+            <strong>Current localStorage value:</strong>
+            <code id="currentMode">-</code>
+        </div>
+        <div class="info">
+            <strong>Instructions:</strong>
+            1. Click "Set Rotation Mode" or "Set Show All Mode" to change the mode<br>
+            2. Check the TV Display iframe on the left - it should update automatically within 500ms<br>
+            3. Open the Admin Panel in another browser tab and click the mode buttons there<br>
+            4. The TV Display should update automatically
+        </div>
+    </div>
+
+    <div class="iframe-container">
+        <div style="flex: 1;">
+            <h3>TV Display (should update when mode changes)</h3>
+            <iframe src="http://localhost:8000" id="tv-display"></iframe>
+        </div>
+        <div style="flex: 1;">
+            <h3>Admin Panel (click buttons here to test mode switching)</h3>
+            <iframe src="http://localhost:8000/admin/announcements" id="admin-panel"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function setMode(mode) {
+            localStorage.setItem('announcementDisplayMode', mode);
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const mode = localStorage.getItem('announcementDisplayMode') || 'rotation';
+            document.getElementById('currentMode').textContent = mode;
+        }
+
+        // Update display on page load
+        updateDisplay();
+
+        // Monitor localStorage changes
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'announcementDisplayMode') {
+                updateDisplay();
+            }
+        });
+
+        // Poll localStorage for changes
+        setInterval(updateDisplay, 500);
+    </script>
+</body>
+</html>

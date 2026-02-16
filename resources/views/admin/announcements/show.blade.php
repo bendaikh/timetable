@@ -50,13 +50,16 @@
                                 <h6>Preview:</h6>
                                 <div class="p-3 rounded" 
                                      style="background-color: {{ $announcement->background_color }}; color: {{ $announcement->text_color }}; 
-                                            font-size: {{ $announcement->font_size }}px; min-height: 100px; 
-                                            display: flex; align-items: center; justify-content: center;">
-                                    <div class="text-center">
+                                            font-size: {{ $announcement->font_size }}px; min-height: 100px; max-height: 300px;
+                                            display: flex; align-items: center; justify-content: center;
+                                            overflow: hidden;">
+                                    <div class="text-center" style="width: 100%; overflow: hidden;">
                                         <div style="font-size: {{ $announcement->font_size }}px; 
                                                     color: {{ $announcement->text_color }};
                                                     background-color: {{ $announcement->background_color }};
-                                                    padding: 10px; border-radius: 5px;">
+                                                    padding: 10px; border-radius: 5px;
+                                                    word-wrap: break-word; word-break: break-word;
+                                                    overflow: hidden; white-space: normal;">
                                             {{ $announcement->content }}
                                         </div>
                                     </div>

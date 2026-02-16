@@ -37,7 +37,7 @@
                                                         <h6 class="mb-0">{{ $media->title }}</h6>
                                                         <div>
                                                             <span class="badge bg-primary">Priority: {{ $media->pivot->priority }}</span>
-                                                            <span class="badge bg-info">{{ $media->pivot->duration }}s</span>
+                                                            <span class="badge bg-info">{{ $media->pivot->duration }}m</span>
                                                         </div>
                                                     </div>
                                                     <div class="text-center">
@@ -205,12 +205,12 @@
                                             <p class="mb-2"><strong>Media will display in this order:</strong></p>
                                             <ol class="mb-0">
                                                 @foreach($mediaSchedule->mediaItems->sortBy('pivot.priority') as $media)
-                                                    <li>{{ $media->title }} ({{ $media->pivot->duration }}s)</li>
+                                                    <li>{{ $media->title }} ({{ $media->pivot->duration }}m)</li>
                                                 @endforeach
                                             </ol>
                                             <hr>
                                             <small class="text-muted">
-                                                Total cycle duration: {{ $mediaSchedule->mediaItems->sum('pivot.duration') }} seconds
+                                                Total cycle duration: {{ $mediaSchedule->mediaItems->sum('pivot.duration') }} minutes
                                                 @if($mediaSchedule->schedule_type === 'full_time_poster')
                                                     <br>This cycle repeats continuously
                                                 @endif

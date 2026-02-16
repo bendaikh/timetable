@@ -7,6 +7,49 @@
 @section('page-title', 'Announcements')
 
 @section('content')
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-gear me-2"></i>
+                    Display Settings
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Announcement Display Mode</strong></label>
+                        <div class="btn-group" role="group" style="width: 100%;">
+                            <input type="radio" class="btn-check" name="displayMode" id="modeRotation" value="rotation" checked>
+                            <label class="btn btn-outline-primary" for="modeRotation" onclick="updateAnnouncementMode('rotation')">
+                                <i class="bi bi-arrow-repeat me-2"></i> Rotation Mode
+                            </label>
+
+                            <input type="radio" class="btn-check" name="displayMode" id="modeShowAll" value="show-all">
+                            <label class="btn btn-outline-primary" for="modeShowAll" onclick="updateAnnouncementMode('show-all')">
+                                <i class="bi bi-list me-2"></i> Show All
+                            </label>
+                        </div>
+                        <small class="form-text text-muted d-block mt-2">
+                            <strong>Rotation:</strong> Shows one announcement at a time, rotates based on duration<br>
+                            <strong>Show All:</strong> Displays all announcements stacked vertically
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-info mb-0">
+                            <strong><i class="bi bi-info-circle me-2"></i>Current Display:</strong>
+                            <span id="currentModeDisplay">Rotation Mode</span>
+                            <br>
+                            <small>Changes apply to the TV display in real-time</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-12">
         <div class="card shadow">
@@ -76,7 +119,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge bg-primary">{{ $announcement->display_duration }}s</span>
+                                        <span class="badge bg-primary">{{ ceil($announcement->display_duration / 60) }}m</span>
                                     </td>
                                     <td>
                                         <small class="text-muted">{{ $announcement->created_at->format('M j, Y') }}</small>
@@ -122,4 +165,34 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    // Store current display mode in localStorage
+    const DISPLAY_MODE_KEY = 'announcementDisplayMode';
+    
+    function updateAnnouncementMode(mode) {
+        // Save to localStorage
+        localStorage.setItem(DISPLAY_MODE_KEY, mode);
+        
+        // Update the display text
+        const displayText = mode === 'rotation' ? 'Rotation Mode' : 'Show All Mode';
+        document.getElementById('currentModeDisplay').textContent = displayText;
+        
+        // Send update to all open windows/tabs via localStorage event
+        // (The TV display window will listen for this change)
+        window.dispatchEvent(new CustomEvent('announcementModeChanged', { 
+            detail: { mode: mode } 
+        }));
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedMode = localStorage.getItem(DISPLAY_MODE_KEY) || 'rotation';
+        document.getElementById(savedMode === 'rotation' ? 'modeRotation' : 'modeShowAll').checked = true;
+        const displayText = savedMode === 'rotation' ? 'Rotation Mode' : 'Show All Mode';
+        document.getElementById('currentModeDisplay').textContent = displayText;
+    });
+</script>
 @endsection

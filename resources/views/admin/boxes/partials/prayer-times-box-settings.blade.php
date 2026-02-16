@@ -57,6 +57,28 @@
         </div>
     </div>
     
+    <!-- Section 1.5: Prayer Names and Font Size -->
+    <div class="card mb-3 border-danger">
+        <div class="card-header bg-danger text-white">
+            <h6 class="mb-0"><i class="bi bi-type"></i> Prayer Names Font Size</h6>
+        </div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">Set the font size for all prayer names (Fajr, Zohar, Asr, Maghrib, Isha)</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="prayer_names_font_size" class="form-label">Prayer Names Font Size (rem)</label>
+                    <input type="text" class="form-control" id="prayer_names_font_size" name="styling_settings[prayer_names_font_size]"
+                           value="{{ old('styling_settings.prayer_names_font_size', $box->styling_settings['prayer_names_font_size'] ?? '3') }}"
+                           placeholder="e.g., 2, 2.5, 3, 3.5"
+                           pattern="^[0-9]+(\.[0-9]+)?$">
+                    <div class="form-text">Recommended: 2.5 - 3.5. Controls the size of prayer names (Fajr, Zohar, Asr, Maghrib, Isha)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
     <!-- Section 2: Next Prayer Countdown Settings -->
     <div class="card mb-3 border-success">
         <div class="card-header bg-success text-white">
@@ -185,26 +207,26 @@
     <!-- Section 4: Column Font Sizes -->
     <div class="card mb-3 border-warning">
         <div class="card-header bg-warning text-dark">
-            <h6 class="mb-0"><i class="bi bi-type"></i> Column Font Sizes</h6>
+            <h6 class="mb-0"><i class="bi bi-type"></i> Beginning & Jamaat Time Font Sizes</h6>
         </div>
         <div class="card-body">
-            <p class="text-muted small mb-3">Control the size of text in the prayer times columns</p>
+            <p class="text-muted small mb-3">Control the size of the time values in the Beginning and Jamaat Time columns (NOT the column titles)</p>
             <div class="row">
                 <div class="col-md-6">
-                    <label for="beginning_font_size" class="form-label">Beginning Time Font Size</label>
+                    <label for="beginning_font_size" class="form-label">Beginning Time Values Font Size</label>
                     <input type="text" class="form-control" id="beginning_font_size" name="styling_settings[beginning_font_size]"
                            value="{{ old('styling_settings.beginning_font_size', $box->styling_settings['beginning_font_size'] ?? '2') }}"
                            placeholder="e.g., 1.5, 2, 2.5"
                            pattern="^[0-9]+(\.[0-9]+)?$">
-                    <div class="form-text">Recommended: 1.5 - 3.5</div>
+                    <div class="form-text">This controls the time values like "5:30 AM". Recommended: 1.5 - 3.5</div>
                 </div>
                 <div class="col-md-6">
-                    <label for="jamaat_font_size" class="form-label">Jamaat Time Font Size</label>
+                    <label for="jamaat_font_size" class="form-label">Jamaat Time Values Font Size</label>
                     <input type="text" class="form-control" id="jamaat_font_size" name="styling_settings[jamaat_font_size]"
                            value="{{ old('styling_settings.jamaat_font_size', $box->styling_settings['jamaat_font_size'] ?? '2') }}"
                            placeholder="e.g., 1.5, 2, 2.5"
                            pattern="^[0-9]+(\.[0-9]+)?$">
-                    <div class="form-text">Recommended: 1.5 - 3.5</div>
+                    <div class="form-text">This controls the time values like "6:30 AM". Recommended: 1.5 - 3.5</div>
                 </div>
             </div>
             <div class="row mt-3">

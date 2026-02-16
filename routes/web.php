@@ -20,6 +20,8 @@ Route::get('/', [TimetableController::class, 'index'])->name('timetable.index');
 
 // API Routes for real-time data
 Route::prefix('api')->group(function () {
+    Route::get('/screen-config', [ApiController::class, 'screenConfig']);
+    Route::get('/timetable', [ApiController::class, 'timetable']);
     Route::get('/prayer-times', [ApiController::class, 'prayerTimes']);
     Route::get('/tomorrow-prayer-times', [ApiController::class, 'tomorrowPrayerTimes']);
     Route::get('/announcements', [ApiController::class, 'announcements']);
@@ -32,13 +34,16 @@ Route::prefix('api')->group(function () {
     Route::get('/countdown-info', [MediaDisplayController::class, 'getCountdownInfo']);
     Route::get('/media-status', [MediaDisplayController::class, 'getStatus']);
     Route::get('/debug-schedules', [MediaDisplayController::class, 'debugSchedules']);
+    Route::get('/debug-priority', [MediaDisplayController::class, 'debugPriority']);
+    Route::get('/screen-state', [MediaDisplayController::class, 'getScreenState']); // NEW: Unified state endpoint
 });
 
 // Auth Routes
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login');
+
 Route::middleware(['guest'])->group(function () {
-    Route::get('/login', function () {
-        return view('auth.login');
-    })->name('login');
     
     Route::post('/login', function (Illuminate\Http\Request $request) {
         $credentials = $request->validate([
@@ -54,14 +59,15 @@ Route::middleware(['guest'])->group(function () {
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ]);
-    });
+    }
+);
 });
 
 Route::post('/logout', function (Illuminate\Http\Request $request) {
     auth()->logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
-    return redirect('/');
+    return redirect('/login');
 })->name('logout');
 
 // Admin Routes
@@ -131,12 +137,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::post('/update-order', [BoxesManagementController::class, 'updateOrder'])->name('admin.boxes.update-order');
         Route::post('/initialize-defaults', [BoxesManagementController::class, 'initializeDefaults'])->name('admin.boxes.initialize-defaults');
         
-        // Dynamic routes
-        Route::get('/{boxType}/edit', [BoxesManagementController::class, 'edit'])->name('admin.boxes.edit');
-        Route::get('/{boxType}/preview', [BoxesManagementController::class, 'getPreview'])->name('admin.boxes.preview');
-        Route::put('/{boxType}', [BoxesManagementController::class, 'update'])->name('admin.boxes.update');
-        Route::post('/{boxType}/update-ajax', [BoxesManagementController::class, 'updateAjax'])->name('admin.boxes.update-ajax');
-        Route::post('/{boxType}/toggle', [BoxesManagementController::class, 'toggleActive'])->name('admin.boxes.toggle');
-        Route::post('/{boxType}/reset', [BoxesManagementController::class, 'reset'])->name('admin.boxes.reset');
+        // Dynamic routes with constraints
+        Route::get('/{boxType}/edit', [BoxesManagementController::class, 'edit'])->where('boxType', '[\w\-]+')->name('admin.boxes.edit');
+        Route::get('/{boxType}/preview', [BoxesManagementController::class, 'getPreview'])->where('boxType', '[\w\-]+')->name('admin.boxes.preview');
+        Route::put('/{boxType}', [BoxesManagementController::class, 'update'])->where('boxType', '[\w\-]+')->name('admin.boxes.update');
+        Route::post('/{boxType}/update-ajax', [BoxesManagementController::class, 'updateAjax'])->where('boxType', '[\w\-]+')->name('admin.boxes.update-ajax');
+        Route::post('/{boxType}/toggle', [BoxesManagementController::class, 'toggleActive'])->where('boxType', '[\w\-]+')->name('admin.boxes.toggle');
+        Route::post('/{boxType}/reset', [BoxesManagementController::class, 'reset'])->where('boxType', '[\w\-]+')->name('admin.boxes.reset');
     });
 });

@@ -214,7 +214,7 @@
                         </div>
                     </div>
                     <div class="duration-indicator">
-                        <i class="bi bi-clock"></i> {{ $medium->display_duration }}s
+                        <i class="bi bi-clock"></i> {{ $medium->display_duration }}m
                     </div>
                 </div>
             </div>
@@ -254,7 +254,7 @@
     <script>
         let previewActive = false;
         let previewTimer = null;
-        const duration = {{ $medium->display_duration * 1000 }}; // Convert to milliseconds
+        const duration = {{ $medium->display_duration * 1000 }}; // Convert to milliseconds (duration is in seconds)
         
         document.addEventListener('DOMContentLoaded', function() {
             // Hide loading overlay

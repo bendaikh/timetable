@@ -18,14 +18,27 @@ class Media extends Model
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
-        'display_duration' => 'integer'
+        'is_active' => 'boolean'
     ];
+
+    // Convert seconds to minutes for display
+    public function getDisplayDurationAttribute($value)
+    {
+        return $value ? round($value / 60, 2) : 0;
+    }
+
+    // Convert minutes to seconds for storage
+    public function setDisplayDurationAttribute($value)
+    {
+        // Convert minutes to seconds and store as integer
+        // 0.5 minutes = 30 seconds
+        $this->attributes['display_duration'] = $value ? intval(round($value * 60)) : 0;
+    }
 
     public function schedules(): BelongsToMany
     {
         return $this->belongsToMany(MediaSchedule::class, 'media_schedule_media')
-            ->withPivot('duration', 'priority', 'expiry_date', 'expiry_time', 'gap_duration', 'days_of_week')
+            ->withPivot('duration', 'priority', 'is_active', 'expiry_date', 'expiry_time', 'gap_duration', 'days_of_week')
             ->orderBy('media_schedule_media.priority', 'asc')
             ->withTimestamps();
     }

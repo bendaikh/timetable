@@ -34,6 +34,22 @@
                                 </div>
 
                                 <div class="mb-3">
+                                    <label for="title_font_size" class="form-label">Title Font Size <span class="text-danger">*</span></label>
+                                    <div class="d-flex gap-2">
+                                        <input type="range" class="form-range flex-grow-1" 
+                                               id="title_font_size_range" min="20" max="60" value="{{ old('title_font_size', 36) }}">
+                                        <input type="number" class="form-control" style="width: 80px;" 
+                                               id="title_font_size" name="title_font_size" value="{{ old('title_font_size', 36) }}" 
+                                               min="20" max="60" required>
+                                        <span class="input-group-text" id="title-font-size-label">px</span>
+                                    </div>
+                                    <small class="form-text d-block mt-2">Recommended: 20 - 60 pixels</small>
+                                    @error('title_font_size')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="mb-3">
                                     <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
                                     <textarea class="form-control @error('content') is-invalid @enderror" 
                                               id="content" name="content" rows="6" maxlength="300" required>{{ old('content') }}</textarea>
@@ -403,6 +419,36 @@ fontSizeRange.addEventListener('input', function() {
     fontSizeInput.value = this.value;
     updateFontSize();
 });
+
+/**
+ * Update title font size display and preview
+ */
+function updateTitleFontSize() {
+    const titleFontSize = parseInt(document.getElementById('title_font_size').value) || 36;
+    
+    // Sync range and input
+    const titleFontSizeRange = document.getElementById('title_font_size_range');
+    if (titleFontSizeRange) {
+        titleFontSizeRange.value = titleFontSize;
+    }
+    document.getElementById('title_font_size').value = titleFontSize;
+    
+    previewTitle.style.fontSize = titleFontSize + 'px';
+    updatePreview();
+}
+
+const titleFontSizeInput = document.getElementById('title_font_size');
+const titleFontSizeRange = document.getElementById('title_font_size_range');
+if (titleFontSizeInput) {
+    titleFontSizeInput.addEventListener('input', updateTitleFontSize);
+    titleFontSizeInput.addEventListener('change', updateTitleFontSize);
+}
+if (titleFontSizeRange) {
+    titleFontSizeRange.addEventListener('input', function() {
+        document.getElementById('title_font_size').value = this.value;
+        updateTitleFontSize();
+    });
+}
 
 /**
  * Update scroll speed display

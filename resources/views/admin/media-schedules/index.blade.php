@@ -53,7 +53,7 @@
                                                             @endif
                                                             <div>
                                                                 <small><strong>{{ $media->title }}</strong></small>
-                                                                <br><small class="text-muted">Priority: {{ $media->pivot->priority }}, Duration: {{ $media->pivot->duration }}s</small>
+                                                                <br><small class="text-muted">Priority: {{ $media->pivot->priority }}, Duration: {{ $media->pivot->duration }}m</small>
                                                             </div>
                                                         </div>
                                                     @endforeach

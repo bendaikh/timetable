@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PrayerTime;
 use App\Services\GoogleSheetsService;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -178,6 +179,12 @@ class PrayerTimeController extends Controller
             $imported = 0;
             $updated = 0;
             $skipped = 0;
+
+            $importedDates = collect($prayerTimes)
+                ->pluck('date')
+                ->filter(fn ($d) => is_string($d) && $d !== '')
+                ->sort()
+                ->values();
             
             DB::beginTransaction();
             
@@ -199,6 +206,12 @@ class PrayerTimeController extends Controller
                 }
                 
                 DB::commit();
+
+                // Persist the uploaded timetable coverage so the display doesn't show out-of-range years
+                if ($importedDates->isNotEmpty()) {
+                    Setting::set('timetable_min_date', $importedDates->first(), 'string', 'Earliest date available in uploaded timetable');
+                    Setting::set('timetable_max_date', $importedDates->last(), 'string', 'Latest date available in uploaded timetable');
+                }
                 
                 $message = "Import completed successfully! ";
                 $message .= "Imported: {$imported}, Updated: {$updated}, Skipped: {$skipped}";

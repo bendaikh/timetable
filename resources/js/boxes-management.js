@@ -4,6 +4,7 @@
  */
 
 class BoxesManager {
+
     constructor() {
         this.init();
     }

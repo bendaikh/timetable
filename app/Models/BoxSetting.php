@@ -78,6 +78,7 @@ class BoxSetting extends Model
                     'header_text_color' => '#000000',
                     'font_family' => 'Courier New, monospace',
                     'font_size' => '2rem',
+                    'prayer_names_font_size' => '3rem',
                     'beginning_font_size' => '2rem',
                     'jamaat_font_size' => '2rem',
                     'header_font_size' => '1.2rem',
@@ -135,8 +136,8 @@ class BoxSetting extends Model
                     'text_color' => '#000000',
                     'title_color' => '#000000',
                     'font_family' => 'Courier New, monospace',
-                    'font_size' => '1.1rem',
-                    'title_font_size' => '1.4rem',
+                    'font_size' => '24',
+                    'title_font_size' => '28',
                     'border_color' => '#000000',
                     'border_width' => '2px',
                     'padding' => '20px'

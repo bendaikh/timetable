@@ -281,10 +281,10 @@ function updateMediaConfig() {
                         <h6 class="mb-3"><i class="bi bi-image"></i> ${media.title}</h6>
                         <div class="row">
                             <div class="col-md-6 mb-2">
-                                <label class="form-label small">Duration (seconds)</label>
-                                <input type="number" class="form-control form-control-sm" 
+                                <label class="form-label small">Duration (minutes)</label>
+                                <input type="number" class="form-control form-control-sm" step="0.5"
                                        name="media_durations[]" value="${duration}" 
-                                       min="1" max="300" required>
+                                       min="0.5" required>
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label class="form-label small">Priority</label>
@@ -484,10 +484,61 @@ document.addEventListener('DOMContentLoaded', function() {
         checkbox.addEventListener('change', updateMediaConfig);
     });
     
+    // Add real-time preview for duration changes
+    function addDurationPreviewListeners() {
+        document.querySelectorAll('input[name="media_durations[]"]').forEach(input => {
+            input.addEventListener('input', function() {
+                updateDurationPreview(this);
+            });
+        });
+    }
+    
+    // Update duration preview
+    function updateDurationPreview(input) {
+        const card = input.closest('.media-config-card');
+        if (!card) return;
+        
+        const duration = parseFloat(input.value) || 0;
+        let previewElement = card.querySelector('.duration-preview');
+        
+        if (!previewElement) {
+            previewElement = document.createElement('div');
+            previewElement.className = 'duration-preview mt-2 p-2 bg-light border rounded';
+            const durationContainer = input.closest('.col-md-6');
+            if (durationContainer) {
+                durationContainer.parentElement.insertAdjacentElement('afterend', previewElement);
+            }
+        }
+        
+        if (duration > 0) {
+            const seconds = Math.round(duration * 60);
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            previewElement.innerHTML = `<small><strong>Preview:</strong> ${duration}m = ${seconds}s (${minutes}m ${secs}s)</small>`;
+            previewElement.style.display = 'block';
+        } else {
+            previewElement.style.display = 'none';
+        }
+    }
+    
     // Initial setup
     toggleFields();
     updateMediaConfig();
     checkDisplayTime(); // Check display time on page load
+    
+    // Add listeners after media config is updated
+    setTimeout(() => {
+        addDurationPreviewListeners();
+    }, 100);
+    
+    // Re-add listeners when media config updates
+    const originalUpdateMediaConfig = window.updateMediaConfig;
+    window.updateMediaConfig = function() {
+        originalUpdateMediaConfig.call(this);
+        setTimeout(() => {
+            addDurationPreviewListeners();
+        }, 100);
+    };
 });
 </script>
 @endsection

@@ -43,7 +43,7 @@
     $bgColor = $timetableBgStyling['background_color'] ?? '#fdf7e6';
     $backgroundStyle = "background-color: {$bgColor};";
 @endphp
-<div class="container-fluid digital-board" style="{{ $backgroundStyle }}; padding: 0; margin: 0;">
+<div id="timetable-background-box" data-box-root="timetable_background_box" class="container-fluid digital-board" style="{{ $backgroundStyle }}; padding: 0; margin: 0;">
     <!-- Unified Container for Consistent Width -->
     <div class="unified-container" style="padding: 0; margin: 0;">
         <!-- Top Header Row -->
@@ -51,8 +51,19 @@
             @php
                 $headerBox = $boxSettings['header_box'] ?? null;
                 $headerStyling = $headerBox['styling_settings'] ?? [];
+                // Convert numeric font sizes to rem units
+                $timeFontSize = $headerStyling['time_font_size'] ?? '5rem';
+                $dateFontSize = $headerStyling['date_font_size'] ?? '4rem';
+                // Add 'rem' if only number is provided
+                if (is_numeric($timeFontSize)) {
+                    $timeFontSize = $timeFontSize . 'rem';
+                }
+                if (is_numeric($dateFontSize)) {
+                    $dateFontSize = $dateFontSize . 'rem';
+                }
             @endphp
-            <div class="board-header" style="
+            <div id="header-box" data-box-root="header_box" class="board-header" style="
+                {{ ($useBoxesStyling && !($boxSettings['header_box']['is_active'] ?? true)) ? 'display:none;' : '' }}
                 background-color: {{ $headerStyling['background_color'] ?? '#1e4d2b' }};
                 color: {{ $headerStyling['text_color'] ?? '#000000' }};
                 font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
@@ -66,7 +77,7 @@
                     <div class="col-md-4 p-0">
                         <div class="current-time-display">
                             <div class="time-large" id="current-time" style="
-                                font-size: {{ $headerStyling['time_font_size'] ?? '5rem' }};
+                                font-size: {{ $timeFontSize }};
                                 font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
                                 color: {{ $headerStyling['text_color'] ?? '#000000' }};
                                 margin: 0;
@@ -77,8 +88,8 @@
                     <!-- Gregorian Date -->
                     <div class="col-md-4 text-center p-0">
                         <div class="date-display">
-                            <div class="gregorian-date" style="
-                                font-size: {{ $headerStyling['date_font_size'] ?? '4rem' }};
+                            <div class="gregorian-date" id="gregorian-date" style="
+                                font-size: {{ $dateFontSize }};
                                 font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
                                 color: {{ $headerStyling['text_color'] ?? '#000000' }};
                                 margin: 0;
@@ -88,10 +99,10 @@
                     
                     <!-- Islamic Date and Fullscreen Button -->
                     <div class="col-md-4 p-0">
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="header-right d-flex justify-content-between align-items-center">
                             <div class="islamic-date-display text-center" style="flex: 1;">
-                                <div class="islamic-date" style="
-                                    font-size: {{ $headerStyling['date_font_size'] ?? '4rem' }};
+                                <div class="islamic-date" id="islamic-date" style="
+                                    font-size: {{ $dateFontSize }};
                                     font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
                                     color: {{ $headerStyling['text_color'] ?? '#000000' }};
                                     margin: 0;
@@ -107,7 +118,7 @@
         @elseif(!$useBoxesStyling)
             <!-- Original Clean Header Design -->
             @if(!isset($activeBoxTypes) || in_array('header_box', $activeBoxTypes))
-            <div class="board-header">
+            <div id="header-box" data-box-root="header_box" class="board-header">
                 <div class="row align-items-center">
                     <!-- Current Time -->
                     <div class="col-md-4">
@@ -119,20 +130,22 @@
                     <!-- Gregorian Date -->
                     <div class="col-md-4 text-center">
                         <div class="date-display">
-                            <div class="gregorian-date">{{ $now->format('D j M Y') }}</div>
+                            <div class="gregorian-date" id="gregorian-date">{{ $now->format('D j M Y') }}</div>
                         </div>
                     </div>
                     
-                    <!-- Islamic Date and Fullscreen Button -->
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="islamic-date-display text-center" style="flex: 1;">
-                                <div class="islamic-date">{{ $islamicDate['day'] }} {{ $islamicDate['month'] }} {{ $islamicDate['year'] }}</div>
-                            </div>
-                            <button onclick="toggleFullscreen()" class="btn btn-light btn-sm" id="fullscreenBtn">
-                                <i class="bi bi-arrows-fullscreen"></i>
-                            </button>
+                    <!-- Islamic Date -->
+                    <div class="col-md-3">
+                        <div class="islamic-date-display text-center">
+                            <div class="islamic-date" id="islamic-date">{{ $islamicDate['day'] }} {{ $islamicDate['month'] }} {{ $islamicDate['year'] }}</div>
                         </div>
+                    </div>
+                    
+                    <!-- Fullscreen Button -->
+                    <div class="col-md-1" style="display: flex; justify-content: flex-end;">
+                        <button onclick="toggleFullscreen()" class="btn btn-light btn-sm" id="fullscreenBtn">
+                            <i class="bi bi-arrows-fullscreen"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -141,18 +154,18 @@
 
         <!-- Main Content Area -->
         <div class="board-main-content" style="padding: 0; margin: 0;">
-            <div class="row h-100 m-0">
+            <div class="row h-100 m-0" style="display: flex; flex-direction: row;">
             <!-- Left Column - Prayer Times (2/3 width) -->
             @php $__showPrayer = ($useBoxesStyling ? isset($boxSettings['prayer_times_box']) : (!isset($activeBoxTypes) || in_array('prayer_times_box', $activeBoxTypes))); @endphp
             @if($__showPrayer)
-            <div class="col-md-8 p-0">
+            <div id="prayer-times-box" data-box-root="prayer_times_box" class="col-md-8 p-0" style="{{ ($useBoxesStyling && !($boxSettings['prayer_times_box']['is_active'] ?? true)) ? 'display:none;' : '' }}; display: flex; flex-direction: column;">
                 @php
                     $prayerBox = $useBoxesStyling && isset($boxSettings['prayer_times_box']) ? $boxSettings['prayer_times_box'] : null;
                     $prayerStyling = $prayerBox['styling_settings'] ?? [];
                     $prayerLayout = $prayerBox['layout_settings'] ?? [];
                 @endphp
                 @if($useBoxesStyling && isset($boxSettings['prayer_times_box']))
-                    <div class="prayer-times-section" style="
+                    <div id="prayer-times-section" class="prayer-times-section" style="
                         background-color: {{ $prayerStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                         color: {{ $prayerStyling['text_color'] ?? '#000000' }};
                         font-family: {{ $prayerStyling['font_family'] ?? 'Arial, sans-serif' }};
@@ -181,7 +194,7 @@
                             <div class="prayer-col-header" style="text-align: center;">{{ $prayerContent['jamaat_time_title'] ?? 'Jamaat Time' }}</div>
                         </div>
                 @elseif(!$useBoxesStyling)
-                    <div class="prayer-times-section" @if($settings['logo_path'] ?? false) style="--logo-bg-image: url('{{ app()->environment('production') ? url('public/storage/' . $settings['logo_path']) : asset('storage/' . $settings['logo_path']) }}')" @endif>
+                    <div id="prayer-times-section" class="prayer-times-section" @if($settings['logo_path'] ?? false) style="--logo-bg-image: url('{{ app()->environment('production') ? url('public/storage/' . $settings['logo_path']) : asset('storage/' . $settings['logo_path']) }}')" @endif>
                         <div class="prayer-header">
                             <div class="prayer-col-header"></div>
                             <div class="prayer-col-header">Beginning</div>
@@ -221,27 +234,27 @@
                         @endif
                         <div class="prayer-list">
                             <div class="prayer-row" data-prayer-name="fajr" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: 3rem; font-weight: bold;">Fajr</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['prayer_names_font_size'] ? (strpos($prayerStyling['prayer_names_font_size'], 'rem') !== false ? $prayerStyling['prayer_names_font_size'] : $prayerStyling['prayer_names_font_size'] . 'rem') : '3rem' }}; font-weight: bold;">Fajr</div>
                                 <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
                                 <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="zohar" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: 3rem; font-weight: bold;">Zohar</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['prayer_names_font_size'] ? (strpos($prayerStyling['prayer_names_font_size'], 'rem') !== false ? $prayerStyling['prayer_names_font_size'] : $prayerStyling['prayer_names_font_size'] . 'rem') : '3rem' }}; font-weight: bold;">Zohar</div>
                                 <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
                                 <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="asr" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: 3rem; font-weight: bold;">Asr</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['prayer_names_font_size'] ? (strpos($prayerStyling['prayer_names_font_size'], 'rem') !== false ? $prayerStyling['prayer_names_font_size'] : $prayerStyling['prayer_names_font_size'] . 'rem') : '3rem' }}; font-weight: bold;">Asr</div>
                                 <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
                                 <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="maghrib" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: 3rem; font-weight: bold;">Maghrib</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['prayer_names_font_size'] ? (strpos($prayerStyling['prayer_names_font_size'], 'rem') !== false ? $prayerStyling['prayer_names_font_size'] : $prayerStyling['prayer_names_font_size'] . 'rem') : '3rem' }}; font-weight: bold;">Maghrib</div>
                                 <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
                                 <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="isha" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: 3rem; font-weight: bold;">Isha</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['prayer_names_font_size'] ? (strpos($prayerStyling['prayer_names_font_size'], 'rem') !== false ? $prayerStyling['prayer_names_font_size'] : $prayerStyling['prayer_names_font_size'] . 'rem') : '3rem' }}; font-weight: bold;">Isha</div>
                                 <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
                                 <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
                             </div>
@@ -281,7 +294,7 @@
                                 $noteStyling = $noteBox['styling_settings'] ?? [];
                                 $noteContent = $noteBox['content_settings'] ?? [];
                             @endphp
-                            <div class="next-prayer-info" style="
+                            <div class="next-prayer-info" data-box-root="note_prayer_box" style="
                                 background-color: {{ $noteStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                                 color: {{ $noteStyling['text_color'] ?? '#000000' }};
                                 font-family: {{ $noteStyling['font_family'] ?? 'Arial, sans-serif' }};
@@ -316,14 +329,14 @@
             <!-- Right Column - Announcements (1/3 width) -->
             @php $__showAnnouncements = ($useBoxesStyling ? isset($boxSettings['announcements_box']) : (!isset($activeBoxTypes) || in_array('announcements_box', $activeBoxTypes))); @endphp
             @if($__showAnnouncements)
-            <div class="col-md-4 p-0">
+            <div class="col-md-4 p-0" data-box-root="announcements_box" style="{{ ($useBoxesStyling && !($boxSettings['announcements_box']['is_active'] ?? true)) ? 'display:none;' : '' }}; display: flex; flex-direction: column; height: 100%;">
                 @if($useBoxesStyling && isset($boxSettings['announcements_box']))
                     @php
                         $announcementsBox = $boxSettings['announcements_box'] ?? null;
                         $announcementsStyling = $announcementsBox['styling_settings'] ?? [];
                         $announcementsLayout = $announcementsBox['layout_settings'] ?? [];
                     @endphp
-                    <div class="announcements-section" style="
+                    <div class="announcements-section" id="announcements-section" style="
                         background-color: {{ $announcementsStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                         color: {{ $announcementsStyling['text_color'] ?? '#000000' }};
                         font-family: {{ $announcementsStyling['font_family'] ?? 'Arial, sans-serif' }};
@@ -333,55 +346,83 @@
                         margin: 0;
                         display: flex;
                         flex-direction: column;
-                        height: 100%;
+                        flex: 1;
+                        min-height: 0;
                     ">
                         <div class="announcements-header" style="
                             color: {{ $announcementsStyling['title_color'] ?? '#000000' }};
-                            font-size: {{ $announcementsStyling['title_font_size'] ? (strpos($announcementsStyling['title_font_size'], 'rem') !== false ? $announcementsStyling['title_font_size'] : $announcementsStyling['title_font_size'] . 'rem') : '1.4rem' }};
+                            font-size: {{ $announcementsStyling['title_font_size'] ? (is_numeric($announcementsStyling['title_font_size']) ? $announcementsStyling['title_font_size'] . 'px' : $announcementsStyling['title_font_size']) : '28px' }};
                             font-weight: bold;
                             text-align: center;
                             margin: 0 0 15px 0;
                             flex-shrink: 0;
                         ">{{ $announcementsContent['title'] ?? 'Announcements' }}</div>
                 @elseif(!$useBoxesStyling)
-                    <div class="announcements-section" style=\"padding: 10px 15px; margin: 0;\">
+                    <div class="announcements-section" id="announcements-section" style=\"padding: 10px 15px; margin: 0;\">
                         <div class="announcements-header" style=\"font-size: 3.5rem; margin: 0 0 10px 0;\">{{ $announcementsContent['title'] ?? 'Announcements' }}</div>
                 @endif
                     <div class="announcements-content" id="announcements-content" style="
                         margin: 0;
                         flex: 1;
-                        overflow-y: auto;
+                        overflow: hidden;
                         display: flex;
                         flex-direction: column;
-                    ">
+                        min-height: 0;
+                    " data-display-mode="rotation">
                         @if($announcements->count() > 0)
                             @foreach($announcements as $index => $announcement)
-                                <div class="announcement-item rotating-announcement" data-index="{{ $index }}" style="
-                                    display: none;
+                                <div class="announcement-item rotating-announcement" 
+                                     data-index="{{ $index }}" 
+                                     data-duration="{{ ($announcement->display_duration ?? 10) * 1000 }}" 
+                                     style="
+                                    display: {{ $index === 0 ? 'block' : 'none' }};
                                     margin: 0;
                                     padding: 0;
                                     word-wrap: break-word;
                                     word-break: break-word;
                                     overflow: hidden;
+                                    background-color: {{ $announcement->background_color ?? '#ffffff' }};
+                                    height: 100%;
+                                    width: 100%;
+                                    flex-direction: column;
+                                    flex: 1;
                                 ">
                                     <div class="announcement-title" style="
                                         font-weight: bold;
                                         margin-bottom: 8px;
-                                        color: {{ $announcementsStyling['text_color'] ?? '#000000' }};
-                                        font-size: {{ $announcementsStyling['font_size'] ? (strpos($announcementsStyling['font_size'], 'rem') !== false ? $announcementsStyling['font_size'] : $announcementsStyling['font_size'] . 'rem') : '1.2rem' }};
+                                        color: {{ $announcement->text_color ?? '#000000' }};
+                                        font-size: {{ $announcement->title_font_size ?? 36 }}px;
                                         line-height: 1.3;
                                         overflow: hidden;
                                         text-overflow: ellipsis;
                                     ">{{ $announcement->title }}</div>
-                                    <div class="announcement-text" style="
-                                        font-size: {{ $announcementsStyling['font_size'] ? (strpos($announcementsStyling['font_size'], 'rem') !== false ? $announcementsStyling['font_size'] : $announcementsStyling['font_size'] . 'rem') : '1rem' }};
-                                        color: {{ $announcementsStyling['text_color'] ?? '#000000' }};
-                                        max-height: {{ $announcementsLayout['max_height'] ?? '400' }}px;
+                                    @php
+                                        // Calculate scroll speed for vertical scrolling (1-10)
+                                        // Speed 1 = slowest (50s), Speed 10 = fastest (5s)
+                                        $baseSpeed = 50; // base seconds
+                                        $scrollSpeed = $announcement->scroll_speed ?? 3;
+                                        $animationDuration = $baseSpeed / $scrollSpeed; // inversely proportional
+                                        $animationDuration = max(5, $animationDuration); // minimum 5 seconds
+                                    @endphp
+                                    <div class="announcement-text-container" style="
+                                        flex: 1;
                                         overflow: hidden;
-                                        word-wrap: break-word;
-                                        line-height: 1.4;
-                                        margin: 0;
-                                    ">{{ Str::limit($announcement->content, 300, '...') }}</div>
+                                        position: relative;
+                                        display: flex;
+                                        flex-direction: column;
+                                        justify-content: flex-start;
+                                    ">
+                                        <div class="announcement-text-scroll" style="
+                                            font-size: {{ $announcement->font_size ?? 24 }}px;
+                                            color: {{ $announcement->text_color ?? '#000000' }};
+                                            word-wrap: break-word;
+                                            line-height: 1.4;
+                                            margin: 0;
+                                            min-height: 100%;
+                                            animation: scroll-vertical {{ $animationDuration }}s linear infinite;
+                                            animation-play-state: running;
+                                        " data-scroll-speed="{{ $scrollSpeed }}">{{ $announcement->content }}</div>
+                                    </div>
                                 </div>
                             @endforeach
                         @else
@@ -405,7 +446,8 @@
                 $specialStyling = $specialBox['styling_settings'] ?? [];
                 $specialLayout = $specialBox['layout_settings'] ?? [];
             @endphp
-            <div class="board-bottom-times" style="
+            <div class="board-bottom-times" data-box-root="special_times_box" style="
+                {{ ($useBoxesStyling && !($boxSettings['special_times_box']['is_active'] ?? true)) ? 'display:none;' : '' }}
                 background-color: {{ $specialStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                 color: {{ $specialStyling['text_color'] ?? '#000000' }};
                 font-family: {{ $specialStyling['font_family'] ?? 'Courier New, monospace' }};
@@ -448,68 +490,68 @@
                             @endphp
                             <div class="time-item">
                                 <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[0] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[0] }}</div>
+                                <div class="time-value" data-special-time="sehri_ends" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[0] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[1] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[1] }}</div>
+                                <div class="time-value" data-special-time="sun_rise" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[1] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[2] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[2] }}</div>
+                                <div class="time-value" data-special-time="noon" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[2] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[3] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[3] }}</div>
+                                <div class="time-value" data-special-time="jumah_1" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[3] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[4] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[4] }}</div>
+                                <div class="time-value" data-special-time="jumah_2" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[4] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[5] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[5] }}</div>
+                                <div class="time-value" data-special-time="eid_prayer_1" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[5] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[6] }}</div>
-                                <div class="time-value" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[6] }}</div>
+                                <div class="time-value" data-special-time="eid_prayer_2" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[6] }}</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         @elseif(!$useBoxesStyling)
-            <div class="board-bottom-times">
+            <div class="board-bottom-times" data-box-root="special_times_box">
                 <div class="row">
                     <div class="col">
                         <div class="additional-times">
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['sehri_ends_title'] ?? 'Sehri Ends' }}</div>
-                                <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="sehri_ends">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') : '--:--' }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['sun_rise_title'] ?? 'Sun Rise' }}</div>
-                                <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->sun_rise)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="sun_rise">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->sun_rise)->format('h:i') : '--:--' }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['noon_title'] ?? 'Noon' }}</div>
-                                <div class="time-value">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="noon">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') : '--:--' }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['jumah_1_title'] ?? 'Jumu\'ah 1' }}</div>
-                                <div class="time-value">{{ $prayerTimes && $prayerTimes->jumah_1 ? \Carbon\Carbon::parse($prayerTimes->jumah_1)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="jumah_1">{{ $prayerTimes && $prayerTimes->jumah_1 ? \Carbon\Carbon::parse($prayerTimes->jumah_1)->format('h:i') : '--:--' }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['jumah_2_title'] ?? 'Jumu\'ah 2' }}</div>
-                                <div class="time-value">{{ $prayerTimes && $prayerTimes->jumah_2 ? \Carbon\Carbon::parse($prayerTimes->jumah_2)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="jumah_2">{{ $prayerTimes && $prayerTimes->jumah_2 ? \Carbon\Carbon::parse($prayerTimes->jumah_2)->format('h:i') : '--:--' }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['eid_prayer_1_title'] ?? 'Eid Prayer 1' }}</div>
-                                <div class="time-value">{{ $prayerTimes && $prayerTimes->eid_prayer_1 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_1)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="eid_prayer_1">{{ $prayerTimes && $prayerTimes->eid_prayer_1 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_1)->format('h:i') : '--:--' }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['eid_prayer_2_title'] ?? 'Eid Prayer 2' }}</div>
-                                <div class="time-value">{{ $prayerTimes && $prayerTimes->eid_prayer_2 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_2)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="eid_prayer_2">{{ $prayerTimes && $prayerTimes->eid_prayer_2 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_2)->format('h:i') : '--:--' }}</div>
                             </div>
                         </div>
                     </div>
@@ -525,7 +567,8 @@
                 $welcomeStyling = $welcomeBox['styling_settings'] ?? [];
                 $welcomeContent = $welcomeBox['content_settings'] ?? [];
             @endphp
-            <div class="welcome-box" style="
+            <div class="welcome-box" data-box-root="welcome_box" style="
+                {{ ($useBoxesStyling && !($boxSettings['welcome_box']['is_active'] ?? true)) ? 'display:none;' : '' }}
                 background-color: {{ $welcomeStyling['background_color'] ?? '#1e4d2b' }};
                 color: {{ $welcomeStyling['text_color'] ?? '#FFD700' }};
                 font-family: {{ $welcomeStyling['font_family'] ?? 'Arial, sans-serif' }};
@@ -553,7 +596,8 @@
                 $slidingStyling = $slidingBox['styling_settings'] ?? [];
                 $slidingLayout = $slidingBox['layout_settings'] ?? [];
             @endphp
-            <div class="scrolling-text-area" style="
+            <div class="scrolling-text-area" data-box-root="sliding_text_box" style="
+                {{ ($useBoxesStyling && !($boxSettings['sliding_text_box']['is_active'] ?? true)) ? 'display:none;' : '' }}
                 background-color: {{ $slidingStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                 color: {{ $slidingStyling['text_color'] ?? '#000000' }};
                 font-family: {{ $slidingStyling['font_family'] ?? 'Courier New, monospace' }};
@@ -600,7 +644,7 @@
                 </div>
             </div>
         @elseif(!$useBoxesStyling)
-            <div class="scrolling-text-area">
+            <div class="scrolling-text-area" data-box-root="sliding_text_box">
                 <div class="scrolling-content">
                     <div class="scrolling-text">
                         <div class="scroll-wrapper">
@@ -716,6 +760,96 @@
         -webkit-line-clamp: 6 !important;
         -webkit-box-orient: vertical !important;
     }
+
+    @keyframes scroll-vertical {
+        0% {
+            transform: translateY(0);
+        }
+        100% {
+            transform: translateY(-100%);
+        }
+    }
+
+    .announcement-text-scroll {
+        transition: animation 0.3s ease;
+    }
+
+    .announcement-text-scroll.no-scroll {
+        animation: none !important;
+    }
+
+    /* Display Mode: Show All */
+    #announcements-content[data-display-mode="show-all"] {
+        overflow-y: auto;
+        flex-direction: column;
+        display: flex !important;
+        gap: 0;
+        padding: 0;
+    }
+
+    #announcements-content[data-display-mode="show-all"] .announcement-item {
+        display: flex !important;
+        flex: 1 1 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 12px !important;
+        border: none !important;
+        border-radius: 0 !important;
+        flex-direction: column !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    #announcements-content[data-display-mode="show-all"] .announcement-title {
+        font-weight: bold !important;
+        margin-bottom: 5px !important;
+        line-height: 1.2 !important;
+        flex-shrink: 0;
+    }
+
+    #announcements-content[data-display-mode="show-all"] .announcement-text-container {
+        overflow: hidden !important;
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        min-height: 0 !important;
+    }
+
+    #announcements-content[data-display-mode="show-all"] .announcement-text-scroll {
+        animation: scroll-vertical 20s linear infinite !important;
+        min-height: auto !important;
+        line-height: 1.4 !important;
+    }
+
+    #announcements-content[data-display-mode="show-all"] .announcement-text-scroll.no-scroll {
+        animation: none !important;
+        animation-play-state: paused !important;
+    }
+
+    /* Display Mode: Rotation */
+    #announcements-content[data-display-mode="rotation"] {
+        position: relative;
+    }
+
+    #announcements-content[data-display-mode="rotation"] .announcement-item {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    #announcements-content[data-display-mode="rotation"] .announcement-text-scroll {
+        animation: scroll-vertical 20s linear infinite !important;
+    }
+
+    #announcements-content[data-display-mode="rotation"] .announcement-text-scroll.no-scroll {
+        animation: none !important;
+        animation-play-state: paused !important;
+    }
 </style>
 
 @endsection
@@ -787,6 +921,14 @@
     
     // Track which prayers have been updated to tomorrow
     const updatedPrayers = new Set();
+
+    // Track which special times have been updated to tomorrow
+    const updatedSpecialTimes = new Set();
+
+    // Store special times for today/tomorrow
+    let todaySpecialTimesData = {};
+    let tomorrowSpecialTimesData = {};
+    let originalTodaySpecialTimesData = {};
     
     // Store original today's times
     const originalTodayTimes = {
@@ -909,6 +1051,41 @@
         // Mark as updated
         updatedPrayers.add(prayerName);
     }
+
+    function deriveSpecialTimes(dayData) {
+        return {
+            sehri_ends: dayData && dayData.fajr ? dayData.fajr : null,
+            sun_rise: dayData && dayData.sun_rise ? dayData.sun_rise : null,
+            noon: dayData && dayData.zohar ? dayData.zohar : null,
+            jumah_1: dayData && dayData.jumah_1 ? dayData.jumah_1 : null,
+            jumah_2: dayData && dayData.jumah_2 ? dayData.jumah_2 : null,
+            eid_prayer_1: dayData && dayData.eid_prayer_1 ? dayData.eid_prayer_1 : null,
+            eid_prayer_2: dayData && dayData.eid_prayer_2 ? dayData.eid_prayer_2 : null
+        };
+    }
+
+    function updateSpecialTimeToTomorrow(specialKey) {
+        if (updatedSpecialTimes.has(specialKey)) {
+            return;
+        }
+
+        const tomorrowValue = tomorrowSpecialTimesData && Object.prototype.hasOwnProperty.call(tomorrowSpecialTimesData, specialKey)
+            ? tomorrowSpecialTimesData[specialKey]
+            : null;
+
+        if (!tomorrowValue) {
+            return;
+        }
+
+        const formatted = formatTimeForDisplay(tomorrowValue);
+        document.querySelectorAll(`[data-special-time="${specialKey}"]`).forEach(element => {
+            if (element.textContent !== formatted) {
+                element.textContent = formatted;
+            }
+        });
+
+        updatedSpecialTimes.add(specialKey);
+    }
     
     // Function to check if jamaat times have passed and update accordingly
     function checkAndUpdatePrayerTimes() {
@@ -916,29 +1093,51 @@
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
         const currentSeconds = now.getSeconds();
         const currentTotalSeconds = currentMinutes * 60 + currentSeconds;
-        
-        // Check each prayer
+
         const prayers = ['fajr', 'zohar', 'asr', 'maghrib', 'isha'];
-        
         prayers.forEach(prayerName => {
             if (updatedPrayers.has(prayerName)) {
-                return; // Already updated
+                return;
             }
-            
-            // Get today's jamaat time for this prayer
-            const todayJamaatTime = originalTodayTimes.jamaat[prayerName];
-            if (!todayJamaatTime) return;
-            
-            const jamaatMinutes = timeToMinutes(todayJamaatTime);
-            if (jamaatMinutes === null) return;
-            
-            const jamaatTotalSeconds = jamaatMinutes * 60;
-            
-            // Check if current time has passed the jamaat time (immediately after it ends)
-            // No buffer - update right when jamaat time passes
-            if (currentTotalSeconds > jamaatTotalSeconds) {
-                // Jamaat time has passed, update to tomorrow
+
+            const jamaatTime = originalTodayTimes && originalTodayTimes.jamaat ? originalTodayTimes.jamaat[prayerName] : null;
+            if (!jamaatTime) {
+                return;
+            }
+
+            const minutes = timeToMinutes(jamaatTime);
+            if (minutes === null) {
+                return;
+            }
+
+            const totalSeconds = minutes * 60;
+            if (currentTotalSeconds > totalSeconds) {
                 updatePrayerToTomorrow(prayerName);
+            }
+        });
+
+        const specialKeys = ['sehri_ends', 'sun_rise', 'noon', 'jumah_1', 'jumah_2', 'eid_prayer_1', 'eid_prayer_2'];
+        specialKeys.forEach(specialKey => {
+            if (updatedSpecialTimes.has(specialKey)) {
+                return;
+            }
+
+            const originalValue = originalTodaySpecialTimesData && Object.prototype.hasOwnProperty.call(originalTodaySpecialTimesData, specialKey)
+                ? originalTodaySpecialTimesData[specialKey]
+                : null;
+
+            if (!originalValue) {
+                return;
+            }
+
+            const minutes = timeToMinutes(originalValue);
+            if (minutes === null) {
+                return;
+            }
+
+            const totalSeconds = minutes * 60;
+            if (currentTotalSeconds > totalSeconds) {
+                updateSpecialTimeToTomorrow(specialKey);
             }
         });
     }
@@ -952,105 +1151,83 @@
     checkAndUpdatePrayerTimes(); // Initial call
     
     // ========== AUTOMATIC DATE AND TIME UPDATE ==========
-    // Store current date to detect when midnight passes
-    let lastKnownDate = new Date().toLocaleDateString('en-US');
-    
-    // Update current time display and date every second
+    let lastKnownDate = new Date().toISOString().slice(0, 10);
+
+    function updateGregorianDateDisplay(now) {
+        const gregorianDateElement = document.getElementById('gregorian-date');
+        if (!gregorianDateElement) {
+            return;
+        }
+
+        const formattedDate = now.toLocaleDateString('en-GB', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        }).replace(',', '');
+
+        if (gregorianDateElement.textContent !== formattedDate) {
+            gregorianDateElement.textContent = formattedDate;
+        }
+    }
+
+    function updateIslamicDateDisplay(islamicDate) {
+        if (!islamicDate || !islamicDate.day || !islamicDate.month || !islamicDate.year) {
+            return;
+        }
+
+        const islamicDateElement = document.getElementById('islamic-date');
+        if (!islamicDateElement) {
+            return;
+        }
+
+        const formattedDate = `${islamicDate.day} ${islamicDate.month} ${islamicDate.year}`;
+        if (islamicDateElement.textContent !== formattedDate) {
+            islamicDateElement.textContent = formattedDate;
+        }
+    }
+
     function updateTimeAndDate() {
         const now = new Date();
-        const currentDateStr = now.toLocaleDateString('en-US');
-        
-        // Check if date has changed (midnight has passed)
-        if (currentDateStr !== lastKnownDate) {
-            console.log('🕐 Midnight detected! Refreshing page to update all dates and prayers...');
-            lastKnownDate = currentDateStr;
-            
-            // Page reload to refresh dates, prayer times, and Hijri calendar
-            location.reload();
-        }
-        
+        const currentDateKey = now.toISOString().slice(0, 10);
+
         // Update current time display in real-time (every second)
         const timeElements = document.querySelectorAll('#current-time');
         if (timeElements.length > 0) {
-            // Convert to 12-hour format with AM/PM
             let hours = now.getHours();
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
             const ampm = hours >= 12 ? 'PM' : 'AM';
-            
-            // Convert to 12-hour format
+
             hours = hours % 12;
-            hours = hours ? hours : 12; // 0 should be 12
+            hours = hours ? hours : 12;
             hours = String(hours).padStart(2, '0');
-            
-            // Format as HH:MM:SS AM/PM
+
             const timeFormat = `${hours}:${minutes}:${seconds} ${ampm}`;
-            
+
             timeElements.forEach(element => {
                 if (element.textContent !== timeFormat) {
                     element.textContent = timeFormat;
                 }
             });
         }
-    }
-    
-    // Update time every second
-    setInterval(updateTimeAndDate, 1000);
-    updateTimeAndDate(); // Initial call
-    
-    // Calculate time until midnight for page refresh
-    function getTimeUntilMidnight() {
-        const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-        
-        const timeUntilMidnight = tomorrow - now;
-        return timeUntilMidnight;
-    }
-    
-    // Schedule exact page refresh at midnight
-    function schedulePageRefreshAtMidnight() {
-        const timeUntilMidnight = getTimeUntilMidnight();
-        
-        console.log(`📅 Page will auto-refresh at midnight (in ${Math.round(timeUntilMidnight / 1000)} seconds)`);
-        
-        // Schedule refresh for exactly midnight
-        setTimeout(() => {
-            console.log('🔄 Midnight reached! Refreshing page...');
-            location.reload();
-        }, timeUntilMidnight);
-    }
-    
-    // Schedule the first midnight refresh
-    schedulePageRefreshAtMidnight();
 
-    
-    // Countdown timer for next prayer (legacy)
-    function updateCountdown() {
-        const countdownElement = document.querySelector('.countdown-timer');
-        if (!countdownElement) return;
-        
-        let seconds = parseInt(countdownElement.getAttribute('data-seconds'));
-        
-        if (seconds <= 0) {
-            location.reload(); // Refresh when prayer time is reached
-            return;
+        updateGregorianDateDisplay(now);
+
+        // Date changed (midnight) - refresh data via APIs only (no page reload)
+        if (currentDateKey !== lastKnownDate) {
+            console.log('🕐 Midnight detected, syncing timetable and announcements...');
+            lastKnownDate = currentDateKey;
+            resetDailyRuntimeState();
+            requestTimetableSync();
+            requestAnnouncementsSync();
+            requestMediaSync();
+            requestScreenConfigSync();
         }
-        
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const remainingSeconds = seconds % 60;
-        
-        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-        countdownElement.textContent = timeString;
-        
-        countdownElement.setAttribute('data-seconds', seconds - 1);
     }
-    
-    // Update countdown every second
-    setInterval(updateCountdown, 1000);
-    updateCountdown(); // Initial call
+
+    setInterval(updateTimeAndDate, 1000);
+    updateTimeAndDate();
     
     // Fullscreen functionality
     function toggleFullscreen() {
@@ -1155,418 +1332,1026 @@
         }
     });
 
-    // Media Display System
+    // Media/Live Update System
+    const defaultSlowPollMs = Math.max(5000, (Number(@json($settings['auto_refresh_interval'] ?? 45)) || 45) * 1000);
+    const displayPollingConfig = window.displayPollingConfig || {};
+    const POLL_INTERVALS = {
+        media: Math.max(3000, Number(displayPollingConfig.media) || 3000),
+        timetable: Math.max(5000, Number(displayPollingConfig.timetable) || defaultSlowPollMs),
+        announcements: Math.max(5000, Number(displayPollingConfig.announcements) || defaultSlowPollMs),
+        screenConfig: Math.max(5000, Number(displayPollingConfig.screenConfig) || 5000)
+    };
+    let announcementTextMaxHeight = (function() {
+        const existingContainer = document.querySelector('#announcements-content .announcement-text-container');
+        if (!existingContainer) {
+            return '400px';
+        }
+
+        if (existingContainer.style.maxHeight) {
+            return existingContainer.style.maxHeight;
+        }
+
+        const computed = window.getComputedStyle(existingContainer).maxHeight;
+        return computed && computed !== 'none' ? computed : '400px';
+    })();
+
     let currentMedia = null;
     let currentMediaData = null;
     let mediaDisplayTimer = null;
     let countdownTimer = null;
-    let mediaCheckInterval = null;
-    let lastScheduleId = null;
-    let lastMediaId = null;
-    let scheduleMediaSequence = new Set(); // Track media within current schedule sequence
+    let currentScreenState = null;
+    const lastKnownVersions = {
+        announcements: null,
+        media: null,
+        timetable: null,
+        config: null,
+        state: null
+    };
 
-    // Initialize media display system
-    function initMediaDisplay() {
-        checkForMedia();
-        // Check for media updates every 3 seconds for responsive sequencing
-        mediaCheckInterval = setInterval(checkForMedia, 3000);
+    let mediaPollingTimer = null;
+    let timetablePollingTimer = null;
+    let announcementsPollingTimer = null;
+    let screenConfigPollingTimer = null;
+    let isMediaPollInFlight = false;
+    let isTimetablePollInFlight = false;
+    let isAnnouncementsPollInFlight = false;
+    let isScreenConfigPollInFlight = false;
+
+    let announcementRotationInterval = null;
+    let announcementResizeHandler = null;
+
+    async function fetchJson(url) {
+        const response = await fetch(url, {
+            cache: 'no-store',
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Request failed for ${url}: ${response.status}`);
+        }
+
+        return response.json();
     }
 
-    // Check for current media to display
-    async function checkForMedia() {
-        try {
-            const response = await fetch('/api/current-media');
-            const data = await response.json();
-            
-            // If we have media data
-            if (data.media) {
-                const scheduleId = data.media.schedule_id || 'unknown';
-                const mediaId = data.media.id;
-                
-                // Check if this is a new media or different from what's currently showing
-                const isNewMedia = mediaId !== lastMediaId;
-                const isDifferentMedia = !currentMedia || currentMedia.id !== mediaId;
-                
-                if (isNewMedia && isDifferentMedia) {
-                    console.log('New media in sequence, displaying:', data.media);
-                    lastMediaId = mediaId;
-                    displayMedia(data.media);
-                }
-            } else {
-                // No media to display, hide current media if showing
-                if (currentMedia) {
-                    console.log('No media to display, hiding current');
-                    hideMedia();
-                }
-            }
-            
-            // Also check for countdown
-            checkCountdown();
-        } catch (error) {
-            console.error('Error checking media:', error);
+    function toPositiveInteger(value, fallback = 0) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+    }
+
+    function minutesToTime(minutesSinceMidnight) {
+        const normalized = ((minutesSinceMidnight % 1440) + 1440) % 1440;
+        const hours = Math.floor(normalized / 60);
+        const minutes = normalized % 60;
+
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+
+    function computeJamaatTime(beginningTime, explicitJamaatTime, offsetMinutes) {
+        if (explicitJamaatTime) {
+            return explicitJamaatTime;
+        }
+
+        const beginningMinutes = timeToMinutes(beginningTime);
+        if (beginningMinutes === null) {
+            return null;
+        }
+
+        return minutesToTime(beginningMinutes + (Number(offsetMinutes) || 0));
+    }
+
+    function isPosterState(state) {
+        return state === 'PRAYER_POSTER' || state === 'FULLTIME_POSTER';
+    }
+
+    function normalizeMediaPayload(media) {
+        if (!media) {
+            return null;
+        }
+
+        return {
+            id: typeof media.id !== 'undefined' ? media.id : null,
+            title: media.title || '',
+            type: media.type || '',
+            file_url: media.file_url || '',
+            display_duration: toPositiveInteger(media.display_duration, 0),
+            priority: typeof media.priority !== 'undefined' ? media.priority : null,
+            schedule_id: typeof media.schedule_id !== 'undefined' ? media.schedule_id : null
+        };
+    }
+
+    function normalizeAnnouncement(announcement) {
+        return {
+            id: announcement && typeof announcement.id !== 'undefined' ? announcement.id : null,
+            title: announcement && announcement.title ? announcement.title : '',
+            content: announcement && announcement.content ? announcement.content : '',
+            display_duration: toPositiveInteger(announcement && announcement.display_duration ? announcement.display_duration : null, 10),
+            font_size: toPositiveInteger(announcement && announcement.font_size ? announcement.font_size : null, 24),
+            text_color: announcement && announcement.text_color ? announcement.text_color : '#000000',
+            background_color: announcement && announcement.background_color ? announcement.background_color : '#ffffff',
+            scroll_speed: toPositiveInteger(announcement && announcement.scroll_speed ? announcement.scroll_speed : null, 3)
+        };
+    }
+
+    function syncKnownVersions(payload) {
+        if (!payload || typeof payload !== 'object') {
+            return;
+        }
+
+        if (payload.announcements_version) {
+            lastKnownVersions.announcements = payload.announcements_version;
+        }
+
+        if (payload.media_version) {
+            lastKnownVersions.media = payload.media_version;
+        }
+
+        if (payload.timetable_version) {
+            lastKnownVersions.timetable = payload.timetable_version;
+        }
+
+        if (payload.config_version) {
+            lastKnownVersions.config = payload.config_version;
+        }
+
+        if (payload.state_version) {
+            lastKnownVersions.state = payload.state_version;
         }
     }
 
-    // Display media in fullscreen overlay
-    function displayMedia(media) {
-        console.log('displayMedia called with:', media);
-        currentMedia = media;
-        currentMediaData = media;
-        
-        const overlay = document.getElementById('media-overlay');
-        const content = document.getElementById('media-content');
-        
-        // Clear any existing timers
+    function hasVersionChanged(section, nextVersion) {
+        if (!nextVersion) {
+            return true;
+        }
+
+        return lastKnownVersions[section] !== nextVersion;
+    }
+
+    function normalizeCssValue(value, fallbackUnit = '') {
+        if (value === null || typeof value === 'undefined' || value === '') {
+            return '';
+        }
+
+        if (typeof value === 'number') {
+            return `${value}${fallbackUnit}`;
+        }
+
+        const trimmed = String(value).trim();
+        if (!trimmed) {
+            return '';
+        }
+
+        if (!fallbackUnit) {
+            return trimmed;
+        }
+
+        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+            return `${trimmed}${fallbackUnit}`;
+        }
+
+        return trimmed;
+    }
+
+    function setStyleValue(element, property, value, fallbackUnit = '') {
+        if (!element) {
+            return;
+        }
+
+        const cssValue = normalizeCssValue(value, fallbackUnit);
+        if (!cssValue) {
+            return;
+        }
+
+        element.style.setProperty(property, cssValue);
+    }
+
+    function toggleBoxVisibility(boxType, isVisible) {
+        document.querySelectorAll(`[data-box-root="${boxType}"]`).forEach((element) => {
+            if (isVisible) {
+                element.style.display = '';
+                return;
+            }
+
+            element.style.display = 'none';
+        });
+    }
+
+    function applyThemeVariables(themeVariables) {
+        if (!themeVariables || typeof themeVariables !== 'object') {
+            return;
+        }
+
+        const root = document.documentElement;
+        Object.entries(themeVariables).forEach(([key, value]) => {
+            if (value === null || typeof value === 'undefined') {
+                return;
+            }
+            root.style.setProperty(`--${String(key).replace(/_/g, '-')}`, String(value));
+        });
+
+        const displayFontFamily = themeVariables.display_font_family || '';
+        const displayBackgroundColor = themeVariables.display_background_color || '';
+        const displayTextColor = themeVariables.display_text_color || '';
+
+        root.style.setProperty('--display-font-family', displayFontFamily || 'Arial, sans-serif');
+        root.style.setProperty('--display-background-color', displayBackgroundColor || '#ffffff');
+        root.style.setProperty('--display-text-color', displayTextColor || '#000000');
+        root.style.setProperty('--prayer-time-font-size', normalizeCssValue(themeVariables.prayer_time_font_size, 'px') || '24px');
+        root.style.setProperty('--announcement-scroll-speed', String(themeVariables.announcement_scroll_speed || '3'));
+
+        if (displayFontFamily) {
+            document.body.style.fontFamily = displayFontFamily;
+        }
+        if (displayBackgroundColor) {
+            const board = document.getElementById('timetable-background-box');
+            if (board) {
+                board.style.backgroundColor = displayBackgroundColor;
+            }
+        }
+        if (displayTextColor) {
+            document.body.style.color = displayTextColor;
+        }
+    }
+
+    function buildOrderMap(boxSettings, boxOrder = []) {
+        const orderMap = {};
+        let sequence = 0;
+
+        if (Array.isArray(boxOrder)) {
+            boxOrder.forEach((boxType) => {
+                orderMap[boxType] = sequence++;
+            });
+        }
+
+        Object.entries(boxSettings || {}).forEach(([boxType, boxData]) => {
+            if (typeof orderMap[boxType] !== 'undefined') {
+                return;
+            }
+            orderMap[boxType] = Number(boxData && boxData.sort_order);
+            if (!Number.isFinite(orderMap[boxType])) {
+                orderMap[boxType] = sequence++;
+            }
+        });
+
+        return orderMap;
+    }
+
+    function applyBoxOrdering(boxSettings, boxOrder = []) {
+        const orderMap = buildOrderMap(boxSettings, boxOrder);
+        const parents = new Set();
+
+        document.querySelectorAll('[data-box-root]').forEach((node) => {
+            if (node.parentElement) {
+                parents.add(node.parentElement);
+            }
+        });
+
+        parents.forEach((parent) => {
+            const children = Array.from(parent.children).filter((child) => child.hasAttribute('data-box-root'));
+            if (children.length < 2) {
+                return;
+            }
+
+            children
+                .sort((a, b) => {
+                    const aType = a.getAttribute('data-box-root');
+                    const bType = b.getAttribute('data-box-root');
+                    const aOrder = typeof orderMap[aType] !== 'undefined' ? Number(orderMap[aType]) : Number.MAX_SAFE_INTEGER;
+                    const bOrder = typeof orderMap[bType] !== 'undefined' ? Number(orderMap[bType]) : Number.MAX_SAFE_INTEGER;
+                    return aOrder - bOrder;
+                })
+                .forEach((child) => parent.appendChild(child));
+        });
+    }
+
+    function applyBoxConfig(boxSettings) {
+        if (!boxSettings || typeof boxSettings !== 'object') {
+            return;
+        }
+
+        Object.entries(boxSettings).forEach(([boxType, boxData]) => {
+            const isActive = !boxData || typeof boxData.is_active === 'undefined' ? true : !!boxData.is_active;
+            const styling = boxData && boxData.styling_settings ? boxData.styling_settings : {};
+            const content = boxData && boxData.content_settings ? boxData.content_settings : {};
+            const layout = boxData && boxData.layout_settings ? boxData.layout_settings : {};
+
+            toggleBoxVisibility(boxType, isActive);
+            if (!isActive) {
+                return;
+            }
+
+            if (boxType === 'timetable_background_box') {
+                const root = document.getElementById('timetable-background-box');
+                setStyleValue(root, 'background-color', styling.background_color);
+            }
+
+            if (boxType === 'header_box') {
+                const header = document.getElementById('header-box');
+                setStyleValue(header, 'background-color', styling.background_color);
+                setStyleValue(header, 'color', styling.text_color);
+                setStyleValue(header, 'font-family', styling.font_family);
+                setStyleValue(header, 'padding', styling.padding, 'px');
+                if (header && styling.border_width && styling.border_color) {
+                    header.style.border = `${normalizeCssValue(styling.border_width)} solid ${styling.border_color}`;
+                }
+                setStyleValue(header, 'border-radius', styling.border_radius);
+                document.querySelectorAll('#current-time').forEach((node) => setStyleValue(node, 'font-size', styling.time_font_size, 'rem'));
+                document.querySelectorAll('#gregorian-date, #islamic-date').forEach((node) => setStyleValue(node, 'font-size', styling.date_font_size, 'rem'));
+            }
+
+            if (boxType === 'prayer_times_box') {
+                const prayerSection = document.getElementById('prayer-times-section');
+                const prayerBox = document.getElementById('prayer-times-box');
+                setStyleValue(prayerSection, 'background-color', styling.background_color);
+                setStyleValue(prayerSection, 'color', styling.text_color);
+                setStyleValue(prayerSection, 'font-family', styling.font_family);
+                setStyleValue(prayerSection, 'padding', styling.padding, 'px');
+                if (prayerSection && styling.border_width && styling.border_color) {
+                    prayerSection.style.border = `${normalizeCssValue(styling.border_width)} solid ${styling.border_color}`;
+                }
+
+                if (Array.isArray(layout.column_widths) && layout.column_widths.length >= 3) {
+                    const templateColumns = `${layout.column_widths[0]} ${layout.column_widths[1]} ${layout.column_widths[2]}`;
+                    const prayerHeader = prayerSection ? prayerSection.querySelector('.prayer-header') : null;
+                    if (prayerHeader) {
+                        prayerHeader.style.gridTemplateColumns = templateColumns;
+                    }
+                    if (prayerSection) {
+                        prayerSection.querySelectorAll('.prayer-row').forEach((row) => {
+                            row.style.gridTemplateColumns = templateColumns;
+                        });
+                    }
+                }
+
+                const beginningSpacing = normalizeCssValue(layout.beginning_column_spacing, 'px');
+                if (beginningSpacing && prayerSection) {
+                    const headerCells = prayerSection.querySelectorAll('.prayer-header .prayer-col-header');
+                    if (headerCells[1]) {
+                        headerCells[1].style.marginLeft = `-${beginningSpacing}`;
+                    }
+                    prayerSection.querySelectorAll('.prayer-row [data-time-type="beginning"]').forEach((node) => {
+                        node.style.marginLeft = `-${beginningSpacing}`;
+                    });
+                }
+
+                const headerCells = prayerSection ? prayerSection.querySelectorAll('.prayer-header .prayer-col-header') : [];
+                if (headerCells[1] && content.beginning_title) {
+                    headerCells[1].textContent = content.beginning_title;
+                }
+                if (headerCells[2] && content.jamaat_time_title) {
+                    headerCells[2].textContent = content.jamaat_time_title;
+                }
+
+                if (prayerBox && layout.width) {
+                    prayerBox.style.width = normalizeCssValue(layout.width);
+                }
+            }
+
+            if (boxType === 'announcements_box') {
+                const section = document.getElementById('announcements-section');
+                const header = section ? section.querySelector('.announcements-header') : null;
+                setStyleValue(section, 'background-color', styling.background_color);
+                setStyleValue(section, 'color', styling.text_color);
+                setStyleValue(section, 'font-family', styling.font_family);
+                setStyleValue(section, 'font-size', styling.font_size, 'rem');
+                if (section && styling.border_width && styling.border_color) {
+                    section.style.border = `${normalizeCssValue(styling.border_width)} solid ${styling.border_color}`;
+                }
+                setStyleValue(section, 'padding', styling.padding, 'px');
+                setStyleValue(header, 'color', styling.title_color);
+                setStyleValue(header, 'font-size', styling.title_font_size, 'rem');
+                if (header && content.title) {
+                    header.textContent = content.title;
+                }
+
+                if (typeof layout.max_height !== 'undefined') {
+                    announcementTextMaxHeight = normalizeCssValue(layout.max_height, 'px') || announcementTextMaxHeight;
+                    document.querySelectorAll('#announcements-content .announcement-text-container').forEach((element) => {
+                        element.style.maxHeight = announcementTextMaxHeight;
+                    });
+                }
+            }
+
+            if (boxType === 'special_times_box') {
+                const section = document.querySelector('[data-box-root="special_times_box"]');
+                setStyleValue(section, 'background-color', styling.background_color);
+                setStyleValue(section, 'color', styling.text_color);
+                setStyleValue(section, 'font-family', styling.font_family);
+                if (section && styling.border_width && styling.border_color) {
+                    section.style.border = `${normalizeCssValue(styling.border_width)} solid ${styling.border_color}`;
+                }
+
+                const labels = section ? section.querySelectorAll('.time-label') : [];
+                const titles = [
+                    content.sehri_ends_title,
+                    content.sun_rise_title,
+                    content.noon_title,
+                    content.jumah_1_title,
+                    content.jumah_2_title,
+                    content.eid_prayer_1_title,
+                    content.eid_prayer_2_title
+                ];
+                labels.forEach((label, index) => {
+                    if (titles[index]) {
+                        label.textContent = titles[index];
+                    }
+                });
+
+                if (section && Array.isArray(layout.column_widths) && layout.column_widths.length > 0) {
+                    const grid = section.querySelector('.additional-times');
+                    if (grid) {
+                        grid.style.gridTemplateColumns = layout.column_widths.join(' ');
+                    }
+                }
+            }
+
+            if (boxType === 'sliding_text_box') {
+                const section = document.querySelector('[data-box-root="sliding_text_box"]');
+                setStyleValue(section, 'background-color', styling.background_color);
+                setStyleValue(section, 'color', styling.text_color);
+                setStyleValue(section, 'font-family', styling.font_family);
+                setStyleValue(section, 'font-size', styling.font_size, 'rem');
+                setStyleValue(section, 'text-align', layout.text_alignment);
+                if (section && styling.border_width && styling.border_color) {
+                    section.style.border = `${normalizeCssValue(styling.border_width)} solid ${styling.border_color}`;
+                }
+                setStyleValue(section, 'padding', styling.padding, 'px');
+            }
+
+            if (boxType === 'welcome_box') {
+                const section = document.querySelector('[data-box-root="welcome_box"]');
+                setStyleValue(section, 'background-color', styling.background_color);
+                setStyleValue(section, 'color', styling.text_color);
+                setStyleValue(section, 'font-family', styling.font_family);
+                setStyleValue(section, 'font-size', styling.font_size);
+                setStyleValue(section, 'font-weight', styling.font_weight);
+                setStyleValue(section, 'text-align', layout.text_alignment);
+                setStyleValue(section, 'padding', styling.padding, 'px');
+                if (section && typeof content.welcome_text === 'string') {
+                    section.textContent = content.welcome_text;
+                }
+            }
+
+            if (boxType === 'note_prayer_box') {
+                const section = document.querySelector('[data-box-root="note_prayer_box"]');
+                setStyleValue(section, 'background-color', styling.background_color);
+                setStyleValue(section, 'color', styling.text_color);
+                setStyleValue(section, 'font-family', styling.font_family);
+                setStyleValue(section, 'font-size', styling.font_size);
+                if (section && styling.border_width && styling.border_color) {
+                    section.style.border = `${normalizeCssValue(styling.border_width)} solid ${styling.border_color}`;
+                }
+                const noteText = section ? section.querySelector('.next-prayer-text') : null;
+                if (noteText && content.text) {
+                    noteText.textContent = content.text;
+                }
+            }
+        });
+    }
+
+    function applyScreenConfig(configPayload) {
+        if (!configPayload || typeof configPayload !== 'object') {
+            return;
+        }
+
+        applyThemeVariables(configPayload.theme_variables || {});
+        applyBoxConfig(configPayload.box_settings || {});
+        applyBoxOrdering(configPayload.box_settings || {}, configPayload.box_order || []);
+    }
+
+    function clearAllScreenContent() {
+        const mediaOverlay = document.getElementById('media-overlay');
+        const countdownPopup = document.getElementById('countdown-popup');
+        const mediaContent = document.getElementById('media-content');
+        const mediaCountdown = document.getElementById('media-countdown');
+
+        if (mediaOverlay) {
+            mediaOverlay.style.display = 'none';
+        }
+
+        if (countdownPopup) {
+            countdownPopup.style.display = 'none';
+        }
+
+        if (mediaContent) {
+            mediaContent.innerHTML = '';
+        }
+
+        if (mediaCountdown) {
+            mediaCountdown.style.display = 'none';
+            mediaCountdown.innerHTML = '';
+        }
+
         clearTimeout(mediaDisplayTimer);
-        clearTimeout(countdownTimer);
-        
-        // Hide countdown if showing
-        document.getElementById('media-countdown').style.display = 'none';
-        
-        // Create media element
-        let mediaElement;
-        if (media.type === 'image') {
+        clearInterval(countdownTimer);
+
+        mediaDisplayTimer = null;
+        countdownTimer = null;
+        currentMedia = null;
+        currentMediaData = null;
+    }
+
+    function renderCountdownState(data) {
+        const countdownPopup = document.getElementById('countdown-popup');
+        const popupTitle = document.getElementById('countdown-popup-title');
+        const popupPrayer = document.getElementById('countdown-popup-prayer');
+        const popupTimer = document.getElementById('countdown-popup-timer');
+
+        if (!countdownPopup || !data || !data.countdown || !data.countdown.prayer_time) {
+            renderTimetableState();
+            return;
+        }
+
+        const prayerName = data.countdown.prayer_name || 'Prayer';
+        if (popupTitle) {
+            popupTitle.textContent = 'Countdown';
+        }
+        if (popupPrayer) {
+            popupPrayer.textContent = prayerName;
+        }
+        if (popupTimer) {
+            popupTimer.textContent = '00';
+        }
+
+        countdownPopup.style.display = 'flex';
+        countdownPopup.style.position = 'fixed';
+        countdownPopup.style.top = '50%';
+        countdownPopup.style.left = '50%';
+        countdownPopup.style.transform = 'translate(-50%, -50%)';
+        startCountdownTimer(data.countdown.prayer_time);
+    }
+
+    function renderAdhanState() {
+        const overlay = document.getElementById('media-overlay');
+        const mediaContent = document.getElementById('media-content');
+        if (!overlay || !mediaContent) {
+            return;
+        }
+
+        mediaContent.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #000; color: #fff;">
+                <div style="font-size: 5rem; font-weight: bold; letter-spacing: 0.2rem;">ADHAN</div>
+                <div style="font-size: 1.6rem; margin-top: 1rem;">Prayer time has started</div>
+            </div>
+        `;
+
+        overlay.style.display = 'flex';
+    }
+
+    function renderMediaState(media, posterType) {
+        const normalizedMedia = normalizeMediaPayload(media);
+        const overlay = document.getElementById('media-overlay');
+        const mediaContent = document.getElementById('media-content');
+
+        if (!normalizedMedia || !normalizedMedia.file_url || !overlay || !mediaContent) {
+            renderTimetableState();
+            return;
+        }
+
+        const isSameMedia = currentMediaData
+            && normalizedMedia
+            && currentMediaData.id === normalizedMedia.id
+            && currentMediaData.file_url === normalizedMedia.file_url
+            && currentScreenState === posterType;
+
+        if (isSameMedia) {
+            overlay.style.display = 'flex';
+            return;
+        }
+
+        clearInterval(countdownTimer);
+        clearTimeout(mediaDisplayTimer);
+
+        currentMedia = normalizedMedia;
+        currentMediaData = normalizedMedia;
+
+        let mediaElement = null;
+        if (normalizedMedia.type === 'image') {
             mediaElement = document.createElement('img');
-            mediaElement.src = media.file_url;
-            mediaElement.alt = media.title;
-            mediaElement.style.width = '100%';
-            mediaElement.style.height = '100%';
-            mediaElement.style.objectFit = 'contain';
-            mediaElement.style.display = 'block';
-            mediaElement.style.position = 'relative';
-            mediaElement.style.zIndex = '1';
-
-            // Add error handling for image loading
-            mediaElement.onload = function() {
-                console.log('Image loaded successfully:', media.file_url);
-                console.log('Image natural dimensions:', this.naturalWidth, 'x', this.naturalHeight);
-                console.log('Image display style:', this.style.display);
-                console.log('Image visibility:', this.style.visibility);
-                console.log('Image opacity:', this.style.opacity);
-                console.log('Content children:', content.children.length);
-                console.log('Media element tag name:', this.tagName);
-                console.log('Image computed display:', window.getComputedStyle(this).display);
-                console.log('Image computed width:', window.getComputedStyle(this).width);
-                console.log('Image computed height:', window.getComputedStyle(this).height);
-                console.log('Content dimensions:', content.offsetWidth, 'x', content.offsetHeight);
-            };
-
+            mediaElement.src = normalizedMedia.file_url;
+            mediaElement.alt = normalizedMedia.title;
+            mediaElement.style.cssText = 'width: 100%; height: 100%; object-fit: contain; display: block; position: relative; z-index: 1;';
             mediaElement.onerror = function() {
-                console.error('Failed to load image:', media.file_url);
-                console.error('Image natural dimensions:', this.naturalWidth, 'x', this.naturalHeight);
-                // Show error message instead of black screen
-                content.innerHTML = '<div style="color: white; text-align: center; padding: 20px;">Failed to load image: ' + media.title + '</div>';
+                mediaContent.innerHTML = `<div style="color: white; text-align: center; padding: 20px;">Failed to load image: ${normalizedMedia.title}</div>`;
             };
-
-            console.log('Loading image from:', media.file_url);
-        } else if (media.type === 'video') {
+        } else if (normalizedMedia.type === 'video') {
             mediaElement = document.createElement('video');
-            mediaElement.src = media.file_url;
+            mediaElement.src = normalizedMedia.file_url;
             mediaElement.autoplay = true;
             mediaElement.loop = true;
             mediaElement.muted = true;
-            mediaElement.style.width = '100%';
-            mediaElement.style.height = '100%';
-            mediaElement.style.objectFit = 'contain';
+            mediaElement.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
         }
-        
-        // Clear content and add new media
-        content.innerHTML = '';
-        console.log('Content dimensions before adding image:', content.offsetWidth, 'x', content.offsetHeight);
 
-        // Clear any existing animations
-        mediaElement.style.animation = 'none';
+        if (!mediaElement) {
+            renderTimetableState();
+            return;
+        }
 
-        content.appendChild(mediaElement);
-
-        // Force reflow to ensure animation plays
-        mediaElement.offsetHeight;
-
-        // Start the slide-in animation
-        mediaElement.style.animation = 'slideInFromRight 1s ease-out';
-
-        console.log('Content dimensions after adding image:', content.offsetWidth, 'x', content.offsetHeight);
-        console.log('Media element dimensions:', mediaElement.offsetWidth, 'x', mediaElement.offsetHeight);
-
-        // Show overlay
-        console.log('Showing media overlay');
+        mediaContent.innerHTML = '';
+        mediaContent.appendChild(mediaElement);
         overlay.style.display = 'flex';
-        overlay.style.visibility = 'visible';
-        overlay.style.opacity = '1';
 
-        // Debug: Check if overlay is actually visible
-        console.log('Overlay display style:', overlay.style.display);
-        console.log('Overlay computed display:', window.getComputedStyle(overlay).display);
-        console.log('Overlay z-index:', window.getComputedStyle(overlay).zIndex);
-        console.log('Overlay background:', window.getComputedStyle(overlay).backgroundColor);
-
-        // Skip fullscreen for now - just show the media overlay
-        // User can manually click fullscreen button if they want
-
-        // Set timer to hide media after duration
-        console.log('Setting timer to hide media after', media.display_duration, 'seconds');
-        console.log('Timer ID:', mediaDisplayTimer);
+        const refreshDelayMs = Math.max(1000, toPositiveInteger(normalizedMedia.display_duration, 3) * 1000 + 250);
         mediaDisplayTimer = setTimeout(() => {
-            console.log('Hiding media after duration');
-            hideMedia();
-        }, media.display_duration * 1000);
-
-        // Prevent multiple timers
-        if (window.mediaDisplayTimer) {
-            clearTimeout(window.mediaDisplayTimer);
-        }
-        window.mediaDisplayTimer = mediaDisplayTimer;
-
-        // Also set a timer to check if the media is still visible after 1 second
-        setTimeout(() => {
-            console.log('Checking media visibility after 1 second');
-            console.log('Overlay display:', overlay.style.display);
-            console.log('Overlay visibility:', overlay.style.visibility);
-            console.log('Overlay opacity:', overlay.style.opacity);
-            console.log('Current media:', currentMedia?.title || 'none');
-            console.log('Media element in DOM:', content.contains(mediaElement));
-            console.log('Media element visible:', mediaElement.offsetWidth > 0 && mediaElement.offsetHeight > 0);
-        }, 1000);
-
-        // Debug: Check media element
-        console.log('Media element in content:', content.contains(mediaElement));
-        console.log('Media element src:', mediaElement.src);
-        console.log('Media element style:', mediaElement.style.cssText);
+            // After display duration ends, poll for next media and RESUME polling
+            requestMediaSync();
+            mediaPollingTimer = setInterval(requestMediaSync, POLL_INTERVALS.media);
+        }, refreshDelayMs);
     }
 
-    // Hide media overlay
-    function hideMedia() {
-        console.log('hideMedia called, currentMedia:', currentMedia?.title || 'none');
+    function renderTimetableState() {
         const overlay = document.getElementById('media-overlay');
-        overlay.style.display = 'none';
-        currentMedia = null;
-        currentMediaData = null;
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+
         clearTimeout(mediaDisplayTimer);
+        clearInterval(countdownTimer);
+        mediaDisplayTimer = null;
+        countdownTimer = null;
         
-        // Immediately check for next media in sequence
-        setTimeout(checkForMedia, 500);
-    }
-
-    // Check for countdown timer
-    async function checkCountdown() {
-        try {
-            const response = await fetch('/api/countdown-info');
-            const data = await response.json();
-            
-            if (data.countdown && data.countdown.is_countdown_time) {
-                showCountdown(data.countdown);
-            } else {
-                hideCountdown();
-            }
-        } catch (error) {
-            console.error('Error checking countdown:', error);
+        // RESUME media polling when returning to timetable
+        if (!mediaPollingTimer) {
+            mediaPollingTimer = setInterval(requestMediaSync, POLL_INTERVALS.media);
         }
     }
 
-    // Show countdown timer
-    function showCountdown(countdownInfo) {
-        // Don't show countdown if media is currently displaying
-        if (currentMedia) return;
-        
-        const overlay = document.getElementById('media-overlay');
-        const countdownDiv = document.getElementById('media-countdown');
-        const prayerName = document.getElementById('countdown-prayer-name');
-        const countdownTime = document.getElementById('countdown-time');
-        
-        prayerName.textContent = countdownInfo.prayer_name;
-        
-        // Show overlay
-        overlay.style.display = 'flex';
-        countdownDiv.style.display = 'flex';
-        
-        // Skip fullscreen for countdown - just show the overlay
-        // User can manually click fullscreen button if they want
-        
-        // Start countdown timer
-        startCountdownTimer(countdownInfo.prayer_time);
-    }
-
-    // Start countdown timer
     function startCountdownTimer(prayerTime) {
         const targetTime = new Date(prayerTime).getTime();
-        
-        function updateCountdown() {
-            const now = new Date().getTime();
+        if (Number.isNaN(targetTime)) {
+            return;
+        }
+
+        function tick() {
+            const now = Date.now();
             const distance = targetTime - now;
-            
-            if (distance < 0) {
-                hideCountdown();
-                // Refresh page to update prayer times
-                location.reload();
+
+            if (distance <= 0) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+                requestMediaSync();
                 return;
             }
-            
+
             const hours = Math.floor(distance / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            
-            document.getElementById('countdown-time').textContent = 
-                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            const timeDisplay = document.getElementById('countdown-time-display');
+            if (timeDisplay) {
+                timeDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            const popupTimer = document.getElementById('countdown-popup-timer');
+            if (popupTimer) {
+                const totalSeconds = Math.max(0, Math.floor(distance / 1000));
+                popupTimer.textContent = totalSeconds.toString().padStart(2, '0');
+            }
         }
-        
-        updateCountdown();
-        countdownTimer = setInterval(updateCountdown, 1000);
-    }
-
-    // Hide countdown
-    function hideCountdown() {
-        // Don't hide overlay if media is currently displaying
-        if (currentMedia) {
-            const countdownDiv = document.getElementById('media-countdown');
-            countdownDiv.style.display = 'none';
-            clearInterval(countdownTimer);
-            return;
-        }
-
-        const overlay = document.getElementById('media-overlay');
-        const countdownDiv = document.getElementById('media-countdown');
-
-        countdownDiv.style.display = 'none';
-        overlay.style.display = 'none';
 
         clearInterval(countdownTimer);
+        tick();
+        countdownTimer = setInterval(tick, 1000);
     }
 
-    // Countdown Popup System
-    let countdownPopupTimer = null;
-    let countdownPopupInterval = null;
-    let currentCountdownSeconds = 30;
-    
-    // Initialize countdown popup system
-    function initCountdownPopup() {
-        checkForCountdownPopups();
-        // Check every second for countdown opportunities
-        setInterval(checkForCountdownPopups, 1000);
-    }
-    
-    // Check if we should show countdown popup
-    function checkForCountdownPopups() {
-        const now = new Date();
-        const currentTimeInSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-        
-        // Check all prayer times for countdown opportunities
-        const allPrayerTimes = [
-            // Adhan times
-            { name: 'Fajr Adhan', time: adhanTimesData.fajr_adhan, type: 'adhan' },
-            { name: 'Zohar Adhan', time: adhanTimesData.zohar_adhan, type: 'adhan' },
-            { name: 'Asr Adhan', time: adhanTimesData.asr_adhan, type: 'adhan' },
-            { name: 'Maghrib Adhan', time: adhanTimesData.maghrib_adhan, type: 'adhan' },
-            { name: 'Isha Adhan', time: adhanTimesData.isha_adhan, type: 'adhan' },
-            // Jamaat times
-            { name: 'Fajr Jamaat', time: prayerTimesData.fajr, type: 'jamaat' },
-            { name: 'Zohar Jamaat', time: prayerTimesData.zohar, type: 'jamaat' },
-            { name: 'Asr Jamaat', time: prayerTimesData.asr, type: 'jamaat' },
-            { name: 'Maghrib Jamaat', time: prayerTimesData.maghrib, type: 'jamaat' },
-            { name: 'Isha Jamaat', time: prayerTimesData.isha, type: 'jamaat' }
-        ];
-        
-        for (const prayer of allPrayerTimes) {
-            if (!prayer.time) continue;
-            
-            const [hours, minutes] = prayer.time.split(':').map(Number);
-            const prayerTimeInSeconds = hours * 3600 + minutes * 60;
-            const timeDifferenceInSeconds = prayerTimeInSeconds - currentTimeInSeconds;
-            
-            // Check if we're within the 30-second window before the prayer time
-            // Show countdown when we're between 30 and 1 seconds before the prayer time
-            if (timeDifferenceInSeconds > 0 && timeDifferenceInSeconds <= 30) {
-                showCountdownPopup(prayer.name, prayer.type, timeDifferenceInSeconds);
-                return; // Only show one popup at a time
-            }
+    function applyScreenState(screenStateData) {
+        const nextState = (screenStateData && screenStateData.state) ? screenStateData.state : 'TIMETABLE';
+        const nextMedia = normalizeMediaPayload(screenStateData && screenStateData.media ? screenStateData.media : null);
+        const stateChanged = nextState !== currentScreenState;
+
+        if (stateChanged) {
+            clearAllScreenContent();
         }
-    }
-    
-    // Show countdown popup
-    function showCountdownPopup(prayerName, type, initialSeconds = 30) {
-        // Don't show if already showing or if media is displaying
-        if (document.getElementById('countdown-popup').style.display !== 'none' || currentMedia) {
+
+        currentScreenState = nextState;
+
+        if (nextState === 'COUNTDOWN') {
+            renderCountdownState(screenStateData);
             return;
         }
-        
-        const popup = document.getElementById('countdown-popup');
-        const titleElement = document.getElementById('countdown-popup-title');
-        const timerElement = document.getElementById('countdown-popup-timer');
-        const prayerElement = document.getElementById('countdown-popup-prayer');
-        
-        // Set popup content
-        titleElement.textContent = type === 'adhan' ? 'Adhan starting in' : 'Jamaat starting in';
-        prayerElement.textContent = prayerName;
-        timerElement.textContent = initialSeconds;
-        
-        // Show popup
-        popup.style.display = 'flex';
-        
-        // Start countdown with the actual remaining seconds
-        currentCountdownSeconds = initialSeconds;
-        countdownPopupInterval = setInterval(() => {
-            currentCountdownSeconds--;
-            timerElement.textContent = currentCountdownSeconds;
-            
-            if (currentCountdownSeconds <= 0) {
-                hideCountdownPopup();
+
+        if (nextState === 'ADHAN') {
+            renderAdhanState();
+            return;
+        }
+
+        if (isPosterState(nextState)) {
+            renderMediaState(nextMedia, nextState);
+            return;
+        }
+
+        renderTimetableState();
+    }
+
+    async function pollMediaState() {
+        try {
+            const [screenStateData, currentMediaResponse] = await Promise.all([
+                fetchJson('/api/screen-state'),
+                fetchJson('/api/current-media')
+            ]);
+
+            if (!screenStateData || !screenStateData.state) {
+                return;
             }
-        }, 1000);
-        
-        // Auto-hide after the remaining seconds as backup
-        countdownPopupTimer = setTimeout(() => {
-            hideCountdownPopup();
-        }, initialSeconds * 1000);
-    }
-    
-    // Hide countdown popup
-    function hideCountdownPopup() {
-        const popup = document.getElementById('countdown-popup');
-        popup.style.display = 'none';
-        
-        // Clear timers
-        if (countdownPopupTimer) {
-            clearTimeout(countdownPopupTimer);
-            countdownPopupTimer = null;
-        }
-        if (countdownPopupInterval) {
-            clearInterval(countdownPopupInterval);
-            countdownPopupInterval = null;
-        }
-        
-        currentCountdownSeconds = 30;
-    }
-    
 
-    // Initialize media display when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        initMediaDisplay();
-        initContentRotation();
-        initCountdownPopup();
-        
-        // Reset at midnight each day
-        scheduleMidnightReset();
-    });
+            const fallbackMedia = normalizeMediaPayload(currentMediaResponse && currentMediaResponse.media ? currentMediaResponse.media : null);
+            if (isPosterState(screenStateData.state) && !screenStateData.media && fallbackMedia) {
+                screenStateData.media = fallbackMedia;
+            }
 
-    // Schedule reset at midnight
-    function scheduleMidnightReset() {
-        const now = new Date();
-        const midnight = new Date(now);
-        midnight.setHours(24, 0, 0, 0); // Next midnight
+            const nextStateVersion = screenStateData.state_version || null;
+            const shouldApply = nextStateVersion
+                ? hasVersionChanged('state', nextStateVersion)
+                : true;
+
+            if (shouldApply) {
+                applyScreenState(screenStateData);
+            }
+
+            syncKnownVersions(screenStateData);
+            syncKnownVersions(currentMediaResponse);
+        } catch (error) {
+            console.error('Error polling media state:', error);
+        }
+    }
+
+    function requestMediaSync() {
+        if (isMediaPollInFlight) {
+            return;
+        }
+
+        isMediaPollInFlight = true;
+        pollMediaState().finally(() => {
+            isMediaPollInFlight = false;
+        });
+    }
+
+    function initMediaDisplay() {
+        requestMediaSync();
+        mediaPollingTimer = setInterval(requestMediaSync, POLL_INTERVALS.media);
+    }
+
+    function updateSpecialTimesDisplay(todayData) {
+        const specialTimes = {
+            sehri_ends: todayData && todayData.fajr ? todayData.fajr : null,
+            sun_rise: todayData && todayData.sun_rise ? todayData.sun_rise : null,
+            noon: todayData && todayData.zohar ? todayData.zohar : null,
+            jumah_1: todayData && todayData.jumah_1 ? todayData.jumah_1 : null,
+            jumah_2: todayData && todayData.jumah_2 ? todayData.jumah_2 : null,
+            eid_prayer_1: todayData && todayData.eid_prayer_1 ? todayData.eid_prayer_1 : null,
+            eid_prayer_2: todayData && todayData.eid_prayer_2 ? todayData.eid_prayer_2 : null
+        };
+
+        Object.entries(specialTimes).forEach(([key, value]) => {
+            const formatted = formatTimeForDisplay(value);
+            document.querySelectorAll(`[data-special-time="${key}"]`).forEach(element => {
+                if (element.textContent !== formatted) {
+                    element.textContent = formatted;
+                }
+            });
+        });
+    }
+
+    function applyTimetableUpdate(payload) {
+        if (!payload) {
+            return;
+        }
+
+        if (payload.jamaat_offsets && typeof payload.jamaat_offsets === 'object') {
+            Object.assign(jamaatOffsets, payload.jamaat_offsets);
+        }
+
+        const todayData = payload.today || {};
+        const tomorrowData = payload.tomorrow || {};
+        const prayers = ['fajr', 'zohar', 'asr', 'maghrib', 'isha'];
+
+        updatedPrayers.clear();
+        updatedSpecialTimes.clear();
+
+        todaySpecialTimesData = deriveSpecialTimes(todayData);
+        tomorrowSpecialTimesData = deriveSpecialTimes(tomorrowData);
+        originalTodaySpecialTimesData = { ...todaySpecialTimesData };
+
+        prayers.forEach(prayerName => {
+            const todayBeginning = todayData[prayerName] || null;
+            const todayJamaat = computeJamaatTime(todayBeginning, todayData[`${prayerName}_jamaat`] || null, jamaatOffsets[prayerName]);
+            const tomorrowBeginning = tomorrowData[prayerName] || null;
+            const tomorrowJamaat = computeJamaatTime(tomorrowBeginning, tomorrowData[`${prayerName}_jamaat`] || null, jamaatOffsets[prayerName]);
+
+            prayerTimesData[prayerName] = todayJamaat;
+            todayBeginningTimes[prayerName] = todayBeginning;
+            tomorrowPrayerTimesData[prayerName] = tomorrowJamaat;
+            tomorrowBeginningTimes[prayerName] = tomorrowBeginning;
+            originalTodayTimes.beginning[prayerName] = todayBeginning;
+            originalTodayTimes.jamaat[prayerName] = todayJamaat;
+            adhanTimesData[`${prayerName}_adhan`] = todayData[`${prayerName}_adhan`] || todayBeginning;
+
+            const prayerRow = document.querySelector(`[data-prayer-name="${prayerName}"]`);
+            if (!prayerRow) {
+                return;
+            }
+
+            const beginningElement = prayerRow.querySelector('[data-time-type="beginning"]');
+            const jamaatElement = prayerRow.querySelector('[data-time-type="jamaat"]');
+            const formattedBeginning = formatTimeForDisplay(todayBeginning);
+            const formattedJamaat = formatTimeForDisplay(todayJamaat);
+
+            if (beginningElement && beginningElement.textContent !== formattedBeginning) {
+                beginningElement.textContent = formattedBeginning;
+            }
+
+            if (jamaatElement && jamaatElement.textContent !== formattedJamaat) {
+                jamaatElement.textContent = formattedJamaat;
+            }
+        });
+
+        updateSpecialTimesDisplay(todayData);
+
+        if (payload.islamic_date) {
+            updateIslamicDateDisplay(payload.islamic_date);
+        }
+
+        if (payload.server_date) {
+            lastKnownDate = payload.server_date;
+        }
+
+        updateNextPrayerCountdown();
+        checkAndUpdatePrayerTimes();
+    }
+
+    async function pollTimetableData() {
+        try {
+            const data = await fetchJson('/api/timetable');
+            const nextTimetableVersion = data && data.timetable_version ? data.timetable_version : null;
+
+            if (hasVersionChanged('timetable', nextTimetableVersion)) {
+                applyTimetableUpdate(data);
+            }
+
+            syncKnownVersions(data);
+        } catch (error) {
+            console.error('Error polling timetable:', error);
+        }
+    }
+
+    function requestTimetableSync() {
+        if (isTimetablePollInFlight) {
+            return;
+        }
+
+        isTimetablePollInFlight = true;
+        pollTimetableData().finally(() => {
+            isTimetablePollInFlight = false;
+        });
+    }
+
+    function announcementAnimationDuration(scrollSpeed) {
+        const speed = Math.max(1, Number(scrollSpeed) || 3);
+        return Math.max(5, 50 / speed);
+    }
+
+    function createAnnouncementNode(announcement, index) {
+        const item = document.createElement('div');
+        item.className = 'announcement-item rotating-announcement';
+        item.dataset.index = String(index);
+        item.dataset.duration = String((announcement.display_duration ?? 10) * 1000);
+        item.style.display = 'none';
+        item.style.margin = '0';
+        item.style.padding = '0';
+        item.style.wordWrap = 'break-word';
+        item.style.wordBreak = 'break-word';
+        item.style.overflow = 'hidden';
+        item.style.backgroundColor = announcement.background_color;
+        item.style.height = '100%';
+        item.style.width = '100%';
+        item.style.flexDirection = 'column';
+        item.style.flex = '1';
+
+        const title = document.createElement('div');
+        title.className = 'announcement-title';
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '8px';
+        title.style.color = announcement.text_color;
+        title.style.fontSize = `${announcement.font_size}px`;
+        title.style.lineHeight = '1.3';
+        title.style.overflow = 'hidden';
+        title.style.textOverflow = 'ellipsis';
+        title.textContent = announcement.title;
+
+        const textContainer = document.createElement('div');
+        textContainer.className = 'announcement-text-container';
+        textContainer.style.flex = '1';
+        textContainer.style.overflow = 'hidden';
+        textContainer.style.position = 'relative';
+        textContainer.style.display = 'flex';
+        textContainer.style.flexDirection = 'column';
+        textContainer.style.justifyContent = 'flex-start';
+
+        const scrollingText = document.createElement('div');
+        scrollingText.className = 'announcement-text-scroll';
+        scrollingText.style.fontSize = `${announcement.font_size}px`;
+        scrollingText.style.color = announcement.text_color;
+        scrollingText.style.wordWrap = 'break-word';
+        scrollingText.style.lineHeight = '1.4';
+        scrollingText.style.margin = '0';
+        scrollingText.style.minHeight = '100%';
+        scrollingText.style.animation = `scroll-vertical ${announcementAnimationDuration(announcement.scroll_speed)}s linear infinite`;
+        scrollingText.style.animationPlayState = 'running';
+        scrollingText.setAttribute('data-scroll-speed', String(announcement.scroll_speed));
+        scrollingText.textContent = announcement.content;
+
+        textContainer.appendChild(scrollingText);
+        item.appendChild(title);
+        item.appendChild(textContainer);
+
+        return item;
+    }
+
+    function renderAnnouncements(announcements) {
+        const contentContainer = document.getElementById('announcements-content');
+        if (!contentContainer) {
+            return;
+        }
+
+        contentContainer.innerHTML = '';
+
+        if (announcements.length === 0) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'announcement-placeholder';
+            placeholder.style.textAlign = 'center';
+            placeholder.style.padding = '20px';
+
+            const text = document.createElement('p');
+            text.style.margin = '0';
+            text.style.fontSize = '0.9rem';
+            text.textContent = 'No announcements currently.';
+
+            placeholder.appendChild(text);
+            contentContainer.appendChild(placeholder);
+            return;
+        }
+
+        announcements.forEach((announcement, index) => {
+            contentContainer.appendChild(createAnnouncementNode(announcement, index));
+        });
         
-        const msUntilMidnight = midnight.getTime() - now.getTime();
-        
+        // Immediately show the first announcement
         setTimeout(() => {
-            lastScheduleId = null;
-            lastMediaId = null;
-            scheduleMediaSequence.clear();
-            // Schedule the next reset
-            scheduleMidnightReset();
-        }, msUntilMidnight);
+            const firstAnnouncement = contentContainer.querySelector('.rotating-announcement');
+            if (firstAnnouncement) {
+                firstAnnouncement.style.display = 'block';
+                firstAnnouncement.style.opacity = '1';
+                firstAnnouncement.style.transform = 'translateY(0)';
+            }
+        }, 10);
     }
 
-    // Content rotation for hadeeths and announcements
+    async function pollAnnouncementsData() {
+        // Skip polling - use static announcements from HTML template
+        // This ensures announcements are always present and display modes work reliably
+        return;
+    }
+
+    async function pollScreenConfigData() {
+        try {
+            const response = await fetchJson('/api/screen-config');
+            const nextConfigVersion = response && response.config_version ? response.config_version : null;
+
+            if (hasVersionChanged('config', nextConfigVersion)) {
+                applyScreenConfig(response);
+                requestTimetableSync();
+                requestAnnouncementsSync();
+            }
+
+            syncKnownVersions(response);
+        } catch (error) {
+            console.error('Error polling screen config:', error);
+        }
+    }
+
+    function requestAnnouncementsSync() {
+        if (isAnnouncementsPollInFlight) {
+            return;
+        }
+
+        isAnnouncementsPollInFlight = true;
+        pollAnnouncementsData().finally(() => {
+            isAnnouncementsPollInFlight = false;
+        });
+    }
+
+    function requestScreenConfigSync() {
+        if (isScreenConfigPollInFlight) {
+            return;
+        }
+
+        isScreenConfigPollInFlight = true;
+        pollScreenConfigData().finally(() => {
+            isScreenConfigPollInFlight = false;
+        });
+    }
+
     function initContentRotation() {
-        // Rotate hadeeths
         const hadeeths = document.querySelectorAll('.rotating-hadeeth');
         if (hadeeths.length > 1) {
             let currentHadeethIndex = 0;
@@ -1574,147 +2359,241 @@
                 hadeeths[currentHadeethIndex].style.display = 'none';
                 currentHadeethIndex = (currentHadeethIndex + 1) % hadeeths.length;
                 hadeeths[currentHadeethIndex].style.display = 'block';
-            }, 30 * 1000); // Fixed 30 second rotation duration
+            }, 30 * 1000);
         }
 
-        // Initialize dynamic announcement layout
         initDynamicAnnouncements();
     }
-    
-    // Dynamic announcement layout system
-    function initDynamicAnnouncements() {
-        const announcements = document.querySelectorAll('.rotating-announcement');
+
+    function checkAnnouncementScrolling() {
         const contentContainer = document.getElementById('announcements-content');
-        
-        if (announcements.length === 0) return;
-        
-        // Calculate optimal layout on load and resize
-        function calculateOptimalLayout() {
-            const containerHeight = contentContainer.offsetHeight;
-            const containerPadding = parseFloat(getComputedStyle(contentContainer).paddingTop) + 
-                                   parseFloat(getComputedStyle(contentContainer).paddingBottom);
-            const availableHeight = containerHeight - containerPadding;
-            
-            // Get actual gap size from CSS
-            const gapSize = parseFloat(getComputedStyle(contentContainer).gap) || 15;
-            
-            // More accurate height estimation based on content
-            let estimatedItemHeight = 60; // Base minimum height
-            
-            // If we have announcements, measure the first one for better accuracy
-            if (announcements.length > 0) {
-                const firstAnnouncement = announcements[0];
-                firstAnnouncement.style.display = 'block';
-                firstAnnouncement.style.visibility = 'hidden';
-                firstAnnouncement.style.position = 'absolute';
-                firstAnnouncement.style.top = '-9999px';
-                
-                estimatedItemHeight = firstAnnouncement.offsetHeight;
-                
-                // Reset styles
-                firstAnnouncement.style.display = 'none';
-                firstAnnouncement.style.visibility = 'visible';
-                firstAnnouncement.style.position = 'static';
-                firstAnnouncement.style.top = 'auto';
-            }
-            
-            // Calculate how many announcements can fit
-            let maxVisible = Math.floor((availableHeight + gapSize) / (estimatedItemHeight + gapSize));
-            maxVisible = Math.max(1, Math.min(maxVisible, announcements.length));
-            
-            // Apply layout class based on number of announcements and available space
-            contentContainer.classList.remove('dynamic-layout', 'centered-layout', 'compact-layout');
-            
-            if (announcements.length <= 2) {
-                contentContainer.classList.add('centered-layout');
-            } else if (maxVisible >= announcements.length) {
-                contentContainer.classList.add('dynamic-layout');
+        if (!contentContainer) return;
+
+        const announcements = Array.from(contentContainer.querySelectorAll('.rotating-announcement'));
+        announcements.forEach(el => {
+            const container = el.querySelector('.announcement-text-container');
+            const scrollDiv = el.querySelector('.announcement-text-scroll');
+
+            if (!container || !scrollDiv) return;
+
+            const isOverflowing = scrollDiv.scrollHeight > container.clientHeight;
+            if (isOverflowing) {
+                scrollDiv.classList.remove('no-scroll');
+                scrollDiv.style.animationPlayState = 'running';
             } else {
-                contentContainer.classList.add('compact-layout');
+                scrollDiv.classList.add('no-scroll');
+                scrollDiv.style.animationPlayState = 'paused';
             }
-            
-            return maxVisible;
-        }
-        
-        // Show announcements with rotation
-        let currentStartIndex = 0;
-        let maxVisible = calculateOptimalLayout();
-        
-        function showAnnouncements() {
-            // Hide all announcements first
-            announcements.forEach(el => el.style.display = 'none');
-            
-            // Show the optimal number of announcements
-            for (let i = 0; i < maxVisible; i++) {
-                const index = (currentStartIndex + i) % announcements.length;
-                announcements[index].style.display = 'block';
-            }
-        }
-        
-        // Add smooth transitions for better UX
-        function addSmoothTransitions() {
-            announcements.forEach((el, index) => {
-                el.style.transition = 'opacity 0.5s ease, transform 0.3s ease';
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(10px)';
-                
-                // Stagger the appearance for a nice effect
-                setTimeout(() => {
-                    if (el.style.display === 'block') {
-                        el.style.opacity = '1';
-                        el.style.transform = 'translateY(0)';
-                    }
-                }, index * 100);
-            });
-        }
-        
-        // Initial display
-        showAnnouncements();
-        addSmoothTransitions();
-        
-        // Rotate announcements every 15 seconds
-        setInterval(() => {
-            if (announcements.length > maxVisible) {
-                currentStartIndex = (currentStartIndex + maxVisible) % announcements.length;
-                showAnnouncements();
-                addSmoothTransitions();
-            }
-        }, 15000);
-        
-        // Recalculate on window resize
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                maxVisible = calculateOptimalLayout();
-                showAnnouncements();
-            }, 250);
         });
     }
 
-    // ===== LIVE UPDATE FUNCTIONALITY =====
-    // Poll for changes every 5 seconds and refresh the page
-    (function initLiveUpdates() {
-        let lastUpdateTime = new Date().getTime();
+    function setAnnouncementDisplayMode(mode) {
+        const contentContainer = document.getElementById('announcements-content');
+        if (!contentContainer) return;
+
+        const announcements = Array.from(contentContainer.querySelectorAll('.rotating-announcement'));
         
-        // Check for updates every 5 seconds
-        setInterval(() => {
-            fetch('/api/settings')
-                .then(response => response.json())
-                .then(data => {
-                    // Check if any box settings have been updated
-                    // by comparing a timestamp or hash
-                    const currentTime = new Date().getTime();
+        // Clear any existing rotation
+        if (announcementRotationInterval) {
+            clearTimeout(announcementRotationInterval);
+            announcementRotationInterval = null;
+        }
+
+        contentContainer.dataset.displayMode = mode;
+
+        if (mode === 'show-all') {
+            // Show all announcements with equal heights
+            contentContainer.style.cssText = `
+                overflow: auto !important;
+                overflow-y: auto !important;
+                position: relative !important;
+                display: flex !important;
+                flex-direction: column !important;
+            `;
+            
+            // Calculate equal height for each announcement
+            // All boxes share the available height equally
+            announcements.forEach(el => {
+                // Preserve background color from inline style
+                const bgColor = window.getComputedStyle(el).backgroundColor;
+                const textColor = window.getComputedStyle(el).color;
+                
+                el.style.cssText = `
+                    display: flex !important;
+                    flex: 1 1 0 !important;
+                    position: relative !important;
+                    flex-direction: column !important;
+                    margin: 0 !important;
+                    width: 100% !important;
+                    overflow: hidden !important;
+                    background-color: ${bgColor} !important;
+                    color: ${textColor} !important;
+                `;
+            });
+
+            // Check scrolling after layout is settled
+            setTimeout(checkAnnouncementScrolling, 100);
+        } else {
+            // Rotation mode - show only first, set up rotation
+            contentContainer.style.cssText = `
+                overflow: hidden !important;
+                overflow-y: hidden !important;
+                position: relative !important;
+                display: flex !important;
+                flex-direction: column !important;
+            `;
+            
+            announcements.forEach((el, i) => {
+                // Preserve background color
+                const bgColor = window.getComputedStyle(el).backgroundColor;
+                const textColor = window.getComputedStyle(el).color;
+                
+                el.style.cssText = `
+                    display: ${i === 0 ? 'block' : 'none'} !important;
+                    position: absolute !important;
+                    height: 100% !important;
+                    width: 100% !important;
+                    flex-direction: column !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    margin: 0 !important;
+                    background-color: ${bgColor} !important;
+                    color: ${textColor} !important;
+                `;
+            });
+            // Initialize rotation
+            initDynamicAnnouncements();
+        }
+    }
+
+    function initDynamicAnnouncements() {
+        const contentContainer = document.getElementById('announcements-content');
+        if (!contentContainer) return;
+
+        const announcements = Array.from(contentContainer.querySelectorAll('.rotating-announcement'));
+        if (announcements.length === 0) return;
+
+        // Clear any existing rotation
+        if (announcementRotationInterval) {
+            clearTimeout(announcementRotationInterval);
+            announcementRotationInterval = null;
+        }
+
+        let currentIndex = 0;
+
+        function showOnly(index) {
+            announcements.forEach((el, i) => {
+                if (i === index) {
+                    el.style.display = 'flex';  // Use flex to respect flex-direction
+                    el.style.opacity = '1';
+                } else {
+                    el.style.display = 'none';
+                    el.style.opacity = '0';
+                }
+            });
+            
+            // Check if text overflows and enable/disable scrolling accordingly
+            setTimeout(() => {
+                const currentEl = announcements[index];
+                if (!currentEl || currentEl.style.display === 'none') {
+                    console.warn(`Announcement ${index} is not visible`);
+                    return;
+                }
+                
+                const container = currentEl.querySelector('.announcement-text-container');
+                const scrollDiv = currentEl.querySelector('.announcement-text-scroll');
+                
+                if (container && scrollDiv) {
+                    // Force a reflow to ensure dimensions are calculated
+                    const forceReflow = currentEl.offsetHeight;
+                    const containerReflow = container.offsetHeight;
                     
-                    // Reload the page if more than 5 seconds have passed
-                    // This ensures we get the latest data
-                    if (currentTime - lastUpdateTime > 4000) {
-                        // Use a soft reload that preserves scroll position where possible
-                        location.reload();
+                    // Get dimensions from visible element
+                    const containerHeight = container.clientHeight;
+                    const scrollHeight = scrollDiv.scrollHeight;
+                    
+                    const isOverflowing = scrollHeight > containerHeight;
+                    console.log(`Announcement ${index}: scrollHeight=${scrollHeight}, containerHeight=${containerHeight}, overflowing=${isOverflowing}`);
+                    
+                    if (isOverflowing) {
+                        // Text doesn't fit - enable scrolling
+                        scrollDiv.classList.remove('no-scroll');
+                        scrollDiv.style.animationPlayState = 'running';
+                    } else {
+                        // Text fits - disable scrolling
+                        scrollDiv.classList.add('no-scroll');
+                        scrollDiv.style.animationPlayState = 'paused';
                     }
-                })
-                .catch(error => console.log('Live update check failed:', error));
-        }, 5000);
-    })();
+                } else {
+                    console.warn(`Announcement ${index}: container or scrollDiv not found`);
+                }
+            }, 150);
+        }
+
+        function rotate() {
+            currentIndex = (currentIndex + 1) % announcements.length;
+            showOnly(currentIndex);
+            
+            const nextDuration = parseInt(announcements[currentIndex].dataset.duration) || 5000;
+            announcementRotationInterval = setTimeout(rotate, nextDuration);
+        }
+
+        // Show first announcement
+        showOnly(0);
+        
+        // Schedule next rotation
+        const firstDuration = parseInt(announcements[0].dataset.duration) || 5000;
+        announcementRotationInterval = setTimeout(rotate, firstDuration);
+    }
+
+    function resetDailyRuntimeState() {
+        updatedPrayers.clear();
+        updatedSpecialTimes.clear();
+        currentScreenState = null;
+        lastKnownVersions.announcements = null;
+        lastKnownVersions.media = null;
+        lastKnownVersions.timetable = null;
+        lastKnownVersions.config = null;
+        lastKnownVersions.state = null;
+        clearAllScreenContent();
+    }
+
+    let lastAnnouncementDisplayMode = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initMediaDisplay();
+        initContentRotation();
+        requestTimetableSync();
+        requestAnnouncementsSync();
+        requestScreenConfigSync();
+
+        timetablePollingTimer = setInterval(requestTimetableSync, POLL_INTERVALS.timetable);
+        announcementsPollingTimer = setInterval(requestAnnouncementsSync, POLL_INTERVALS.announcements);
+        screenConfigPollingTimer = setInterval(requestScreenConfigSync, POLL_INTERVALS.screenConfig);
+        
+        // Listen for display mode changes from admin panel
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'announcementDisplayMode') {
+                const mode = e.newValue || 'rotation';
+                setAnnouncementDisplayMode(mode);
+            }
+        });
+        
+        // Check localStorage for saved mode on page load
+        const savedMode = localStorage.getItem('announcementDisplayMode') || 'rotation';
+        lastAnnouncementDisplayMode = savedMode;
+        // Always initialize the display mode
+        setAnnouncementDisplayMode(savedMode);
+
+        // Poll for display mode changes (fallback for same-window changes)
+        setInterval(function() {
+            const currentMode = localStorage.getItem('announcementDisplayMode') || 'rotation';
+            if (currentMode !== lastAnnouncementDisplayMode) {
+                lastAnnouncementDisplayMode = currentMode;
+                setAnnouncementDisplayMode(currentMode);
+            }
+        }, 500); // Check every 500ms
+    });
+
 </script>
 @endsection

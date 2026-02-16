@@ -118,7 +118,7 @@
                                                 <option value="Amiri, serif" {{ ($box->styling_settings['font_family'] ?? '') == 'Amiri, serif' ? 'selected' : '' }}>Amiri (Arabic)</option>
                                             </select>
                                         </div>
-                                        @if($box->box_type !== 'header_box' && $box->box_type !== 'sliding_text_box')
+                                        @if($box->box_type !== 'header_box' && $box->box_type !== 'sliding_text_box' && $box->box_type !== 'prayer_times_box' && $box->box_type !== 'announcements_box')
                                         <div class="col-md-6">
                                             <label for="font_size" class="form-label">Font Size</label>
                                             <input type="text" class="form-control" id="font_size" name="styling_settings[font_size]"
@@ -324,19 +324,27 @@
             }
         });
 
-        fetch(`/admin/boxes/{{ $box->box_type }}/update-ajax`, {
+        fetch(`{{ route('admin.boxes.update-ajax', $box->box_type) }}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
             },
             body: JSON.stringify(parsedData)
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 refreshPreview();
                 refreshFullPreview();
+            } else {
+                console.error('Update failed:', data.error || data.message);
             }
         })
         .catch(error => {
@@ -349,8 +357,13 @@
         const previewElement = document.getElementById('livePreview');
         const boxType = '{{ $box->box_type }}';
         
-        fetch(`/admin/boxes/preview/${boxType}`)
-            .then(response => response.json())
+        fetch(`{{ route('admin.boxes.preview', $box->box_type) }}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data) {
                     previewElement.innerHTML = generatePreviewHTML(data, boxType);
@@ -563,5 +576,38 @@
             });
         }
     }
+
+    // Sync font size range and input fields
+    document.addEventListener('DOMContentLoaded', function() {
+        // Title font size sync for announcements box
+        const titleFontSizeRange = document.getElementById('title_font_size_range');
+        const titleFontSizeInput = document.getElementById('title_font_size');
+        
+        if (titleFontSizeRange && titleFontSizeInput) {
+            titleFontSizeRange.addEventListener('input', function() {
+                titleFontSizeInput.value = this.value;
+                updatePreview();
+            });
+            titleFontSizeInput.addEventListener('input', function() {
+                titleFontSizeRange.value = this.value;
+                updatePreview();
+            });
+        }
+
+        // Announcement text font size sync for announcements box
+        const fontSizeRange = document.getElementById('font_size_range');
+        const fontSizeInput = document.getElementById('font_size');
+        
+        if (fontSizeRange && fontSizeInput) {
+            fontSizeRange.addEventListener('input', function() {
+                fontSizeInput.value = this.value;
+                updatePreview();
+            });
+            fontSizeInput.addEventListener('input', function() {
+                fontSizeRange.value = this.value;
+                updatePreview();
+            });
+        }
+    });
 </script>
 @endsection

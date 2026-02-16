@@ -20,12 +20,12 @@ class MediaDisplayService
         
         // Get all active schedules ordered by ID (creation order)
         $schedules = MediaSchedule::with(['mediaItems' => function($query) {
-                $query->where('is_active', true)
+                $query->where('media_schedule_media.is_active', true)
                       ->orderBy('media_schedule_media.priority', 'asc');
             }])
             ->active()
             ->whereHas('mediaItems', function($query) {
-                $query->where('is_active', true);
+                $query->where('media_schedule_media.is_active', true);
             })
             ->orderBy('id', 'desc')
             ->get();
@@ -138,6 +138,12 @@ class MediaDisplayService
 
     /**
      * Get media for full time poster (cycles continuously)
+     * 
+     * Handles gap durations:
+     * - Each media has a configurable gap duration after it plays
+     * - Gap=0 means back-to-back continuous display (no interruption)
+     * - Gap>0 means pause before next media
+     * - Cycle continues indefinitely with all gaps respected
      */
     private function getFullTimePosterMedia(MediaSchedule $schedule, Carbon $now, Carbon $scheduleStart): ?array
     {
@@ -177,9 +183,10 @@ class MediaDisplayService
             return null;
         }
 
-        // Calculate total cycle duration (media duration + gap duration)
+        // Calculate total cycle duration (media duration + gap duration for each media)
+        // Convert pivot duration from minutes to seconds
         $totalDuration = $activeMediaItems->sum(function($media) {
-            return $media->pivot->duration + ($media->pivot->gap_duration ?? 0);
+            return ($media->pivot->duration * 60) + ($media->pivot->gap_duration ?? 0);
         });
         
         if ($totalDuration <= 0) {
@@ -188,7 +195,7 @@ class MediaDisplayService
 
         // Calculate seconds elapsed since start of day
         // Use diffInSeconds with false to get signed difference
-        $elapsedSeconds = $scheduleStart->diffInSeconds($now, false);
+        $elapsedSeconds = (int)$scheduleStart->diffInSeconds($now, false);
         
         // For full time poster, ensure we have a positive elapsed time
         if ($elapsedSeconds < 0) {
@@ -199,16 +206,17 @@ class MediaDisplayService
         $positionInCycle = $elapsedSeconds % $totalDuration;
 
         // Find which media should be displayed
+        // Account for gap durations: media plays until (duration), then gap period before next media
         $accumulatedDuration = 0;
         foreach ($activeMediaItems as $media) {
-            $mediaDuration = $media->pivot->duration;
+            // Convert pivot duration from minutes to seconds
+            $mediaDuration = $media->pivot->duration * 60;
             $gapDuration = $media->pivot->gap_duration ?? 0;
-            $totalMediaDuration = $mediaDuration + $gapDuration;
-            $mediaEndTime = $accumulatedDuration + $mediaDuration; // Display ends before gap
-            $slotEndTime = $accumulatedDuration + $totalMediaDuration; // Gap ends here
+            $totalSlotDuration = $mediaDuration + $gapDuration;
             
-            // Check if current time falls within this media's display window (not in the gap)
-            if ($positionInCycle >= $accumulatedDuration && $positionInCycle < $mediaEndTime) {
+            // Check if current time falls within this media's display window (not during gap)
+            if ($positionInCycle >= $accumulatedDuration && $positionInCycle < ($accumulatedDuration + $mediaDuration)) {
+                // We're in the media display period
                 return [
                     'media' => $media,
                     'duration' => $mediaDuration,
@@ -217,12 +225,21 @@ class MediaDisplayService
                 ];
             }
             
-            // If we're in the gap period, don't display anything (return null or wait)
-            // Actually, we should skip to next media, so just accumulate
-            $accumulatedDuration = $slotEndTime;
+            // If we're in the gap period (after media, before next media), 
+            // we want to show the next media immediately or return timetable if that's desired
+            // For now, gap periods show nothing (returns null to display timetable)
+            // This can be enhanced in future to show next media or loading state
+            if ($positionInCycle >= ($accumulatedDuration + $mediaDuration) && $positionInCycle < ($accumulatedDuration + $totalSlotDuration)) {
+                // We're in a gap period - return null to show main screen during gap
+                // Admin can set gap=0 for back-to-back continuous display
+                return null;
+            }
+            
+            $accumulatedDuration += $totalSlotDuration;
         }
 
-        // If we're in a gap period between media, return null to show timetable momentarily
+        // If we've gone through all media without finding a match, return null
+        // This shouldn't happen if logic is correct, but serve as fallback
         return null;
     }
 
@@ -272,7 +289,8 @@ class MediaDisplayService
         // Media 1: 0-29s, Media 2: 30-59s, etc.
         $accumulatedDuration = 0;
         foreach ($activeMediaItems as $media) {
-            $mediaDuration = $media->pivot->duration;
+            // Convert pivot duration from minutes to seconds
+            $mediaDuration = $media->pivot->duration * 60;
             $mediaEndTime = $accumulatedDuration + $mediaDuration;
             
             // Check if current time falls within this media's time window
@@ -332,26 +350,18 @@ class MediaDisplayService
             return null;
         }
 
-        $prayers = [
-            'fajr' => $prayerTimes->fajr,
-            'zohar' => $prayerTimes->zohar,
-            'asr' => $prayerTimes->asr,
-            'maghrib' => $prayerTimes->maghrib,
-            'isha' => $prayerTimes->isha,
-        ];
-
         $nextPrayer = null;
         $nextPrayerTime = null;
 
-        foreach ($prayers as $name => $time) {
-            $prayerTime = Carbon::parse($time);
-            
-            // If prayer time is today and hasn't passed yet
-            if ($prayerTime->isToday() && $prayerTime->gt($now)) {
-                if (!$nextPrayerTime || $prayerTime->lt($nextPrayerTime)) {
-                    $nextPrayer = $name;
-                    $nextPrayerTime = $prayerTime;
-                }
+        foreach (['fajr', 'zohar', 'asr', 'maghrib', 'isha'] as $name) {
+            $candidateTime = $this->resolveNextCountdownTarget($prayerTimes, $name, $now);
+            if (!$candidateTime) {
+                continue;
+            }
+
+            if (!$nextPrayerTime || $candidateTime->lt($nextPrayerTime)) {
+                $nextPrayer = $name;
+                $nextPrayerTime = $candidateTime;
             }
         }
 
@@ -371,12 +381,73 @@ class MediaDisplayService
         ];
     }
 
+    private function resolveNextCountdownTarget(PrayerTime $prayerTimes, string $prayerName, Carbon $now): ?Carbon
+    {
+        $candidates = [];
+
+        $adhanField = $prayerName . '_adhan';
+        $adhanTime = $prayerTimes->$adhanField ?? null;
+        if (is_string($adhanTime) && trim($adhanTime) !== '') {
+            $candidates[] = Carbon::parse($adhanTime);
+        }
+
+        $jamaatField = $prayerName . '_jamaat';
+        $jamaatTime = $prayerTimes->$jamaatField ?? null;
+        if (is_string($jamaatTime) && trim($jamaatTime) !== '') {
+            $candidates[] = Carbon::parse($jamaatTime);
+        }
+
+        $baseTime = $prayerTimes->$prayerName ?? null;
+        if (is_string($baseTime) && trim($baseTime) !== '') {
+            $candidates[] = Carbon::parse($baseTime);
+        }
+
+        $nextCandidate = null;
+        foreach ($candidates as $candidate) {
+            if ($candidate->isToday() && $candidate->gt($now)) {
+                if (!$nextCandidate || $candidate->lt($nextCandidate)) {
+                    $nextCandidate = $candidate;
+                }
+            }
+        }
+
+        return $nextCandidate;
+    }
+
     /**
      * Check if media display is enabled
      */
     public function isMediaDisplayEnabled(): bool
     {
         return (bool) Setting::get('media_display_enabled', true);
+    }
+
+    /**
+     * Check if ADHAN or COUNTDOWN is currently active
+     * This takes HIGHEST PRIORITY - blocks ALL media
+     */
+    public function isAdhanOrCountdownActive(?Carbon $now = null): bool
+    {
+        if (!$now) {
+            $now = Carbon::now();
+        }
+
+        $countdownInfo = $this->getCountdownInfo();
+        
+        // If no prayer times exist, countdown can't be active
+        if (!$countdownInfo) {
+            return false;
+        }
+
+        // Check if we're in countdown or adhan window
+        // Countdown: from (prayer_time - duration) until prayer_time
+        // Adhan: from prayer_time until (prayer_time + 5 seconds)
+        $prayerTime = $countdownInfo['prayer_time'];
+        $countdownStart = $countdownInfo['countdown_start'];
+        $adhanEnd = $prayerTime->copy()->addSeconds(5);
+
+        // Check if current time is between countdown start and adhan end
+        return $now->between($countdownStart, $adhanEnd);
     }
 
     /**

@@ -19,6 +19,7 @@ class Announcement extends Model
         'end_date',
         'display_duration',
         'font_size',
+        'title_font_size',
         'text_color',
         'background_color',
         'scroll_speed'
@@ -33,6 +34,7 @@ class Announcement extends Model
         'end_date' => 'datetime',
         'display_duration' => 'integer',
         'font_size' => 'integer',
+        'title_font_size' => 'integer',
         'scroll_speed' => 'integer',
         'priority' => 'integer'
     ];

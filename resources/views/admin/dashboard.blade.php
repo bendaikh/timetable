@@ -316,16 +316,6 @@
             
             <div class="col-md-2">
                 <div class="stat-card text-center">
-                    <div class="stat-icon text-info">
-                        <i class="bi bi-book"></i>
-                    </div>
-                    <div class="stat-number text-info">{{ $stats['hadeeths_count'] }}</div>
-                    <div class="text-muted">Active Hadeeths</div>
-                </div>
-            </div>
-            
-            <div class="col-md-2">
-                <div class="stat-card text-center">
                     <div class="stat-icon text-purple">
                         <i class="bi bi-images"></i>
                     </div>
@@ -443,10 +433,7 @@
                                 <i class="bi bi-plus-circle me-2"></i>
                                 New Announcement
                             </a>
-                            <a href="{{ route('admin.hadeeths.create') }}" class="btn btn-info">
-                                <i class="bi bi-plus-circle me-2"></i>
-                                Add Hadeeth
-                            </a>
+
                             <a href="{{ route('admin.media.create') }}" class="btn btn-purple">
                                 <i class="bi bi-plus-circle me-2"></i>
                                 Add Media

@@ -29,62 +29,23 @@
             <div class="mb-0">
                 <h6 class="text-muted"><i class="bi bi-type"></i> Title Font Size</h6>
                 <div class="row">
-                    <div class="col-md-6">
-                        <input type="text" class="form-control" id="title_font_size" name="styling_settings[title_font_size]"
-                               value="{{ old('styling_settings.title_font_size', $box->styling_settings['title_font_size'] ?? '1.4') }}"
-                               placeholder="e.g., 1.2, 1.4, 1.6"
-                               pattern="^[0-9]+(\.[0-9]+)?$">
-                        <div class="form-text">Recommended: 1.0 - 2.0</div>
+                    <div class="col-md-12">
+                        <div class="d-flex gap-2">
+                            <input type="range" class="form-range flex-grow-1" 
+                                   id="title_font_size_range" min="20" max="60" value="{{ old('styling_settings.title_font_size', intval($box->styling_settings['title_font_size'] ?? '28')) }}">
+                            <input type="number" class="form-control" style="width: 80px;" 
+                                   id="title_font_size" name="styling_settings[title_font_size]" value="{{ old('styling_settings.title_font_size', intval($box->styling_settings['title_font_size'] ?? '28')) }}" 
+                                   min="20" max="60" required>
+                            <span class="input-group-text" id="title-font-size-label">px</span>
+                        </div>
+                        <div class="form-text mt-2">Recommended: 20 - 60 pixels</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Section 2: Announcements Content Settings -->
-    <div class="card mb-3 border-success">
-        <div class="card-header bg-success text-white">
-            <h6 class="mb-0"><i class="bi bi-info-circle"></i> Announcements Text Settings</h6>
-        </div>
-        <div class="card-body">
-            <p class="text-muted small mb-3">Control how individual announcements are displayed</p>
-            
-            <div class="mb-3">
-                <h6 class="text-muted"><i class="bi bi-type"></i> Announcement Text Font Size</h6>
-                <div class="row">
-                    <div class="col-md-6">
-                        <input type="text" class="form-control" id="font_size" name="styling_settings[font_size]"
-                               value="{{ old('styling_settings.font_size', $box->styling_settings['font_size'] ?? '1.2') }}"
-                               placeholder="e.g., 0.9, 1.0, 1.2"
-                               pattern="^[0-9]+(\.[0-9]+)?$">
-                        <div class="form-text">Recommended: 0.8 - 1.5</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="text_color" class="form-label">Text Color</label>
-                        <input type="color" class="form-control form-control-color" 
-                               id="text_color" name="styling_settings[text_color]"
-                               value="{{ old('styling_settings.text_color', $box->styling_settings['text_color'] ?? '#000000') }}">
-                    </div>
-                </div>
-            </div>
-            
-            <hr>
-            <div class="mb-0">
-                <h6 class="text-muted"><i class="bi bi-eye-slash"></i> Maximum Visible Height</h6>
-                <div class="row">
-                    <div class="col-md-6">
-                        <label for="max_height" class="form-label">Max Height (px)</label>
-                        <input type="number" class="form-control" id="max_height" name="layout_settings[max_height]"
-                               value="{{ old('layout_settings.max_height', $box->layout_settings['max_height'] ?? '400') }}"
-                               min="200" max="1000" step="50">
-                        <div class="form-text">Prevents text overflow. Adjust if announcements are cut off.</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Section 3: Box Appearance -->
+    <!-- Section 2: Box Appearance -->
     <div class="card mb-3 border-info">
         <div class="card-header bg-info text-white">
             <h6 class="mb-0"><i class="bi bi-palette"></i> Box Appearance</h6>

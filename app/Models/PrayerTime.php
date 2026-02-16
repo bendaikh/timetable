@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Setting;
 use Carbon\Carbon;
 
 class PrayerTime extends Model
@@ -88,12 +89,26 @@ class PrayerTime extends Model
 
     public static function getTodayPrayerTimes()
     {
-        return self::whereDate('date', Carbon::today())->first();
+        $timezone = (string) (Setting::get('timezone', config('app.timezone')) ?: config('app.timezone'));
+        $today = Carbon::now($timezone)->toDateString();
+
+        if (!self::isDateWithinUploadedTimetableRange($today)) {
+            return null;
+        }
+
+        return self::whereDate('date', $today)->first();
     }
 
     public static function getTomorrowPrayerTimes()
     {
-        return self::whereDate('date', Carbon::tomorrow())->first();
+        $timezone = (string) (Setting::get('timezone', config('app.timezone')) ?: config('app.timezone'));
+        $tomorrow = Carbon::now($timezone)->addDay()->toDateString();
+
+        if (!self::isDateWithinUploadedTimetableRange($tomorrow)) {
+            return null;
+        }
+
+        return self::whereDate('date', $tomorrow)->first();
     }
 
     public static function getNextPrayer()
@@ -101,7 +116,8 @@ class PrayerTime extends Model
         $today = self::getTodayPrayerTimes();
         if (!$today) return null;
 
-        $now = Carbon::now();
+        $timezone = (string) (Setting::get('timezone', config('app.timezone')) ?: config('app.timezone'));
+        $now = Carbon::now($timezone);
         $prayers = [
             'fajr' => $today->fajr,
             'zohar' => $today->zohar,
@@ -123,5 +139,21 @@ class PrayerTime extends Model
         }
 
         return null;
+    }
+
+    private static function isDateWithinUploadedTimetableRange(string $date): bool
+    {
+        $min = Setting::get('timetable_min_date');
+        $max = Setting::get('timetable_max_date');
+
+        if ($min && is_string($min) && $date < $min) {
+            return false;
+        }
+
+        if ($max && is_string($max) && $date > $max) {
+            return false;
+        }
+
+        return true;
     }
 }

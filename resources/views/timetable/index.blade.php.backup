@@ -489,7 +489,7 @@
         // Skip fullscreen for now - just show the media overlay
         // User can manually click fullscreen button if they want
 
-        // Set timer to hide media after duration
+        // Set timer to hide media after duration (duration is in seconds from API)
         console.log('Setting timer to hide media after', media.display_duration, 'seconds');
         console.log('Timer ID:', mediaDisplayTimer);
         mediaDisplayTimer = setTimeout(() => {

@@ -49,7 +49,7 @@ class MediaScheduleController extends Controller
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
             'media_durations' => 'required|array',
-            'media_durations.*' => 'required|integer|min:1|max:300',
+            'media_durations.*' => 'required|numeric|min:0.5',
             'media_priorities' => 'required|array',
             'media_priorities.*' => 'required|integer|min:1|max:100',
             // New fields for pivot table
@@ -141,7 +141,7 @@ class MediaScheduleController extends Controller
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
             'media_durations' => 'required|array',
-            'media_durations.*' => 'required|integer|min:1|max:300',
+            'media_durations.*' => 'required|numeric|min:0.5',
             'media_priorities' => 'required|array',
             'media_priorities.*' => 'required|integer|min:1|max:100',
             // New fields for pivot table
