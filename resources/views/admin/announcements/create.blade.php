@@ -52,12 +52,12 @@
                                 <div class="mb-3">
                                     <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
                                     <textarea class="form-control @error('content') is-invalid @enderror" 
-                                              id="content" name="content" rows="6" maxlength="300" required>{{ old('content') }}</textarea>
+                                              id="content" name="content" rows="6" required>{{ old('content') }}</textarea>
                                     <div class="form-text d-flex justify-content-between align-items-center mt-2">
                                         <span>
-                                            Characters: <strong id="char-count">0</strong>/300
+                                            Characters: <strong id="char-count">0</strong>
                                         </span>
-                                        <small id="char-remaining" class="text-success">300 remaining</small>
+                                        <small id="char-remaining" class="text-muted">No limit - scrolling enabled</small>
                                     </div>
                                     <div id="char-warning" style="display: none; margin-top: 8px;" class="alert alert-warning py-2 px-3 mb-0">
                                         <i class="bi bi-exclamation-triangle me-1"></i><span id="warning-text"></span>
@@ -526,13 +526,6 @@ if (form) {
         if (charCount === 0) {
             e.preventDefault();
             alert('Please enter some content for the announcement.');
-            contentTextarea.focus();
-            return false;
-        }
-
-        if (charCount > MAX_CHARS) {
-            e.preventDefault();
-            alert(`Announcement cannot exceed ${MAX_CHARS} characters. Current: ${charCount} characters.`);
             contentTextarea.focus();
             return false;
         }
