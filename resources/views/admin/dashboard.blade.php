@@ -299,7 +299,7 @@
                     <div class="stat-icon text-primary">
                         <i class="bi bi-clock"></i>
                     </div>
-                    <div class="stat-number text-primary">{{ $stats['prayer_times_count'] }}</div>
+                    <div class="stat-number text-primary">{{ $stats['prayer_times_count'] ?? 0 }}</div>
                     <div class="text-muted">Prayer Times</div>
                 </div>
             </div>
@@ -309,7 +309,7 @@
                     <div class="stat-icon text-success">
                         <i class="bi bi-megaphone"></i>
                     </div>
-                    <div class="stat-number text-success">{{ $stats['announcements_count'] }}</div>
+                    <div class="stat-number text-success">{{ $stats['announcements_count'] ?? 0 }}</div>
                     <div class="text-muted">Active Announcements</div>
                 </div>
             </div>
@@ -319,7 +319,7 @@
                     <div class="stat-icon text-purple">
                         <i class="bi bi-images"></i>
                     </div>
-                    <div class="stat-number text-purple">{{ $stats['media_count'] }}</div>
+                    <div class="stat-number text-purple">{{ $stats['media_count'] ?? 0 }}</div>
                     <div class="text-muted">Active Media</div>
                 </div>
             </div>
@@ -329,7 +329,7 @@
                     <div class="stat-icon text-orange">
                         <i class="bi bi-calendar-event"></i>
                     </div>
-                    <div class="stat-number text-orange">{{ $stats['media_schedules_count'] }}</div>
+                    <div class="stat-number text-orange">{{ $stats['media_schedules_count'] ?? 0 }}</div>
                     <div class="text-muted">Media Schedules</div>
                 </div>
             </div>
@@ -339,7 +339,7 @@
                     <div class="stat-icon text-warning">
                         <i class="bi bi-gear"></i>
                     </div>
-                    <div class="stat-number text-warning">{{ $stats['total_settings'] }}</div>
+                    <div class="stat-number text-warning">{{ $stats['total_settings'] ?? 0 }}</div>
                     <div class="text-muted">Settings</div>
                 </div>
             </div>

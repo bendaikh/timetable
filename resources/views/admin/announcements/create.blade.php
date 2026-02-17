@@ -57,10 +57,6 @@
                                         <span>
                                             Characters: <strong id="char-count">0</strong>
                                         </span>
-                                        <small id="char-remaining" class="text-muted">No limit - scrolling enabled</small>
-                                    </div>
-                                    <div id="char-warning" style="display: none; margin-top: 8px;" class="alert alert-warning py-2 px-3 mb-0">
-                                        <i class="bi bi-exclamation-triangle me-1"></i><span id="warning-text"></span>
                                     </div>
                                     @error('content')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -250,7 +246,7 @@
                                         <strong>Display Info:</strong>
                                         <div class="small mt-2">
                                             <p><strong>Font Size:</strong> <span id="preview-font-size">24px</span></p>
-                                            <p><strong>Character Count:</strong> <span id="preview-char-count">0</span>/300</p>
+                                            <p><strong>Character Count:</strong> <span id="preview-char-count">0</span></p>
                                             <p><strong>Estimated Lines:</strong> <span id="preview-lines">1</span></p>
                                             <p id="preview-fit-warning" style="display: none; color: #ff6b6b; margin-top: 10px;">
                                                 <i class="bi bi-exclamation-triangle"></i> Text may be truncated on TV!
@@ -273,9 +269,6 @@
 <script>
 // ==================== ENHANCED VALIDATION & PREVIEW ====================
 
-const MAX_CHARS = 300;
-const WARNING_THRESHOLD = 250;
-
 // Elements
 const contentTextarea = document.getElementById('content');
 const fontSizeInput = document.getElementById('font_size');
@@ -283,9 +276,6 @@ const fontSizeRange = document.getElementById('font_size_range');
 const scrollSpeedInput = document.getElementById('scroll_speed');
 const scrollSpeedRange = document.getElementById('scroll_speed_range');
 const charCountDisplay = document.getElementById('char-count');
-const charRemainingDisplay = document.getElementById('char-remaining');
-const charWarningDiv = document.getElementById('char-warning');
-const warningText = document.getElementById('warning-text');
 const titleInput = document.getElementById('title');
 
 // Preview elements
@@ -325,29 +315,9 @@ function updateCharCounter() {
     
     // Update display
     charCountDisplay.textContent = charCount;
-    const remaining = Math.max(0, MAX_CHARS - charCount);
-    charRemainingDisplay.textContent = remaining + ' remaining';
     
     // Update preview
     previewCharCount.textContent = charCount;
-    
-    // Show/hide warning
-    if (charCount > WARNING_THRESHOLD) {
-        charWarningDiv.style.display = 'block';
-        
-        if (charCount > MAX_CHARS) {
-            warningText.textContent = `⚠️ Character limit exceeded! Maximum ${MAX_CHARS} characters allowed.`;
-            charWarningDiv.className = 'alert alert-danger py-2 px-3 mb-0';
-            document.getElementById('submit-btn').disabled = true;
-        } else {
-            warningText.textContent = `${remaining} characters remaining`;
-            charWarningDiv.className = 'alert alert-warning py-2 px-3 mb-0';
-            document.getElementById('submit-btn').disabled = false;
-        }
-    } else {
-        charWarningDiv.style.display = 'none';
-        document.getElementById('submit-btn').disabled = false;
-    }
     
     // Check if text fits on TV
     updateTextFitWarning(charCount, fontSize);
@@ -356,28 +326,7 @@ function updateCharCounter() {
     updatePreview();
 }
 
-/**
- * Prevent typing beyond MAX_CHARS
- */
-contentTextarea.addEventListener('input', function(e) {
-    if (this.value.length > MAX_CHARS) {
-        this.value = this.value.substring(0, MAX_CHARS);
-        charCountDisplay.textContent = MAX_CHARS;
-    }
-    updateCharCounter();
-});
-
-/**
- * Validate on paste
- */
-contentTextarea.addEventListener('paste', function(e) {
-    setTimeout(() => {
-        if (this.value.length > MAX_CHARS) {
-            this.value = this.value.substring(0, MAX_CHARS);
-        }
-        updateCharCounter();
-    }, 0);
-});
+contentTextarea.addEventListener('input', updateCharCounter);
 
 /**
  * Update font size display and preview

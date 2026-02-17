@@ -76,6 +76,18 @@
                 height: 100%;
             }
         }
+
+        /* Keep 3-column header on laptop preview even when responsive rules kick in */
+        @media (max-width: 1920px) {
+            #tv-display-wrapper .board-header .row {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            #tv-display-wrapper .header-right {
+                flex-wrap: nowrap;
+                justify-content: center;
+            }
+        }
         
         /* TV screens (4K+) - no wrapper, no scaling, nothing */
         @media (min-width: 3840px) {
@@ -1035,6 +1047,8 @@
 
             updateTvPreviewScale();
             window.addEventListener('resize', updateTvPreviewScale);
+            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange']
+                .forEach((eventName) => document.addEventListener(eventName, updateTvPreviewScale));
         })();
     </script>
     

@@ -11,10 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const warningText = document.getElementById('warning-text');
     const saveButton = document.querySelector('form button[type="submit"]');
 
-    // Constants
-    const MAX_CHARS = 300;
-    const WARNING_THRESHOLD = 250;
-
     if (contentInput) {
         /**
          * Update character counter and validation status
@@ -26,54 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (charCountDisplay) {
                 charCountDisplay.textContent = charCount;
             }
-
-            // Show/hide warning
-            if (charWarning && warningText) {
-                if (charCount > WARNING_THRESHOLD) {
-                    charWarning.style.display = 'block';
-                    
-                    if (charCount > MAX_CHARS) {
-                        warningText.textContent = `⚠️ Character limit exceeded! Maximum ${MAX_CHARS} characters allowed.`;
-                        warningText.parentElement.classList.add('alert-danger');
-                        warningText.parentElement.classList.remove('alert-warning');
-                        if (saveButton) saveButton.disabled = true;
-                    } else {
-                        warningText.textContent = `${MAX_CHARS - charCount} characters remaining`;
-                        warningText.parentElement.classList.remove('alert-danger');
-                        warningText.parentElement.classList.add('alert-warning');
-                        if (saveButton) saveButton.disabled = false;
-                    }
-                } else {
-                    charWarning.style.display = 'none';
-                    if (saveButton) saveButton.disabled = false;
-                }
-            }
         }
-
-        /**
-         * Prevent typing beyond MAX_CHARS
-         */
-        contentInput.addEventListener('input', function(e) {
-            if (this.value.length > MAX_CHARS) {
-                this.value = this.value.substring(0, MAX_CHARS);
-                if (charCountDisplay) {
-                    charCountDisplay.textContent = MAX_CHARS;
-                }
-            }
-            updateCharCounter();
-        });
-
-        /**
-         * Validate before paste
-         */
-        contentInput.addEventListener('paste', function(e) {
-            setTimeout(() => {
-                if (this.value.length > MAX_CHARS) {
-                    this.value = this.value.substring(0, MAX_CHARS);
-                }
-                updateCharCounter();
-            }, 0);
-        });
+        contentInput.addEventListener('input', updateCharCounter);
 
         /**
          * Validate on form submit
@@ -86,13 +36,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (charCount === 0) {
                     e.preventDefault();
                     alert('Please enter some content for the announcement.');
-                    contentInput.focus();
-                    return false;
-                }
-
-                if (charCount > MAX_CHARS) {
-                    e.preventDefault();
-                    alert(`Announcement cannot exceed ${MAX_CHARS} characters. Current: ${charCount} characters.`);
                     contentInput.focus();
                     return false;
                 }

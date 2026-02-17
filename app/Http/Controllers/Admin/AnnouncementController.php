@@ -22,7 +22,7 @@ class AnnouncementController extends Controller
      */
     public function create()
     {
-        return view('admin.announcements.form');
+        return view('admin.announcements.create');
     }
 
     /**
@@ -32,22 +32,36 @@ class AnnouncementController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'content' => 'required|string|max:250',
-            'active' => 'boolean',
+            'content' => 'required|string',
+            'title_font_size' => 'required|integer|min:20|max:60',
+            'display_duration' => 'required|integer|min:1|max:120',
+            'font_size' => 'required|integer|min:12|max:160',
+            'scroll_speed' => 'required|integer|min:1|max:10',
+            'text_color' => 'required|string',
+            'background_color' => 'required|string',
+            'start_date' => 'nullable|date_format:Y-m-d\TH:i',
+            'end_date' => 'nullable|date_format:Y-m-d\TH:i|after_or_equal:start_date',
+            'is_active' => 'boolean',
+            'auto_repeat' => 'boolean',
+            'repeat_days' => 'nullable|array',
             'priority' => 'nullable|integer|between:1,3',
         ]);
 
         Announcement::create([
             'title' => $request->title,
             'content' => $request->content,
-            'active' => $request->has('active'),
+            'title_font_size' => $request->title_font_size,
+            'display_duration' => $request->display_duration,
+            'font_size' => $request->font_size,
+            'scroll_speed' => $request->scroll_speed,
+            'text_color' => $request->text_color,
+            'background_color' => $request->background_color,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'is_active' => $request->has('is_active'),
+            'auto_repeat' => $request->has('auto_repeat'),
+            'repeat_days' => $request->has('repeat_days') ? $request->repeat_days : null,
             'priority' => $request->priority ?? 1,
-            'is_active' => $request->has('active'),
-            'display_duration' => 10,
-            'font_size' => 48,
-            'text_color' => '#000000',
-            'background_color' => '#ffffff',
-            'scroll_speed' => 5,
         ]);
 
         return redirect()->route('admin.announcements.index')
@@ -77,7 +91,7 @@ class AnnouncementController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'content' => 'required|string|max:300',
+            'content' => 'required|string',
             'display_duration' => 'required|integer|min:1|max:120',
             'font_size' => 'required|integer|min:12|max:160',
             'scroll_speed' => 'required|integer|min:1|max:10',

@@ -68,9 +68,9 @@
 
                         <div class="form-group mb-4">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="active" name="active" 
-                                       {{ old('active', $announcement->active ?? true) ? 'checked' : '' }}>
-                                <label class="form-check-label" for="active">
+                                <input type="checkbox" class="form-check-input" id="is_active" name="is_active" 
+                                       {{ old('is_active', $announcement->is_active ?? true) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_active">
                                     Active (Display on TV screen)
                                 </label>
                             </div>

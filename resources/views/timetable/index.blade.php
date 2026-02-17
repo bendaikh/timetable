@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $settings['masjid_name'] . ' - Prayer Timetable')
+@section('title', ($settings['masjid_name'] ?? 'Masjid') . ' - Prayer Timetable')
 
 @section('content')
 
@@ -71,7 +71,11 @@
                 border-radius: {{ $headerStyling['border_radius'] ?? '0px' }};
                 padding: 10px 20px;
                 margin: 0;
+                position: relative;
             ">
+                <button onclick="toggleFullscreen()" class="btn btn-light btn-sm" id="fullscreenBtn" style="position: absolute; top: 10px; right: 20px; font-size: 1.5rem; padding: 0.25rem 0.5rem;">
+                    <i class="bi bi-arrows-fullscreen"></i>
+                </button>
                 <div class="row align-items-center m-0">
                     <!-- Current Time -->
                     <div class="col-md-4 p-0">
@@ -97,20 +101,15 @@
                         </div>
                     </div>
                     
-                    <!-- Islamic Date and Fullscreen Button -->
+                    <!-- Islamic Date -->
                     <div class="col-md-4 p-0">
-                        <div class="header-right d-flex justify-content-between align-items-center">
-                            <div class="islamic-date-display text-center" style="flex: 1;">
-                                <div class="islamic-date" id="islamic-date" style="
-                                    font-size: {{ $dateFontSize }};
-                                    font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
-                                    color: {{ $headerStyling['text_color'] ?? '#000000' }};
-                                    margin: 0;
-                                ">{{ $islamicDate['day'] }} {{ $islamicDate['month'] }} {{ $islamicDate['year'] }}</div>
-                            </div>
-                            <button onclick="toggleFullscreen()" class="btn btn-light btn-sm" id="fullscreenBtn" style="font-size: 1.5rem;">
-                                <i class="bi bi-arrows-fullscreen"></i>
-                            </button>
+                        <div class="islamic-date-display text-center">
+                            <div class="islamic-date" id="islamic-date" style="
+                                font-size: {{ $dateFontSize }};
+                                font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
+                                color: {{ $headerStyling['text_color'] ?? '#000000' }};
+                                margin: 0;
+                            ">{{ $islamicDate['day'] ?? '' }} {{ $islamicDate['month'] ?? '' }} {{ $islamicDate['year'] ?? '' }}</div>
                         </div>
                     </div>
                 </div>
@@ -137,7 +136,7 @@
                     <!-- Islamic Date -->
                     <div class="col-md-3">
                         <div class="islamic-date-display text-center">
-                            <div class="islamic-date" id="islamic-date">{{ $islamicDate['day'] }} {{ $islamicDate['month'] }} {{ $islamicDate['year'] }}</div>
+                            <div class="islamic-date" id="islamic-date">{{ $islamicDate['day'] ?? '' }} {{ $islamicDate['month'] ?? '' }} {{ $islamicDate['year'] ?? '' }}</div>
                         </div>
                     </div>
                     
@@ -163,6 +162,14 @@
                     $prayerBox = $useBoxesStyling && isset($boxSettings['prayer_times_box']) ? $boxSettings['prayer_times_box'] : null;
                     $prayerStyling = $prayerBox['styling_settings'] ?? [];
                     $prayerLayout = $prayerBox['layout_settings'] ?? [];
+                    // Safe style variables to avoid undefined array key errors on servers with older saved settings
+                    $prayer_names_font_size = $prayerStyling['prayer_names_font_size'] ?? null;
+                    $beginning_font_size = $prayerStyling['beginning_font_size'] ?? null;
+                    $jamaat_font_size = $prayerStyling['jamaat_font_size'] ?? null;
+                    $header_font_size = $prayerStyling['header_font_size'] ?? null;
+                    $next_prayer_font_size = $prayerStyling['next_prayer_font_size'] ?? null;
+                    $next_prayer_countdown_font_size = $prayerStyling['next_prayer_countdown_font_size'] ?? null;
+                    $next_prayer_name_font_size = $prayerStyling['next_prayer_name_font_size'] ?? null;
                 @endphp
                 @if($useBoxesStyling && isset($boxSettings['prayer_times_box']))
                     <div id="prayer-times-section" class="prayer-times-section" style="
@@ -180,7 +187,7 @@
                         <div class="prayer-header" style="
                             background-color: {{ $prayerStyling['header_background_color'] ?? 'transparent' }};
                             color: {{ $prayerStyling['header_text_color'] ?? '#000000' }};
-                            font-size: {{ $prayerStyling['header_font_size'] ? (strpos($prayerStyling['header_font_size'], 'rem') !== false ? $prayerStyling['header_font_size'] : $prayerStyling['header_font_size'] . 'rem') : '1rem' }};
+                            font-size: {{ $header_font_size ? (strpos($header_font_size, 'rem') !== false ? $header_font_size : $header_font_size . 'rem') : '1rem' }};
                             margin: 0 0 10px 0;
                             padding: 8px;
                             text-align: center;
@@ -215,16 +222,16 @@
                                     <div class="next-prayer-text" style="
                                         margin-bottom: 8px; 
                                         font-weight: bold;
-                                        font-size: {{ $prayerStyling['next_prayer_font_size'] ? (strpos($prayerStyling['next_prayer_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_font_size'] : $prayerStyling['next_prayer_font_size'] . 'rem') : '1.4rem' }} !important;
+                                        font-size: {{ $next_prayer_font_size ? (strpos($next_prayer_font_size, 'rem') !== false ? $next_prayer_font_size : $next_prayer_font_size . 'rem') : '1.4rem' }} !important;
                                         color: {{ $prayerStyling['next_prayer_text_color'] ?? '#000000' }} !important;
                                     ">Next prayer in:</div>
                                     <div id="next-prayer-countdown" class="next-prayer-countdown" style="
-                                        font-size: {{ $prayerStyling['next_prayer_countdown_font_size'] ? (strpos($prayerStyling['next_prayer_countdown_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_countdown_font_size'] : $prayerStyling['next_prayer_countdown_font_size'] . 'rem') : '1.4rem' }} !important; 
+                                        font-size: {{ $next_prayer_countdown_font_size ? (strpos($next_prayer_countdown_font_size, 'rem') !== false ? $next_prayer_countdown_font_size : $next_prayer_countdown_font_size . 'rem') : '1.4rem' }} !important; 
                                         font-weight: bold;
                                         color: {{ $prayerStyling['next_prayer_countdown_color'] ?? '#000000' }} !important;
                                     ">--:--:--</div>
                                     <div id="next-prayer-name" class="next-prayer-name" style="
-                                        font-size: {{ $prayerStyling['next_prayer_name_font_size'] ? (strpos($prayerStyling['next_prayer_name_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_name_font_size'] : $prayerStyling['next_prayer_name_font_size'] . 'rem') : '0.9rem' }} !important; 
+                                        font-size: {{ $next_prayer_name_font_size ? (strpos($next_prayer_name_font_size, 'rem') !== false ? $next_prayer_name_font_size : $next_prayer_name_font_size . 'rem') : '0.9rem' }} !important; 
                                         margin-top: 5px; 
                                         opacity: 0.8;
                                         color: {{ $prayerStyling['next_prayer_name_color'] ?? '#666666' }} !important;
@@ -234,29 +241,29 @@
                         @endif
                         <div class="prayer-list">
                             <div class="prayer-row" data-prayer-name="fajr" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['prayer_names_font_size'] ? (strpos($prayerStyling['prayer_names_font_size'], 'rem') !== false ? $prayerStyling['prayer_names_font_size'] : $prayerStyling['prayer_names_font_size'] . 'rem') : '3rem' }}; font-weight: bold;">Fajr</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size ? (strpos($prayer_names_font_size, 'rem') !== false ? $prayer_names_font_size : $prayer_names_font_size . 'rem') : '3rem' }}; font-weight: bold;">Fajr</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size ? (strpos($beginning_font_size, 'rem') !== false ? $beginning_font_size : $beginning_font_size . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size ? (strpos($jamaat_font_size, 'rem') !== false ? $jamaat_font_size : $jamaat_font_size . 'rem') : '3rem' }};">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="zohar" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['prayer_names_font_size'] ? (strpos($prayerStyling['prayer_names_font_size'], 'rem') !== false ? $prayerStyling['prayer_names_font_size'] : $prayerStyling['prayer_names_font_size'] . 'rem') : '3rem' }}; font-weight: bold;">Zohar</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size ? (strpos($prayer_names_font_size, 'rem') !== false ? $prayer_names_font_size : $prayer_names_font_size . 'rem') : '3rem' }}; font-weight: bold;">Zohar</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size ? (strpos($beginning_font_size, 'rem') !== false ? $beginning_font_size : $beginning_font_size . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size ? (strpos($jamaat_font_size, 'rem') !== false ? $jamaat_font_size : $jamaat_font_size . 'rem') : '3rem' }};">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="asr" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['prayer_names_font_size'] ? (strpos($prayerStyling['prayer_names_font_size'], 'rem') !== false ? $prayerStyling['prayer_names_font_size'] : $prayerStyling['prayer_names_font_size'] . 'rem') : '3rem' }}; font-weight: bold;">Asr</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size ? (strpos($prayer_names_font_size, 'rem') !== false ? $prayer_names_font_size : $prayer_names_font_size . 'rem') : '3rem' }}; font-weight: bold;">Asr</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size ? (strpos($beginning_font_size, 'rem') !== false ? $beginning_font_size : $beginning_font_size . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size ? (strpos($jamaat_font_size, 'rem') !== false ? $jamaat_font_size : $jamaat_font_size . 'rem') : '3rem' }};">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="maghrib" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['prayer_names_font_size'] ? (strpos($prayerStyling['prayer_names_font_size'], 'rem') !== false ? $prayerStyling['prayer_names_font_size'] : $prayerStyling['prayer_names_font_size'] . 'rem') : '3rem' }}; font-weight: bold;">Maghrib</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size ? (strpos($prayer_names_font_size, 'rem') !== false ? $prayer_names_font_size : $prayer_names_font_size . 'rem') : '3rem' }}; font-weight: bold;">Maghrib</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size ? (strpos($beginning_font_size, 'rem') !== false ? $beginning_font_size : $beginning_font_size . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size ? (strpos($jamaat_font_size, 'rem') !== false ? $jamaat_font_size : $jamaat_font_size . 'rem') : '3rem' }};">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="isha" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayerStyling['prayer_names_font_size'] ? (strpos($prayerStyling['prayer_names_font_size'], 'rem') !== false ? $prayerStyling['prayer_names_font_size'] : $prayerStyling['prayer_names_font_size'] . 'rem') : '3rem' }}; font-weight: bold;">Isha</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $prayerStyling['beginning_font_size'] ? (strpos($prayerStyling['beginning_font_size'], 'rem') !== false ? $prayerStyling['beginning_font_size'] : $prayerStyling['beginning_font_size'] . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $prayerStyling['jamaat_font_size'] ? (strpos($prayerStyling['jamaat_font_size'], 'rem') !== false ? $prayerStyling['jamaat_font_size'] : $prayerStyling['jamaat_font_size'] . 'rem') : '3rem' }};">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size ? (strpos($prayer_names_font_size, 'rem') !== false ? $prayer_names_font_size : $prayer_names_font_size . 'rem') : '3rem' }}; font-weight: bold;">Isha</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size ? (strpos($beginning_font_size, 'rem') !== false ? $beginning_font_size : $beginning_font_size . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size ? (strpos($jamaat_font_size, 'rem') !== false ? $jamaat_font_size : $jamaat_font_size . 'rem') : '3rem' }};">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                         </div>
                         
@@ -272,16 +279,16 @@
                                     <div class="next-prayer-text" style="
                                         margin-bottom: 8px; 
                                         font-weight: bold;
-                                        font-size: {{ $prayerStyling['next_prayer_font_size'] ? (strpos($prayerStyling['next_prayer_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_font_size'] : $prayerStyling['next_prayer_font_size'] . 'rem') : '1.4rem' }} !important;
+                                        font-size: {{ $next_prayer_font_size ? (strpos($next_prayer_font_size, 'rem') !== false ? $next_prayer_font_size : $next_prayer_font_size . 'rem') : '1.4rem' }} !important;
                                         color: {{ $prayerStyling['next_prayer_text_color'] ?? '#000000' }} !important;
                                     ">Next prayer in:</div>
                                     <div id="next-prayer-countdown" class="next-prayer-countdown" style="
-                                        font-size: {{ $prayerStyling['next_prayer_countdown_font_size'] ? (strpos($prayerStyling['next_prayer_countdown_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_countdown_font_size'] : $prayerStyling['next_prayer_countdown_font_size'] . 'rem') : '1.4rem' }} !important; 
+                                        font-size: {{ $next_prayer_countdown_font_size ? (strpos($next_prayer_countdown_font_size, 'rem') !== false ? $next_prayer_countdown_font_size : $next_prayer_countdown_font_size . 'rem') : '1.4rem' }} !important; 
                                         font-weight: bold;
                                         color: {{ $prayerStyling['next_prayer_countdown_color'] ?? '#000000' }} !important;
                                     ">--:--:--</div>
                                     <div id="next-prayer-name" class="next-prayer-name" style="
-                                        font-size: {{ $prayerStyling['next_prayer_name_font_size'] ? (strpos($prayerStyling['next_prayer_name_font_size'], 'rem') !== false ? $prayerStyling['next_prayer_name_font_size'] : $prayerStyling['next_prayer_name_font_size'] . 'rem') : '0.9rem' }} !important; 
+                                        font-size: {{ $next_prayer_name_font_size ? (strpos($next_prayer_name_font_size, 'rem') !== false ? $next_prayer_name_font_size : $next_prayer_name_font_size . 'rem') : '0.9rem' }} !important; 
                                         margin-top: 5px; 
                                         opacity: 0.8;
                                         color: {{ $prayerStyling['next_prayer_name_color'] ?? '#666666' }} !important;
@@ -684,6 +691,42 @@
 </div>
 
 <style>
+    /* Header layout fixes: keep time/dates on one line and prevent fullscreen button from squeezing Hijri date */
+    #header-box .current-time-display,
+    #header-box .time-large,
+    #header-box .gregorian-date,
+    #header-box .islamic-date {
+        white-space: nowrap;
+    }
+
+    #header-box .header-right {
+        width: 100%;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: clamp(10px, 2vw, 20px);
+    }
+
+    #header-box .header-right .islamic-date-display {
+        min-width: 0;
+        text-align: center;
+        justify-self: stretch;
+    }
+
+    #header-box .header-right #fullscreenBtn {
+        position: static;
+        justify-self: end;
+        transform: none;
+    }
+
+    @media (max-width: 3839px) {
+        #tv-display-wrapper #header-box .time-large,
+        #tv-display-wrapper #header-box .gregorian-date,
+        #tv-display-wrapper #header-box .islamic-date {
+            font-size: clamp(2.2rem, 3.2vw, 3.8rem) !important;
+        }
+    }
+
     /* Next Prayer Info Container - Prevent overflow and ensure proper spacing */
     .next-prayer-info {
         max-height: 350px !important;

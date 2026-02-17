@@ -11,7 +11,6 @@ class Announcement extends Model
         'title',
         'content',
         'is_active',
-        'active',
         'priority',
         'auto_repeat',
         'repeat_days',
@@ -27,7 +26,6 @@ class Announcement extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'active' => 'boolean',
         'auto_repeat' => 'boolean',
         'repeat_days' => 'array',
         'start_date' => 'datetime',
