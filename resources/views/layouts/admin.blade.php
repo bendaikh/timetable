@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Admin Panel') - Masjid Timetable</title>
+    <title>@yield('title', 'Admin Panel - Masjid Timetable')</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,6 +14,19 @@
     <style>
         body {
             background-color: #f8f9fa;
+        }
+
+        body.admin-zoomed {
+            zoom: 0.67;
+        }
+
+        @supports not (zoom: 1) {
+            body.admin-zoomed {
+                transform: scale(0.67);
+                transform-origin: top left;
+                width: calc(100% / 0.67);
+                height: calc(100% / 0.67);
+            }
         }
         
         .sidebar {
@@ -44,10 +57,18 @@
             padding: 20px;
         }
         
-        .card-header-custom {
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-radius: 10px 10px 0 0 !important;
+            border: none;
         }
         
         .navbar-brand {
@@ -59,8 +80,6 @@
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: white;
-            border-radius: 20px;
-            padding: 8px 20px;
             transition: all 0.3s ease;
         }
         
@@ -68,143 +87,396 @@
             background: rgba(255, 255, 255, 0.2);
             color: white;
         }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+        /* Header buttons styling */
+        .card-header .btn {
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header .btn-light {
+            background-color: rgba(255, 255, 255, 0.95);
+            color: #667eea;
             border: none;
         }
-        
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+
+        .card-header .btn-light:hover {
+            background-color: white;
+            color: #764ba2;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-header .btn-outline-light {
+            color: white;
+            border-color: rgba(255, 255, 255, 0.8) !important;
+            background-color: transparent;
+        }
+
+        .card-header .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: white !important;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-header .btn-danger {
+            background-color: #dc3545;
+            border: none;
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+        }
+
+        .card-header .btn-danger:hover {
+            background-color: #c82333;
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+            transform: translateY(-2px);
         }
         
-        .table th {
-            background-color: #f8f9fa;
-            border-top: none;
+        .box-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
-        .badge {
-            font-size: 0.85em;
+        .box-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .preview-container {
+            min-height: 200px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .box-preview {
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .form-control-color {
+            width: 60px;
+            height: 38px;
+            padding: 0;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+        }
+        
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
         }
     </style>
     
-    @yield('styles')
+    @stack('styles')
 </head>
 <body>
-    <!-- Sidebar -->
-    <nav class="sidebar">
-        <div class="p-4">
-            <h4 class="text-white mb-4">
-                <i class="bi bi-house-door-fill me-2"></i>
-                Masjid Admin
-            </h4>
-            
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
-                        <i class="bi bi-speedometer2 me-2"></i>
-                        Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.prayer-times.*') ? 'active' : '' }}" href="{{ route('admin.prayer-times.index') }}">
-                        <i class="bi bi-clock me-2"></i>
-                        Prayer Times
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.announcements.*') ? 'active' : '' }}" href="{{ route('admin.announcements.index') }}">
-                        <i class="bi bi-megaphone me-2"></i>
-                        Announcements
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.hadeeths.*') ? 'active' : '' }}" href="{{ route('admin.hadeeths.index') }}">
-                        <i class="bi bi-book me-2"></i>
-                        Hadeeths
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" href="{{ route('admin.settings.index') }}">
-                        <i class="bi bi-gear me-2"></i>
-                        Settings
-                    </a>
-                </li>
-                <li class="nav-item mt-4">
-                    <a class="nav-link" href="{{ route('timetable.index') }}" target="_blank">
-                        <i class="bi bi-eye me-2"></i>
-                        View Timetable
-                    </a>
-                </li>
-            </ul>
-            
-            <div class="mt-5">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="btn logout-btn w-100">
-                        <i class="bi bi-box-arrow-right me-2"></i>
-                        Logout
-                    </button>
-                </form>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Navigation -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-white rounded shadow-sm mb-4">
-            <div class="container-fluid">
-                <span class="navbar-brand">
-                    @yield('page-icon', '<i class="bi bi-speedometer2 me-2"></i>')
-                    @yield('page-title', 'Dashboard')
-                </span>
-                <div class="navbar-nav ms-auto">
-                    <span class="nav-item nav-link">
-                        Welcome, {{ auth()->user()->name }}
-                    </span>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="sidebar col-md-3 col-lg-2 d-md-block">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="navbar-brand text-white">Admin Panel</h4>
+                        <small class="text-white-50">Masjid Timetable</small>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" 
+                               href="{{ route('admin.dashboard') }}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.boxes.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.boxes.index') }}">
+                                <i class="bi bi-grid-3x3-gap"></i> Boxes Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.prayer-times.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.prayer-times.index') }}">
+                                <i class="bi bi-clock"></i> Prayer Times
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.announcements.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.announcements.index') }}">
+                                <i class="bi bi-megaphone"></i> Announcements
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.media.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.media.index') }}">
+                                <i class="bi bi-image"></i> Media
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.media-schedules.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.media-schedules.index') }}">
+                                <i class="bi bi-calendar-event"></i> Media Schedules
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.sliding-texts.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.sliding-texts.index') }}">
+                                <i class="bi bi-text-paragraph"></i> Sliding Texts
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.settings.index') }}">
+                                <i class="bi bi-gear"></i> Settings
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <a class="nav-link" href="{{ route('timetable.index') }}" target="_blank">
+                                <i class="bi bi-eye"></i> View Timetable
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.profile.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.profile.edit') }}">
+                                <i class="bi bi-person-circle"></i> My Profile
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <div class="mt-auto pt-3">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="btn logout-btn w-100">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        </nav>
+            </nav>
 
-        <!-- Alert Messages -->
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle me-2"></i>
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                <strong>Please fix the following errors:</strong>
-                <ul class="mb-0 mt-2">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        <!-- Page Content -->
-        @yield('content')
+            <!-- Main content -->
+            <main class="main-content col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                @yield('content')
+            </main>
+        </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Boxes Management JS -->
+    @if(file_exists(public_path('build/manifest.json')))
+        @vite('resources/js/boxes-management.js')
+    @else
+        <script>
+            // Fallback: Inline boxes management functionality
+            console.warn('Vite build not found, using fallback boxes management');
+            
+            class BoxesManager {
+                constructor() {
+                    this.init();
+                }
+
+                init() {
+                    this.setupEventListeners();
+                    this.initializeColorPickers();
+                }
+
+                setupEventListeners() {
+                    document.addEventListener('input', (e) => {
+                        if (e.target.matches('input, select, textarea')) {
+                            this.debounce(() => this.updatePreview(e.target), 300);
+                        }
+                    });
+
+                    document.addEventListener('change', (e) => {
+                        if (e.target.type === 'color') {
+                            this.updatePreview(e.target);
+                        }
+                    });
+                }
+
+                initializeColorPickers() {
+                    const colorInputs = document.querySelectorAll('input[type="color"]');
+                    colorInputs.forEach(input => {
+                        if (!input.value) {
+                            input.value = this.getDefaultColor(input.id);
+                        }
+                    });
+                }
+
+                getDefaultColor(inputId) {
+                    const defaults = {
+                        'background_color': '#f5f5dc',
+                        'text_color': '#000000',
+                        'border_color': '#0066cc',
+                        'header_background_color': '#0066cc',
+                        'header_text_color': '#ffffff',
+                        'title_color': '#000000',
+                        'accent_color': '#90EE90'
+                    };
+                    return defaults[inputId] || '#000000';
+                }
+
+                updatePreview(element) {
+                    const form = element.closest('form');
+                    if (!form) return;
+
+                    const formData = new FormData(form);
+                    const data = this.parseFormData(formData);
+                    this.updateLivePreview(data);
+                }
+
+                parseFormData(formData) {
+                    const data = {};
+                    for (let [key, value] of formData.entries()) {
+                        if (key.includes('[') && key.includes(']')) {
+                            const [parent, child] = key.split('[');
+                            const childKey = child.replace(']', '');
+                            if (!data[parent]) data[parent] = {};
+                            data[parent][childKey] = value;
+                        } else {
+                            data[key] = value;
+                        }
+                    }
+                    return data;
+                }
+
+                updateLivePreview(data) {
+                    const previewElement = document.getElementById('livePreview');
+                    if (!previewElement) return;
+
+                    const boxType = this.getCurrentBoxType();
+                    const previewHTML = this.generatePreviewHTML(data, boxType);
+                    
+                    if (previewHTML) {
+                        previewElement.innerHTML = previewHTML;
+                    }
+                }
+
+                getCurrentBoxType() {
+                    const path = window.location.pathname;
+                    const match = path.match(/\/edit\/([^\/]+)/);
+                    return match ? match[1] : null;
+                }
+
+                generatePreviewHTML(data, boxType) {
+                    const styling = data.styling_settings || {};
+                    const content = data.content_settings || {};
+                    
+                    let styleString = `
+                        background-color: ${styling.background_color || '#f5f5dc'};
+                        color: ${styling.text_color || '#000000'};
+                        font-family: ${styling.font_family || 'Arial, sans-serif'};
+                        font-size: ${styling.font_size || '16px'};
+                        border: ${styling.border_width || '1px'} solid ${styling.border_color || '#0066cc'};
+                        border-radius: ${styling.border_radius || '0px'};
+                        padding: ${styling.padding || '15px'};
+                        text-align: ${data.layout_settings?.text_alignment || 'left'};
+                    `;
+                    
+                    switch(boxType) {
+                        case 'header_box':
+                            return `
+                                <div style="${styleString}">
+                                    <div style="font-size: ${styling.time_font_size || '48px'}; font-weight: bold;">02:24:13 PM</div>
+                                    <div style="font-size: ${styling.date_font_size || '18px'}; margin-top: 5px;">Wed 15 Oct 2025</div>
+                                    <div style="font-size: ${styling.date_font_size || '18px'}; margin-top: 5px;">18 Safar 1447</div>
+                                </div>
+                            `;
+                        case 'prayer_times_box':
+                            return `
+                                <div style="${styleString}">
+                                    <div style="background-color: ${styling.header_background_color || '#0066cc'}; color: ${styling.header_text_color || '#ffffff'}; padding: 8px; margin: -15px -15px 10px -15px; text-align: center; font-weight: bold;">
+                                        Prayer Times
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px;">
+                                        <span>Fajr</span>
+                                        <span>05:38</span>
+                                        <span>06:45</span>
+                                    </div>
+                                </div>
+                            `;
+                        default:
+                            return `
+                                <div style="${styleString}">
+                                    <div style="text-align: center;">Box Preview</div>
+                                </div>
+                            `;
+                    }
+                }
+
+                debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = () => {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+            }
+
+            // Initialize when DOM is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                new BoxesManager();
+            });
+
+            // Export for global use
+            window.BoxesManager = BoxesManager;
+        </script>
+    @endif
+    
+    <!-- Mobile sidebar toggle -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                });
+            }
+        });
+    </script>
+
+    <script>
+        function applyAdminZoom() {
+            const isLaptop = window.innerWidth <= 1440 || window.innerHeight <= 900;
+            document.body.classList.toggle('admin-zoomed', isLaptop);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            applyAdminZoom();
+            window.addEventListener('resize', applyAdminZoom);
+        });
+    </script>
     
     @yield('scripts')
+    @stack('scripts')
 </body>
 </html>

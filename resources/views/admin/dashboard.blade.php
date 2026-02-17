@@ -107,6 +107,77 @@
             background: rgba(255, 255, 255, 0.2);
             color: white;
         }
+        
+        .text-purple {
+            color: #6f42c1 !important;
+        }
+        
+        .text-orange {
+            color: #fd7e14 !important;
+        }
+        
+        .btn-purple {
+            background-color: #6f42c1;
+            border-color: #6f42c1;
+            color: white;
+        }
+        
+        .btn-purple:hover {
+            background-color: #5a32a3;
+            border-color: #5a32a3;
+            color: white;
+        }
+        
+        .btn-orange {
+            background-color: #fd7e14;
+            border-color: #fd7e14;
+            color: white;
+        }
+        
+        .btn-orange:hover {
+            background-color: #e8650e;
+            border-color: #e8650e;
+            color: white;
+        }
+        
+        /* Sliding Text Section */
+        .sliding-text-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 12px 10px;
+            margin: 20px 0;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sliding-text-wrapper {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            animation: slideText 20s linear infinite;
+        }
+        
+        .sliding-text {
+            color: #000000;
+            font-weight: 700;
+            font-size: 14px;
+            display: inline-block;
+            padding-right: 100px;
+        }
+        
+        @keyframes slideText {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+        
+        .sliding-text-container:hover .sliding-text-wrapper {
+            animation-play-state: paused;
+        }
     </style>
 </head>
 <body>
@@ -126,6 +197,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.boxes.index') }}">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>
+                        Boxes Management
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.prayer-times.index') }}">
                         <i class="bi bi-clock me-2"></i>
                         Prayer Times
@@ -138,15 +215,27 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.hadeeths.index') }}">
-                        <i class="bi bi-book me-2"></i>
-                        Hadeeths
+                    <a class="nav-link" href="{{ route('admin.media.index') }}">
+                        <i class="bi bi-images me-2"></i>
+                        Media Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.media-schedules.index') }}">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        Media Schedules
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.settings.index') }}">
                         <i class="bi bi-gear me-2"></i>
                         Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.sliding-texts.index') }}">
+                        <i class="bi bi-text-left me-2"></i>
+                        Sliding Texts
                     </a>
                 </li>
                 <li class="nav-item mt-4">
@@ -157,11 +246,28 @@
                 </li>
             </ul>
             
-            <div class="mt-5">
+            <!-- Sliding Text Section -->
+            @if(isset($slidingTexts) && $slidingTexts->count() > 0)
+                @foreach($slidingTexts as $slidingText)
+                <div class="sliding-text-container" style="background: {{ $slidingText->background_color }};">
+                    <div class="sliding-text-wrapper" style="animation-duration: {{ $slidingText->animation_speed }}s;">
+                        <span class="sliding-text" style="color: {{ $slidingText->text_color }}; font-size: {{ $slidingText->font_size }}px; font-weight: {{ $slidingText->font_weight }};">{{ $slidingText->text }}</span>
+                    </div>
+                </div>
+                @endforeach
+            @else
+                <div class="sliding-text-container">
+                    <div class="sliding-text-wrapper">
+                        <span class="sliding-text">Welcome to Masjid Admin Panel - Manage your prayer times, announcements, and media schedules</span>
+                    </div>
+                </div>
+            @endif
+            
+            <div class="mt-3">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="btn logout-btn w-100">
-                        <i class="bi bi-box-arrow-right me-2"></i>
+                        <i class="bi box-arrow-right me-2"></i>
                         Logout
                     </button>
                 </form>
@@ -188,42 +294,52 @@
 
         <!-- Statistics Cards -->
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="stat-card text-center">
                     <div class="stat-icon text-primary">
                         <i class="bi bi-clock"></i>
                     </div>
-                    <div class="stat-number text-primary">{{ $stats['prayer_times_count'] }}</div>
+                    <div class="stat-number text-primary">{{ $stats['prayer_times_count'] ?? 0 }}</div>
                     <div class="text-muted">Prayer Times</div>
                 </div>
             </div>
             
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="stat-card text-center">
                     <div class="stat-icon text-success">
                         <i class="bi bi-megaphone"></i>
                     </div>
-                    <div class="stat-number text-success">{{ $stats['announcements_count'] }}</div>
+                    <div class="stat-number text-success">{{ $stats['announcements_count'] ?? 0 }}</div>
                     <div class="text-muted">Active Announcements</div>
                 </div>
             </div>
             
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="stat-card text-center">
-                    <div class="stat-icon text-info">
-                        <i class="bi bi-book"></i>
+                    <div class="stat-icon text-purple">
+                        <i class="bi bi-images"></i>
                     </div>
-                    <div class="stat-number text-info">{{ $stats['hadeeths_count'] }}</div>
-                    <div class="text-muted">Active Hadeeths</div>
+                    <div class="stat-number text-purple">{{ $stats['media_count'] ?? 0 }}</div>
+                    <div class="text-muted">Active Media</div>
                 </div>
             </div>
             
-            <div class="col-md-3">
+            <div class="col-md-2">
+                <div class="stat-card text-center">
+                    <div class="stat-icon text-orange">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    <div class="stat-number text-orange">{{ $stats['media_schedules_count'] ?? 0 }}</div>
+                    <div class="text-muted">Media Schedules</div>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
                 <div class="stat-card text-center">
                     <div class="stat-icon text-warning">
                         <i class="bi bi-gear"></i>
                     </div>
-                    <div class="stat-number text-warning">{{ $stats['total_settings'] }}</div>
+                    <div class="stat-number text-warning">{{ $stats['total_settings'] ?? 0 }}</div>
                     <div class="text-muted">Settings</div>
                 </div>
             </div>
@@ -317,9 +433,14 @@
                                 <i class="bi bi-plus-circle me-2"></i>
                                 New Announcement
                             </a>
-                            <a href="{{ route('admin.hadeeths.create') }}" class="btn btn-info">
+
+                            <a href="{{ route('admin.media.create') }}" class="btn btn-purple">
                                 <i class="bi bi-plus-circle me-2"></i>
-                                Add Hadeeth
+                                Add Media
+                            </a>
+                            <a href="{{ route('admin.media-schedules.create') }}" class="btn btn-orange">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Schedule Media
                             </a>
                         </div>
                     </div>

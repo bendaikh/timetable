@@ -11,411 +11,958 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     
+    <!-- Fullscreen Display Styles -->
+    <link href="{{ asset('css/fullscreen-display.css') }}" rel="stylesheet">
+    
     <!-- Custom CSS -->
     <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
         body {
             font-family: {{ $settings['display_font_family'] ?? 'Arial, sans-serif' }};
             background-color: {{ $settings['display_background_color'] ?? '#ffffff' }};
             color: {{ $settings['display_text_color'] ?? '#000000' }};
         }
         
-        .prayer-times {
-            font-size: {{ $settings['prayer_time_font_size'] ?? '24' }}px;
+        /* Laptop auto-scaling - render a 3840x2160 canvas and scale to fit */
+        @media (max-width: 3839px) {
+            #tv-display-wrapper {
+                --tv-preview-scale: 0.33;
+                width: 3840px;
+                height: 2160px;
+                transform: scale(var(--tv-preview-scale));
+                transform-origin: top left;
+                position: relative;
+            }
+
+            #tv-display-wrapper .digital-board,
+            #tv-display-wrapper .unified-container {
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            /* Laptop preview header: reduce height and keep dates on one row */
+            #tv-display-wrapper .board-header {
+                padding: clamp(8px, 1.2vh, 12px) clamp(10px, 1.5vw, 16px);
+            }
+
+            #tv-display-wrapper .board-header .row {
+                flex-wrap: nowrap;
+                align-items: center;
+            }
+
+            #tv-display-wrapper .header-right {
+                flex-wrap: nowrap;
+                gap: 8px;
+            }
+
+            #tv-display-wrapper .gregorian-date,
+            #tv-display-wrapper .islamic-date {
+                white-space: nowrap;
+                line-height: 1.05;
+            }
+
+            /* Laptop preview media overlay should cover the scaled TV canvas */
+            #tv-display-wrapper .media-overlay {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+            }
+        }
+
+        /* Keep 3-column header on laptop preview even when responsive rules kick in */
+        @media (max-width: 1920px) {
+            #tv-display-wrapper .board-header .row {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            #tv-display-wrapper .header-right {
+                flex-wrap: nowrap;
+                justify-content: center;
+            }
         }
         
-        .announcement-scroll {
-            animation: scroll-left {{ $settings['announcement_scroll_speed'] ?? '3' }}s linear infinite;
+        /* TV screens (4K+) - no wrapper, no scaling, nothing */
+        @media (min-width: 3840px) {
+            #tv-display-wrapper {
+                /* Original behavior - no changes */
+            }
         }
         
-        @keyframes scroll-left {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-        }
-        
-        .islamic-pattern {
-            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="islamic" patternUnits="userSpaceOnUse" width="20" height="20"><path d="M10 10 L15 5 L10 0 L5 5 Z" fill="%23d4af37" opacity="0.1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23islamic)"/></svg>');
-        }
-        
-        .hadeeth-section {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 2px solid #d4af37;
-        }
-        
-        .prayer-time-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px 0;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .next-prayer {
-            background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            margin: 20px 0;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
-        
-        .masjid-header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-            color: white;
-            padding: 30px 0;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        /* Fullscreen styles */
-        :fullscreen {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        :-webkit-full-screen {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        :-moz-full-screen {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .fullscreen-mode {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        }
-        
-        .fullscreen-mode .masjid-header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-        }
-        
-        /* Hide certain elements in fullscreen */
-        .fullscreen-mode .navbar,
-        .fullscreen-mode .admin-links {
-            display: none !important;
-        }
-        
-        /* Make prayer times larger in fullscreen */
-        .fullscreen-mode .prayer-time-card {
-            font-size: 1.2em;
-            padding: 20px;
-        }
-        
-        .fullscreen-mode .prayer-times {
-            font-size: 1.3em;
-        }
-        
-        .fullscreen-mode .current-time {
-            font-size: 3.5rem !important;
-        }
-        
-        .fullscreen-mode .next-prayer {
-            font-size: 1.2em;
-        }
-        
-        /* Fullscreen controls */
-        .fullscreen-controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-            display: none; /* Hidden by default */
-            transition: opacity 0.5s ease;
-        }
-        
-        .fullscreen-mode .fullscreen-controls {
-            display: block;
-            opacity: 0;
-        }
-        
-        .fullscreen-mode:hover .fullscreen-controls {
-            opacity: 1;
-        }
-        
-        /* Show controls for 3 seconds when entering fullscreen */
-        .fullscreen-mode.show-controls .fullscreen-controls {
-            opacity: 1;
-        }
-        
-        /* TV-Specific Styles for Single-Screen Display */
-        .tv-layout {
+        /* Digital Information Board Layout */
+        .digital-board {
             height: 100vh;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
         }
         
-        .tv-header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-            color: white;
-            padding: 15px;
+        /* Unified Container for Consistent Width */
+        .unified-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            padding: 0 15px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Top Header */
+        .board-header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: clamp(20px, 4vh, 35px) clamp(15px, 3vw, 30px);
+            border-bottom: 3px solid #000;
+            flex-shrink: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .current-time-display {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .time-large {
+            font-size: clamp(2rem, 3vw, 3rem);
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .time-seconds {
+            font-size: clamp(1rem, 1.5vw, 1.5rem);
+            color: #666;
+        }
+        
+        .time-period {
+            font-size: clamp(1rem, 1.3vw, 1.3rem);
+            color: #666;
+            margin-left: clamp(5px, 0.8vw, 10px);
+        }
+        
+        .date-display, .islamic-date-display {
+            font-size: clamp(1.2rem, 1.5vw, 1.6rem);
+            font-weight: bold;
+            color: #000;
+        }
+        
+        /* Main Content Area */
+        .board-main-content {
+            flex: 1;
+            padding: clamp(10px, 2vh, 20px) 0;
+            display: flex;
+            align-items: stretch;
+            gap: clamp(12px, 2vw, 20px);
+            width: 100%;
+            box-sizing: border-box;
+            min-height: 0;
+            overflow: hidden;
+        }
+        
+        /* Prayer Times Section */
+        .prayer-times-section {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #000;
+            padding: clamp(15px, 2.5vh, 25px);
+            height: 100%;
+            position: relative;
+            overflow-y: auto;
+        }
+        
+        /* Logo Background for Prayer Times Section */
+        .prayer-times-section::before {
+            content: '';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background-image: var(--logo-bg-image);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.2;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .prayer-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid #000;
+            padding-bottom: 10px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .prayer-col-header {
+        }
+        
+        .prayer-list {
+            margin-bottom: clamp(15px, 2vh, 25px);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .prayer-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: clamp(8px, 1vw, 12px);
+            margin-bottom: clamp(8px, 1.5vh, 12px);
+            text-align: center;
+            align-items: center;
+        }
+        
+        .prayer-name {
+            font-weight: bold;
+            font-size: clamp(1.2rem, 1.8vw, 1.8rem);
+        }
+        
+        .prayer-time, .prayer-jamaat {
+            font-size: clamp(1.4rem, 2vw, 2rem);
+            font-weight: bold;
+        }
+        
+        .next-prayer-info {
+            text-align: center;
+            font-style: italic;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Hadeeth Section */
+        .hadeeth-section {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #000;
+            padding: clamp(15px, 2.5vh, 25px);
+            height: 100%;
+            position: relative;
+            overflow-y: auto;
+        }
+        
+        .hadeeth-header {
+            font-size: clamp(1.2rem, 1.5vw, 1.6rem);
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: clamp(15px, 2vh, 20px);
+            color: #000;
+        }
+        
+        .hadeeth-content {
+            height: calc(100% - 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(10px, 1.5vh, 15px);
+        }
+        
+        .hadeeth-text {
+            text-align: center;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .arabic-hadeeth {
+            font-family: 'Amiri', serif;
+            font-size: clamp(1rem, 1.5vw, 1.4rem);
+            direction: rtl;
+            margin-bottom: clamp(10px, 1.5vh, 15px);
+            line-height: 1.6;
+            padding: 0 clamp(5px, 0.8vw, 10px);
+        }
+        
+        .english-hadeeth {
+            font-size: clamp(0.9rem, 1.3vw, 1.2rem);
+            margin-bottom: clamp(8px, 1.5vh, 12px);
+            line-height: 1.4;
+            padding: 0 clamp(5px, 0.8vw, 10px);
+        }
+        
+        .hadeeth-reference {
+            font-size: clamp(0.8rem, 1.1vw, 1rem);
+            color: #666;
+            font-style: italic;
+            padding: 0 clamp(5px, 0.8vw, 10px);
+        }
+        
+        .hadeeth-placeholder {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+        }
+        
+        /* Announcements Section */
+        .announcements-section {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #000;
+            padding: clamp(15px, 2.5vh, 25px);
+            height: 100%;
+            overflow-y: auto;
+        }
+        
+        .announcements-header {
+            font-size: clamp(1.2rem, 1.5vw, 1.6rem);
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: clamp(15px, 2vh, 20px);
+        }
+        
+        .announcements-content {
+            height: calc(100% - 60px);
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            gap: clamp(12px, 1.5vh, 15px);
+            padding: clamp(5px, 1vh, 10px);
+            overflow: hidden;
+        }
+        
+        .announcements-content.dynamic-layout {
+            justify-content: space-evenly;
+        }
+        
+        .announcements-content.centered-layout {
+            justify-content: center;
+        }
+        
+        .announcements-content.compact-layout {
+            gap: clamp(8px, 1vh, 12px);
+        }
+        
+        .announcement-item {
+            text-align: left;
+            width: 100%;
+            padding: clamp(8px, 1vh, 12px);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: clamp(5px, 0.8vh, 8px);
+            border-left: clamp(3px, 0.4vw, 5px) solid #0b3d0b;
+            transition: all 0.3s ease;
             flex-shrink: 0;
         }
         
-        .tv-main-content {
-            flex-grow: 1;
-            padding: 20px;
-            overflow: hidden;
+        .announcement-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
         }
         
-        /* Prayer Times Grid for TV */
-        .prayer-times-tv {
-            height: 100%;
+        .announcement-title {
+            font-size: clamp(1rem, 1.3vw, 1.3rem);
+            font-weight: bold;
+            margin-bottom: clamp(8px, 1vh, 10px);
         }
         
-        .prayer-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 15px;
-            height: 250px;
-            margin-bottom: 20px;
-        }
-        
-        .prayer-time-tv {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 12px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .prayer-time-tv::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.1);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .prayer-time-tv:hover::before {
-            opacity: 1;
-        }
-        
-        .prayer-time-tv .prayer-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .prayer-time-tv .prayer-time {
-            font-size: 1.4rem;
-            font-weight: 700;
-        }
-        
-        /* Color coding for different prayers */
-        .prayer-time-tv.fajr { background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); }
-        .prayer-time-tv.sunrise { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .prayer-time-tv.zohar { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .prayer-time-tv.asr { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
-        .prayer-time-tv.maghrib { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-        .prayer-time-tv.isha { background: linear-gradient(135deg, #30cfd0 0%, #91a7ff 100%); }
-        
-        /* Jumah times styling */
-        .jumah-times {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            margin-top: 15px;
-        }
-        
-        /* Compact Hadeeth for TV */
-        .hadeeth-tv {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 12px;
-            padding: 15px;
-            border: 2px solid #d4af37;
-            height: fit-content;
-            max-height: 200px;
-            overflow: hidden;
-        }
-        
-        .hadeeth-tv .arabic-text {
-            font-size: 1.1rem !important;
-            margin-bottom: 10px;
+        .announcement-text {
             line-height: 1.4;
         }
         
-        .hadeeth-tv .english-text {
-            font-size: 0.95rem;
-            margin-bottom: 8px;
-            line-height: 1.3;
-        }
-        
-        .hadeeth-tv .reference {
-            font-size: 0.8rem;
-        }
-        
-        /* Next Prayer TV styling */
-        .next-prayer-tv {
-            background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 20px;
+        .announcement-placeholder {
             text-align: center;
-            margin-bottom: 20px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            color: #999;
+            font-style: italic;
         }
         
-        .next-prayer-tv .prayer-name {
-            font-size: 1.8rem;
-            margin: 10px 0;
+        /* Subtle visual enhancements for empty space */
+        .announcements-content.centered-layout::before,
+        .announcements-content.centered-layout::after {
+            content: '';
+            flex: 1;
+            min-height: 20px;
         }
         
-        .next-prayer-tv .prayer-time {
-            font-size: 1.5rem;
-            margin: 10px 0;
+        .announcements-content.dynamic-layout .announcement-item {
+            flex: 1;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         
-        .countdown-tv {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 10px 15px;
-            border-radius: 8px;
-            display: inline-block;
-            min-width: 120px;
+        /* Responsive adjustments for different screen sizes */
+        @media (max-height: 600px) {
+            .announcements-content {
+                gap: clamp(6px, 1vh, 10px);
+            }
+            
+            .announcement-item {
+                padding: clamp(6px, 0.8vh, 10px);
+            }
         }
         
-        /* Announcements TV styling */
-        .announcements-tv {
-            max-height: 300px;
-            overflow: hidden;
+        @media (min-height: 800px) {
+            .announcements-content {
+                gap: clamp(15px, 2vh, 20px);
+            }
+            
+            .announcement-item {
+                padding: clamp(10px, 1.2vh, 15px);
+            }
         }
         
-        .announcements-container {
-            max-height: 250px;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-        
-        .announcement-tv {
-            padding: 10px;
-            border-radius: 8px;
-            border-left: 4px solid #d4af37;
-            background: rgba(255, 255, 255, 0.9) !important;
-            color: #333 !important;
-            font-size: 0.9rem;
-        }
-        
-        .announcement-tv h6 {
-            font-size: 1rem;
-            color: #2c3e50;
-        }
-        
-        /* TV Ticker styling */
-        .tv-ticker {
-            background: #2c3e50;
-            color: white;
-            padding: 8px 0;
-            position: relative;
-            overflow: hidden;
+        /* Bottom Additional Times */
+        .board-bottom-times {
+            background: rgba(255, 255, 255, 0.95);
+            border-top: clamp(1px, 0.2vw, 3px) solid #000;
+            padding: clamp(12px, 2.5vh, 20px) 0;
             flex-shrink: 0;
-            height: 40px;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0;
+            /* Ensure consistent width with sliding text box */
+            max-width: 100%;
         }
         
-        .tv-ticker .announcement-scroll {
-            animation: scroll-left 20s linear infinite;
+        .additional-times {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: clamp(10px, 2vw, 20px);
+        }
+        
+        .time-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .time-label {
+            font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+            color: #666;
+            margin-bottom: clamp(3px, 0.5vh, 8px);
+            font-weight: bold;
+        }
+        
+        .time-value {
+            font-size: clamp(1.4rem, 3vw, 2.2rem);
+            font-weight: bold;
+            color: #000;
+        }
+        
+        /* Scrolling Text Area */
+        .scrolling-text-area {
+            padding: clamp(15px, 2.5vh, 25px) 0 !important;
+            flex-shrink: 0;
+            box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0;
+            max-width: 100%;
+            min-height: 80px !important;
+            display: flex !important;
+            align-items: center;
+            justify-content: flex-start;
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .scroll-separator {
+            height: clamp(1px, 0.2vh, 3px);
+            background: #fff;
+            margin-bottom: clamp(5px, 1vh, 12px);
+        }
+        
+        .scrolling-content {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            padding: 0 clamp(15px, 2vw, 30px);
+            box-sizing: border-box;
+            height: auto;
+            min-height: 50px;
+            overflow: hidden;
+        }
+        
+        .scroll-arrow {
+            font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+            color: #ff0000;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .scrolling-text {
+            flex-grow: 1;
             white-space: nowrap;
-            font-size: 1rem;
-            line-height: 24px;
+            position: relative;
+            width: 100%;
+            height: auto;
+            display: flex;
+            align-items: center;
+            line-height: 1.2;
+            overflow: hidden !important;
+            min-width: 0;
         }
         
-        /* Responsive adjustments for different TV sizes */
-        @media (min-height: 900px) {
-            .prayer-grid {
-                height: 300px;
+        .scroll-wrapper {
+            display: inline-flex;
+            white-space: nowrap;
+            animation: scroll-left 40s linear infinite !important;
+            will-change: transform;
+            gap: 80px;
+            min-width: fit-content;
+        }
+        
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(100vw);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+        
+        .scroll-item {
+            display: inline-block;
+            margin-right: clamp(80px, 10vw, 120px);
+            font-size: clamp(1rem, 2vw, 1.6rem);
+            font-weight: 600;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        /* Logo Watermark */
+        .logo-watermark {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.3;
+            z-index: 10;
+        }
+        
+        .watermark-logo {
+            max-height: 80px;
+            max-width: 200px;
+        }
+        
+        
+        /* Fullscreen styles */
+        .fullscreen-mode {
+            background: #fdf7e6 !important;
+        }
+        
+        /* Hide header fullscreen button in fullscreen mode */
+        .fullscreen-mode #fullscreenBtn {
+            display: none;
+        }
+        
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 1200px) {
+            .unified-container {
+                padding: 0 10px;
             }
             
-            .prayer-time-tv .prayer-name {
-                font-size: 1.4rem;
+            .board-main-content {
+                padding: clamp(10px, 2vh, 20px) 0;
             }
             
-            .prayer-time-tv .prayer-time {
+            .prayer-times-section,
+            .hadeeth-section,
+            .announcements-section {
+                padding: clamp(12px, 2.5vh, 25px);
+            }
+            
+            .board-bottom-times,
+            .scrolling-text-area {
+                padding: clamp(10px, 2vh, 18px) 0;
+            }
+        }
+        
+        /* Responsive adjustments for very large screens (4K and above) */
+        @media (min-width: 2560px) {
+            .unified-container {
+                padding: 0 25px;
+            }
+            
+            .board-main-content {
+                padding: 30px 0;
+                gap: 20px;
+            }
+            
+            .prayer-times-section,
+            .hadeeth-section,
+            .announcements-section {
+                padding: 30px;
+            }
+            
+            .board-bottom-times,
+            .scrolling-text-area {
+                padding: 25px 0;
+            }
+            
+            .prayer-name {
+                font-size: 2rem;
+            }
+            
+            .prayer-time, .prayer-jamaat {
+                font-size: 2.2rem;
+            }
+            
+            .hadeeth-header,
+            .announcements-header {
+                font-size: 1.8rem;
+            }
+            
+            .arabic-hadeeth {
                 font-size: 1.6rem;
             }
             
-            .hadeeth-tv {
-                max-height: 250px;
+            .english-hadeeth {
+                font-size: 1.4rem;
+            }
+            
+            .announcement-title {
+                font-size: 1.5rem;
+            }
+            
+            .announcement-text {
+            }
+            
+            .time-large {
+                font-size: 3.5rem;
             }
         }
         
-        @media (max-height: 768px) {
-            .tv-main-content {
-                padding: 15px;
+        @media (max-width: 768px) {
+            .unified-container {
+                padding: 0 8px;
             }
             
-            .prayer-grid {
-                height: 200px;
-                gap: 10px;
+            .board-header {
+                padding: clamp(10px, 2vh, 20px);
             }
             
-            .prayer-time-tv .prayer-name {
-                font-size: 1rem;
+            .board-main-content {
+                padding: clamp(10px, 2vh, 20px) 0;
+                flex-direction: column;
+                gap: clamp(8px, 1.5vh, 15px);
             }
             
-            .prayer-time-tv .prayer-time {
+            .board-bottom-times,
+            .scrolling-text-area {
+                padding: clamp(8px, 1.5vh, 15px) 0;
+            }
+            
+            .prayer-times-section,
+            .hadeeth-section,
+            .announcements-section {
+                height: auto;
+                min-height: clamp(200px, 30vh, 300px);
+            }
+            
+            .additional-times {
+                flex-wrap: wrap;
+                gap: clamp(8px, 1.5vh, 15px);
+            }
+        }
+        
+        /* Pause scrolling animation on hover */
+        .scrolling-text:hover .scroll-wrapper {
+            animation-play-state: paused !important;
+        }
+        
+        /* Media Display Overlay Styles */
+        .media-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-content img,
+        .media-content video {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            animation: slideInFromRight 1s ease-out;
+        }
+
+        @keyframes slideInFromRight {
+            0% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Countdown Timer Styles */
+        .media-countdown {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0b3d0b 0%, #8B7500 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Courier New', monospace;
+        }
+
+        .countdown-timer {
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .countdown-label {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .countdown-prayer {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .countdown-time {
+            font-size: 6rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            letter-spacing: 5px;
+        }
+
+        /* Responsive countdown styles */
+        @media (max-width: 1200px) {
+            .countdown-label {
+                font-size: 1.5rem;
+            }
+            
+            .countdown-prayer {
+                font-size: 3rem;
+            }
+            
+            .countdown-time {
+                font-size: 4rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .countdown-timer {
+                padding: 20px;
+            }
+            
+            .countdown-label {
                 font-size: 1.2rem;
             }
             
-            .hadeeth-tv {
-                max-height: 150px;
-                padding: 10px;
+            .countdown-prayer {
+                font-size: 2.5rem;
             }
             
-            .announcements-tv {
-                max-height: 200px;
+            .countdown-time {
+                font-size: 3rem;
             }
         }
-        
-        /* Fullscreen TV mode enhancements */
-        .fullscreen-mode .tv-layout {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+        /* Countdown Popup Styles */
+        .countdown-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: transparent;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
         }
-        
-        .fullscreen-mode .tv-header {
-            padding: 10px 15px;
+
+        .countdown-popup-content {
+            background: linear-gradient(135deg, #1e4d2b 0%, #2d5a3d 50%, #1e4d2b 100%);
+            border: 4px solid #F8B803;
+            border-radius: 20px;
+            padding: 40px 60px;
+            text-align: center;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            animation: countdownPopupAppear 0.8s ease-out;
+            max-width: 500px;
+            width: 90%;
+            pointer-events: auto;
         }
-        
-        .fullscreen-mode .prayer-grid {
-            height: 280px;
+
+        .countdown-popup-header {
+            margin-bottom: 20px;
         }
-        
-        .fullscreen-mode .prayer-time-tv .prayer-name {
-            font-size: 1.3rem;
+
+        .countdown-popup-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            margin-bottom: 10px;
         }
-        
-        .fullscreen-mode .prayer-time-tv .prayer-time {
-            font-size: 1.5rem;
+
+        .countdown-popup-body {
+            margin: 30px 0;
         }
-        
-        .fullscreen-mode .countdown-tv {
+
+        .countdown-popup-timer {
+            font-size: 8rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            color: #F8B803;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+            margin-bottom: 10px;
+            animation: countdownPulse 1s ease-in-out infinite alternate;
+        }
+
+        .countdown-popup-label {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        }
+
+        .countdown-popup-footer {
+            margin-top: 20px;
+        }
+
+        .countdown-popup-prayer {
             font-size: 2rem;
+            font-weight: bold;
+            color: #F8B803;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        @keyframes countdownPopupAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(-50px);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05) translateY(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes countdownPulse {
+            0% {
+                transform: scale(1);
+                color: #F8B803;
+            }
+            100% {
+                transform: scale(1.1);
+                color: #FFD700;
+            }
+        }
+
+        /* Responsive countdown popup styles */
+        @media (max-width: 1200px) {
+            .countdown-popup-content {
+                padding: 30px 40px;
+                max-width: 400px;
+            }
+            
+            .countdown-popup-title {
+                font-size: 2rem;
+            }
+            
+            .countdown-popup-timer {
+                font-size: 6rem;
+            }
+            
+            .countdown-popup-prayer {
+                font-size: 1.6rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .countdown-popup-content {
+                padding: 20px 30px;
+                max-width: 350px;
+            }
+            
+            .countdown-popup-title {
+                font-size: 1.6rem;
+            }
+            
+            .countdown-popup-timer {
+                font-size: 4.5rem;
+            }
+            
+            .countdown-popup-label {
+                font-size: 1.4rem;
+            }
+            
+            .countdown-popup-prayer {
+                font-size: 1.4rem;
+            }
         }
     </style>
     
     @yield('styles')
 </head>
 <body>
-    @yield('content')
+    <!-- TV Display Wrapper for scaling on laptops -->
+    <div id="tv-display-wrapper">
+        @yield('content')
+    </div>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -474,6 +1021,35 @@
         
         setInterval(updateCurrentTime, 1000);
         updateCurrentTime(); // Initial call
+    </script>
+
+    <script>
+        // Laptop preview scaling: fit a 3840x2160 canvas to the current viewport.
+        (function () {
+            const wrapper = document.getElementById('tv-display-wrapper');
+            if (!wrapper) return;
+
+            const targetWidth = 3840;
+            const targetHeight = 2160;
+
+            function updateTvPreviewScale() {
+                if (window.innerWidth >= targetWidth && window.innerHeight >= targetHeight) {
+                    return;
+                }
+
+                const scale = Math.min(
+                    window.innerWidth / targetWidth,
+                    window.innerHeight / targetHeight
+                );
+
+                wrapper.style.setProperty('--tv-preview-scale', scale.toFixed(4));
+            }
+
+            updateTvPreviewScale();
+            window.addEventListener('resize', updateTvPreviewScale);
+            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange']
+                .forEach((eventName) => document.addEventListener(eventName, updateTvPreviewScale));
+        })();
     </script>
     
     @yield('scripts')

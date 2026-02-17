@@ -11,12 +11,14 @@ class Announcement extends Model
         'title',
         'content',
         'is_active',
+        'priority',
         'auto_repeat',
         'repeat_days',
         'start_date',
         'end_date',
         'display_duration',
         'font_size',
+        'title_font_size',
         'text_color',
         'background_color',
         'scroll_speed'
@@ -30,8 +32,16 @@ class Announcement extends Model
         'end_date' => 'datetime',
         'display_duration' => 'integer',
         'font_size' => 'integer',
-        'scroll_speed' => 'integer'
+        'title_font_size' => 'integer',
+        'scroll_speed' => 'integer',
+        'priority' => 'integer'
     ];
+
+    // Accessor for 'active' field (defaults to is_active if not set)
+    public function getActiveAttribute($value)
+    {
+        return $value !== null ? $value : $this->is_active;
+    }
 
     public static function getActiveAnnouncements()
     {
