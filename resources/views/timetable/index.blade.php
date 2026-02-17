@@ -719,6 +719,35 @@
         transform: none;
     }
 
+    /* Force 2/3 + 1/3 layout regardless of external CSS or empty announcements */
+    .board-main-content .row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        height: 100% !important;
+        gap: 0 !important;
+        min-height: 0 !important;
+    }
+
+    .board-main-content .col-md-8 {
+        flex: 0 0 66.666% !important;
+        max-width: 66.666% !important;
+        min-width: 0 !important;
+        height: 100% !important;
+    }
+
+    .board-main-content .col-md-4 {
+        flex: 0 0 33.334% !important;
+        max-width: 33.334% !important;
+        min-width: 0 !important;
+        height: 100% !important;
+    }
+
+    .announcements-section {
+        min-height: 100% !important;
+    }
+
     @media (max-width: 3839px) {
         #tv-display-wrapper #header-box .time-large,
         #tv-display-wrapper #header-box .gregorian-date,
