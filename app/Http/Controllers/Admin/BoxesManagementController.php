@@ -22,7 +22,7 @@ class BoxesManagementController extends Controller
         }
         
         $boxes = BoxSetting::orderBy('sort_order')
-            ->whereNotIn('box_type', ['welcome_box', 'note_prayer_box'])
+            ->whereNotIn('box_type', ['welcome_box', 'note_prayer_box', 'hadeeth_box'])
             ->get();
         $defaultBoxes = BoxSetting::getDefaultBoxSettings();
         

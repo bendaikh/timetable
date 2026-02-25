@@ -186,8 +186,9 @@ class BoxSetting extends Model
     {
         $defaults = self::getDefaultBoxSettings();
         
-        // Delete all existing box configurations to start fresh
-        self::whereIn('box_type', array_keys($defaults))->delete();
+        // Delete all existing box configurations to start fresh and drop legacy boxes
+        $boxTypesToDelete = array_unique(array_merge(array_keys($defaults), ['hadeeth_box']));
+        self::whereIn('box_type', $boxTypesToDelete)->delete();
         
         // Create fresh default configurations
         foreach ($defaults as $boxType => $settings) {

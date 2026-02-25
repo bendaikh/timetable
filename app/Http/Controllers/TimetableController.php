@@ -87,7 +87,10 @@ class TimetableController extends Controller
     private function getCompleteBoxSettings(): array
     {
         $defaults = BoxSetting::getDefaultBoxSettings();
-        $storedBoxes = BoxSetting::orderBy('sort_order')->get()->keyBy('box_type');
+        $storedBoxes = BoxSetting::orderBy('sort_order')
+            ->get()
+            ->keyBy('box_type')
+            ->reject(fn ($box) => $box->box_type === 'hadeeth_box');
         $result = [];
 
         foreach ($defaults as $boxType => $default) {
