@@ -12,6 +12,47 @@ use Illuminate\Support\Facades\DB;
 
 class PrayerTimeController extends Controller
 {
+    private array $timeFields = [
+        'fajr',
+        'fajr_adhan',
+        'fajr_jamaat',
+        'zohar',
+        'zohar_adhan',
+        'zohar_jamaat',
+        'asr',
+        'asr_adhan',
+        'asr_jamaat',
+        'maghrib',
+        'maghrib_adhan',
+        'maghrib_jamaat',
+        'isha',
+        'isha_adhan',
+        'isha_jamaat',
+        'sun_rise',
+        'jumah_1',
+        'jumah_2',
+        'eid_prayer_1',
+        'eid_prayer_2',
+    ];
+
+    private function preparePrayerTimeData(Request $request): array
+    {
+        $data = $request->all();
+
+        foreach ($this->timeFields as $field) {
+            $value = $request->input($field);
+
+            if ($value === null || $value === '') {
+                $data[$field] = null;
+                continue;
+            }
+
+            $data[$field] = $value . ':00';
+        }
+
+        return $data;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -58,13 +99,7 @@ class PrayerTimeController extends Controller
             'eid_prayer_2' => 'nullable|date_format:H:i',
         ]);
 
-        $data = $request->all();
-        // Convert time format to include seconds
-        foreach (['fajr', 'fajr_adhan', 'fajr_jamaat', 'zohar', 'zohar_adhan', 'zohar_jamaat', 'asr', 'asr_adhan', 'asr_jamaat', 'maghrib', 'maghrib_adhan', 'maghrib_jamaat', 'isha', 'isha_adhan', 'isha_jamaat', 'sun_rise', 'jumah_1', 'jumah_2', 'eid_prayer_1', 'eid_prayer_2'] as $field) {
-            if (isset($data[$field]) && $data[$field]) {
-                $data[$field] = $data[$field] . ':00';
-            }
-        }
+        $data = $this->preparePrayerTimeData($request);
 
         PrayerTime::create($data);
 
@@ -117,18 +152,44 @@ class PrayerTimeController extends Controller
             'eid_prayer_2' => 'nullable|date_format:H:i',
         ]);
 
-        $data = $request->all();
-        // Convert time format to include seconds
-        foreach (['fajr', 'fajr_adhan', 'fajr_jamaat', 'zohar', 'zohar_adhan', 'zohar_jamaat', 'asr', 'asr_adhan', 'asr_jamaat', 'maghrib', 'maghrib_adhan', 'maghrib_jamaat', 'isha', 'isha_adhan', 'isha_jamaat', 'sun_rise', 'jumah_1', 'jumah_2', 'eid_prayer_1', 'eid_prayer_2'] as $field) {
-            if (isset($data[$field]) && $data[$field]) {
-                $data[$field] = $data[$field] . ':00';
-            }
-        }
+        $data = $this->preparePrayerTimeData($request);
 
         $prayerTime->update($data);
 
         return redirect()->route('admin.prayer-times.index')
             ->with('success', 'Prayer times updated successfully.');
+    }
+
+    public function updateTodaySpecialTimes(Request $request)
+    {
+        $request->validate([
+            'jumah_1' => 'nullable|date_format:H:i',
+            'jumah_2' => 'nullable|date_format:H:i',
+            'eid_prayer_1' => 'nullable|date_format:H:i',
+            'eid_prayer_2' => 'nullable|date_format:H:i',
+        ]);
+
+        $timezone = Setting::get('timezone', config('app.timezone')) ?: config('app.timezone');
+        $today = Carbon::now($timezone)->toDateString();
+
+        $prayerTime = PrayerTime::whereDate('date', $today)->first();
+
+        if (!$prayerTime) {
+            return redirect()->route('admin.prayer-times.create')
+                ->with('error', 'No prayer times exist for today yet. Please create today\'s prayer times first.');
+        }
+
+        $data = [];
+
+        foreach (['jumah_1', 'jumah_2', 'eid_prayer_1', 'eid_prayer_2'] as $field) {
+            $value = $request->input($field);
+            $data[$field] = ($value === null || $value === '') ? null : $value . ':00';
+        }
+
+        $prayerTime->update($data);
+
+        return redirect()->route('admin.dashboard')
+            ->with('success', 'Today\'s Jumu\'ah and Eid times were updated successfully.');
     }
 
     /**

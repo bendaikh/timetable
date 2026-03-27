@@ -83,6 +83,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('prayer-times/import', [PrayerTimeController::class, 'showImport'])->name('admin.prayer-times.import');
     Route::post('prayer-times/import', [PrayerTimeController::class, 'import'])->name('admin.prayer-times.import.process');
     Route::post('prayer-times/preview', [PrayerTimeController::class, 'preview'])->name('admin.prayer-times.preview');
+    Route::post('prayer-times/today-special-times', [PrayerTimeController::class, 'updateTodaySpecialTimes'])->name('admin.prayer-times.today-special-times');
     Route::delete('prayer-times/bulk-delete', [PrayerTimeController::class, 'bulkDelete'])->name('admin.prayer-times.bulk-delete');
     
     Route::resource('prayer-times', PrayerTimeController::class, [
