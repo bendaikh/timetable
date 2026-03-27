@@ -22,7 +22,7 @@
                         <li><strong>File Upload (Recommended):</strong> Download your Google Sheet as CSV or Excel and upload it directly</li>
                         <li><strong>URL Import:</strong> Make sure your Google Sheet is publicly accessible (Anyone with the link can view)</li>
                         <li>Your sheet should have columns with prayer time information (the system will auto-detect the correct columns)</li>
-                        <li>Supported column names: Date, Fajr Beginning/Adhan/Jamaat, Zuhr Beginning/Adhan/Jamaat, Asr Beginning/Adhan/Jamaat, Maghrib Beginning/Adhan/Jamaat, Isha Beginning/Adhan/Jamaat, Sunrise, Jumma 1/2</li>
+                        <li>Supported column names: Date, Fajr Beginning/Adhan/Jamaat, Zuhr Beginning/Adhan/Jamaat, Asr Beginning/Adhan/Jamaat, Maghrib Beginning/Adhan/Jamaat, Isha Beginning/Adhan/Jamaat, Sunrise, Jumma 1/2, Eid Prayer 1/2</li>
                         <li><strong>Adhan and Jamaat times are now supported!</strong> The system will automatically detect and import Beginning, Adhan, and Jamaat times for each prayer.</li>
                         <li>Date format can be: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY, etc.</li>
                         <li>Time format can be: HH:MM, HH:MM:SS, 12:00 PM, etc.</li>
@@ -52,6 +52,8 @@
                                     <th>Isha Jamaat</th>
                                     <th>Jumma 1</th>
                                     <th>Jumma 2</th>
+                                    <th>Eid Prayer 1</th>
+                                    <th>Eid Prayer 2</th>
                                     <th>hijri_date</th>
                                 </tr>
                             </thead>
@@ -71,12 +73,14 @@
                                     <td>20:05</td>
                                     <td>12:30</td>
                                     <td>13:30</td>
+                                    <td>08:00</td>
+                                    <td>09:00</td>
                                     <td>15 Jumada al-Awwal 1445</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                    <p class="mt-2 mb-0"><strong>Note:</strong> The system will automatically use the "Beginning" times for each prayer. The "Jamaat" times and "hijri_date" are ignored but won't cause errors.</p>
+                    <p class="mt-2 mb-0"><strong>Note:</strong> The system imports Beginning, Adhan, Jamaat, Jummah, and Eid prayer columns when they are present. The "hijri_date" column is still ignored but won't cause errors.</p>
                 </div>
 
                 <form method="POST" action="{{ route('admin.prayer-times.import.process') }}" id="importForm" enctype="multipart/form-data">
@@ -176,7 +180,10 @@
                             Back to Prayer Times
                         </a>
                         <div>
-                            <button type="button" class="btn btn-outline-primary me-2" id="previewBtn">
+                            <button type="submit"
+                                    class="btn btn-outline-primary me-2"
+                                    id="previewBtn"
+                                    formaction="{{ route('admin.prayer-times.preview') }}">
                                 <i class="bi bi-eye me-2"></i>
                                 Preview Data
                             </button>
@@ -257,66 +264,6 @@ document.addEventListener('DOMContentLoaded', function() {
         fileInput.required = true;
     }
 
-    previewBtn.addEventListener('click', function() {
-        const selectedType = document.querySelector('input[name="import_type"]:checked').value;
-        
-        if (selectedType === 'url' && !urlInput.value.trim()) {
-            alert('Please enter a Google Sheets URL first.');
-            return;
-        }
-        
-        if (selectedType === 'file' && !fileInput.files.length) {
-            alert('Please select a file to upload first.');
-            return;
-        }
-
-        // Create a temporary form for preview
-        const previewForm = document.createElement('form');
-        previewForm.method = 'POST';
-        previewForm.action = '{{ route("admin.prayer-times.preview") }}';
-        previewForm.enctype = 'multipart/form-data';
-        
-        // Add CSRF token
-        const csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = '_token';
-        csrfToken.value = '{{ csrf_token() }}';
-        previewForm.appendChild(csrfToken);
-
-        // Add import type
-        const importTypeField = document.createElement('input');
-        importTypeField.type = 'hidden';
-        importTypeField.name = 'import_type';
-        importTypeField.value = selectedType;
-        previewForm.appendChild(importTypeField);
-
-        if (selectedType === 'url') {
-            // Add URL
-            const urlField = document.createElement('input');
-            urlField.type = 'hidden';
-            urlField.name = 'google_sheets_url';
-            urlField.value = urlInput.value;
-            previewForm.appendChild(urlField);
-        } else {
-            // Add file
-            const fileField = document.createElement('input');
-            fileField.type = 'file';
-            fileField.name = 'google_sheets_file';
-            fileField.files = fileInput.files;
-            previewForm.appendChild(fileField);
-        }
-
-        // Add range
-        const rangeField = document.createElement('input');
-        rangeField.type = 'hidden';
-        rangeField.name = 'range';
-        rangeField.value = rangeInput.value;
-        previewForm.appendChild(rangeField);
-
-        document.body.appendChild(previewForm);
-        previewForm.submit();
-    });
-
     // Validate URL format
     urlInput.addEventListener('blur', function() {
         const url = this.value.trim();
@@ -359,4 +306,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endsection
-

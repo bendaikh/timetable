@@ -37,23 +37,30 @@ class PrayerTimeController extends Controller
         $request->validate([
             'date' => 'required|date|unique:prayer_times,date',
             'fajr' => 'required|date_format:H:i',
+            'fajr_adhan' => 'nullable|date_format:H:i',
             'fajr_jamaat' => 'nullable|date_format:H:i',
             'zohar' => 'required|date_format:H:i',
+            'zohar_adhan' => 'nullable|date_format:H:i',
             'zohar_jamaat' => 'nullable|date_format:H:i',
             'asr' => 'required|date_format:H:i',
+            'asr_adhan' => 'nullable|date_format:H:i',
             'asr_jamaat' => 'nullable|date_format:H:i',
             'maghrib' => 'required|date_format:H:i',
+            'maghrib_adhan' => 'nullable|date_format:H:i',
             'maghrib_jamaat' => 'nullable|date_format:H:i',
             'isha' => 'required|date_format:H:i',
+            'isha_adhan' => 'nullable|date_format:H:i',
             'isha_jamaat' => 'nullable|date_format:H:i',
             'sun_rise' => 'nullable|date_format:H:i',
             'jumah_1' => 'nullable|date_format:H:i',
             'jumah_2' => 'nullable|date_format:H:i',
+            'eid_prayer_1' => 'nullable|date_format:H:i',
+            'eid_prayer_2' => 'nullable|date_format:H:i',
         ]);
 
         $data = $request->all();
         // Convert time format to include seconds
-        foreach (['fajr', 'fajr_jamaat', 'zohar', 'zohar_jamaat', 'asr', 'asr_jamaat', 'maghrib', 'maghrib_jamaat', 'isha', 'isha_jamaat', 'sun_rise', 'jumah_1', 'jumah_2'] as $field) {
+        foreach (['fajr', 'fajr_adhan', 'fajr_jamaat', 'zohar', 'zohar_adhan', 'zohar_jamaat', 'asr', 'asr_adhan', 'asr_jamaat', 'maghrib', 'maghrib_adhan', 'maghrib_jamaat', 'isha', 'isha_adhan', 'isha_jamaat', 'sun_rise', 'jumah_1', 'jumah_2', 'eid_prayer_1', 'eid_prayer_2'] as $field) {
             if (isset($data[$field]) && $data[$field]) {
                 $data[$field] = $data[$field] . ':00';
             }
@@ -89,23 +96,30 @@ class PrayerTimeController extends Controller
         $request->validate([
             'date' => 'required|date|unique:prayer_times,date,' . $prayerTime->id,
             'fajr' => 'required|date_format:H:i',
+            'fajr_adhan' => 'nullable|date_format:H:i',
             'fajr_jamaat' => 'nullable|date_format:H:i',
             'zohar' => 'required|date_format:H:i',
+            'zohar_adhan' => 'nullable|date_format:H:i',
             'zohar_jamaat' => 'nullable|date_format:H:i',
             'asr' => 'required|date_format:H:i',
+            'asr_adhan' => 'nullable|date_format:H:i',
             'asr_jamaat' => 'nullable|date_format:H:i',
             'maghrib' => 'required|date_format:H:i',
+            'maghrib_adhan' => 'nullable|date_format:H:i',
             'maghrib_jamaat' => 'nullable|date_format:H:i',
             'isha' => 'required|date_format:H:i',
+            'isha_adhan' => 'nullable|date_format:H:i',
             'isha_jamaat' => 'nullable|date_format:H:i',
             'sun_rise' => 'nullable|date_format:H:i',
             'jumah_1' => 'nullable|date_format:H:i',
             'jumah_2' => 'nullable|date_format:H:i',
+            'eid_prayer_1' => 'nullable|date_format:H:i',
+            'eid_prayer_2' => 'nullable|date_format:H:i',
         ]);
 
         $data = $request->all();
         // Convert time format to include seconds
-        foreach (['fajr', 'fajr_jamaat', 'zohar', 'zohar_jamaat', 'asr', 'asr_jamaat', 'maghrib', 'maghrib_jamaat', 'isha', 'isha_jamaat', 'sun_rise', 'jumah_1', 'jumah_2'] as $field) {
+        foreach (['fajr', 'fajr_adhan', 'fajr_jamaat', 'zohar', 'zohar_adhan', 'zohar_jamaat', 'asr', 'asr_adhan', 'asr_jamaat', 'maghrib', 'maghrib_adhan', 'maghrib_jamaat', 'isha', 'isha_adhan', 'isha_jamaat', 'sun_rise', 'jumah_1', 'jumah_2', 'eid_prayer_1', 'eid_prayer_2'] as $field) {
             if (isset($data[$field]) && $data[$field]) {
                 $data[$field] = $data[$field] . ':00';
             }
@@ -141,33 +155,47 @@ class PrayerTimeController extends Controller
      */
     public function import(Request $request)
     {
-        $request->validate([
-            'import_type' => 'required|in:url,file',
-            'google_sheets_url' => 'required_if:import_type,url|nullable|url',
-            'google_sheets_file' => 'required_if:import_type,file|nullable|file|mimes:csv,xlsx,xls|max:10240',
-            'range' => 'nullable|string',
-            'overwrite_existing' => 'boolean',
-        ]);
-
         try {
-            $googleSheetsService = new GoogleSheetsService();
-            
-            // Get data based on import type
-            if ($request->import_type === 'file') {
-                $sheetData = $googleSheetsService->getSheetDataFromFile($request->file('google_sheets_file'));
+            $request->validate([
+                'overwrite_existing' => 'boolean',
+                'use_preview_data' => 'nullable|boolean',
+            ]);
+
+            if ($request->boolean('use_preview_data')) {
+                $prayerTimes = session('prayer_times_preview_data', []);
+                $errors = session('prayer_times_preview_errors', []);
+
+                if (empty($prayerTimes)) {
+                    return redirect()->route('admin.prayer-times.import')
+                        ->with('error', 'Preview session expired. Please preview the spreadsheet again before importing.');
+                }
             } else {
-                // Validate URL
-                $googleSheetsService->validateUrl($request->google_sheets_url);
+                $request->validate([
+                    'import_type' => 'required|in:url,file',
+                    'google_sheets_url' => 'required_if:import_type,url|nullable|url',
+                    'google_sheets_file' => 'required_if:import_type,file|nullable|file|mimes:csv,xlsx,xls|max:10240',
+                    'range' => 'nullable|string',
+                ]);
+
+                $googleSheetsService = new GoogleSheetsService();
                 
-                // Get data from Google Sheets
-                $range = $request->range ?: 'A:Z';
-                $sheetData = $googleSheetsService->getSheetData($request->google_sheets_url, $range);
+                // Get data based on import type
+                if ($request->import_type === 'file') {
+                    $sheetData = $googleSheetsService->getSheetDataFromFile($request->file('google_sheets_file'));
+                } else {
+                    // Validate URL
+                    $googleSheetsService->validateUrl($request->google_sheets_url);
+                    
+                    // Get data from Google Sheets
+                    $range = $request->range ?: 'A:Z';
+                    $sheetData = $googleSheetsService->getSheetData($request->google_sheets_url, $range);
+                }
+                
+                // Parse prayer times data
+                $result = $googleSheetsService->parsePrayerTimesData($sheetData);
+                $prayerTimes = $result['prayer_times'];
+                $errors = $result['errors'];
             }
-            
-            // Parse prayer times data
-            $result = $googleSheetsService->parsePrayerTimesData($sheetData);
-            $prayerTimes = $result['prayer_times'];
-            $errors = $result['errors'];
             
             if (empty($prayerTimes)) {
                 return redirect()->back()
@@ -219,6 +247,11 @@ class PrayerTimeController extends Controller
                 if (!empty($errors)) {
                     $message .= ". " . count($errors) . " rows had errors.";
                 }
+
+                session()->forget([
+                    'prayer_times_preview_data',
+                    'prayer_times_preview_errors',
+                ]);
                 
                 return redirect()->route('admin.prayer-times.index')
                     ->with('success', $message)
@@ -274,6 +307,11 @@ class PrayerTimeController extends Controller
                 $dates = collect($prayerTimes)->pluck('date')->toArray();
                 $existingDates = PrayerTime::whereIn('date', $dates)->pluck('date')->toArray();
             }
+
+            session([
+                'prayer_times_preview_data' => $prayerTimes,
+                'prayer_times_preview_errors' => $errors,
+            ]);
             
             return view('admin.prayer-times.preview', compact('prayerTimes', 'errors', 'existingDates', 'request'));
             

@@ -260,45 +260,49 @@ class GoogleSheetsService
 
                 // Debug: Log what values we're getting for each prayer time
                 Log::info("Row {$rowNumber} - Raw values:", [
-                    'date' => $row[$headerMapping['date']] ?? 'NOT FOUND',
-                    'fajr' => $row[$headerMapping['fajr']] ?? 'NOT FOUND',
-                    'fajr_adhan' => $row[$headerMapping['fajr_adhan']] ?? 'NOT FOUND',
-                    'fajr_jamaat' => $row[$headerMapping['fajr_jamaat']] ?? 'NOT FOUND',
-                    'zohar' => $row[$headerMapping['zohar']] ?? 'NOT FOUND',
-                    'zohar_adhan' => $row[$headerMapping['zohar_adhan']] ?? 'NOT FOUND',
-                    'zohar_jamaat' => $row[$headerMapping['zohar_jamaat']] ?? 'NOT FOUND',
-                    'asr' => $row[$headerMapping['asr']] ?? 'NOT FOUND',
-                    'asr_adhan' => $row[$headerMapping['asr_adhan']] ?? 'NOT FOUND',
-                    'asr_jamaat' => $row[$headerMapping['asr_jamaat']] ?? 'NOT FOUND',
-                    'maghrib' => $row[$headerMapping['maghrib']] ?? 'NOT FOUND',
-                    'maghrib_adhan' => $row[$headerMapping['maghrib_adhan']] ?? 'NOT FOUND',
-                    'maghrib_jamaat' => $row[$headerMapping['maghrib_jamaat']] ?? 'NOT FOUND',
-                    'isha' => $row[$headerMapping['isha']] ?? 'NOT FOUND',
-                    'isha_adhan' => $row[$headerMapping['isha_adhan']] ?? 'NOT FOUND',
-                    'isha_jamaat' => $row[$headerMapping['isha_jamaat']] ?? 'NOT FOUND',
+                    'date' => $this->getMappedCellValue($row, $headerMapping, 'date') ?: 'NOT FOUND',
+                    'fajr' => $this->getMappedCellValue($row, $headerMapping, 'fajr') ?: 'NOT FOUND',
+                    'fajr_adhan' => $this->getMappedCellValue($row, $headerMapping, 'fajr_adhan') ?: 'NOT FOUND',
+                    'fajr_jamaat' => $this->getMappedCellValue($row, $headerMapping, 'fajr_jamaat') ?: 'NOT FOUND',
+                    'zohar' => $this->getMappedCellValue($row, $headerMapping, 'zohar') ?: 'NOT FOUND',
+                    'zohar_adhan' => $this->getMappedCellValue($row, $headerMapping, 'zohar_adhan') ?: 'NOT FOUND',
+                    'zohar_jamaat' => $this->getMappedCellValue($row, $headerMapping, 'zohar_jamaat') ?: 'NOT FOUND',
+                    'asr' => $this->getMappedCellValue($row, $headerMapping, 'asr') ?: 'NOT FOUND',
+                    'asr_adhan' => $this->getMappedCellValue($row, $headerMapping, 'asr_adhan') ?: 'NOT FOUND',
+                    'asr_jamaat' => $this->getMappedCellValue($row, $headerMapping, 'asr_jamaat') ?: 'NOT FOUND',
+                    'maghrib' => $this->getMappedCellValue($row, $headerMapping, 'maghrib') ?: 'NOT FOUND',
+                    'maghrib_adhan' => $this->getMappedCellValue($row, $headerMapping, 'maghrib_adhan') ?: 'NOT FOUND',
+                    'maghrib_jamaat' => $this->getMappedCellValue($row, $headerMapping, 'maghrib_jamaat') ?: 'NOT FOUND',
+                    'isha' => $this->getMappedCellValue($row, $headerMapping, 'isha') ?: 'NOT FOUND',
+                    'isha_adhan' => $this->getMappedCellValue($row, $headerMapping, 'isha_adhan') ?: 'NOT FOUND',
+                    'isha_jamaat' => $this->getMappedCellValue($row, $headerMapping, 'isha_jamaat') ?: 'NOT FOUND',
+                    'eid_prayer_1' => $this->getMappedCellValue($row, $headerMapping, 'eid_prayer_1') ?: 'NOT FOUND',
+                    'eid_prayer_2' => $this->getMappedCellValue($row, $headerMapping, 'eid_prayer_2') ?: 'NOT FOUND',
                 ]);
 
                 // Parse prayer times using the mapped columns
                 $prayerTime = [
                     'date' => $date,
-                    'fajr' => $this->parseTime($row[$headerMapping['fajr']] ?? '', $rowNumber, 'Fajr'),
-                    'fajr_adhan' => $this->parseTime($row[$headerMapping['fajr_adhan']] ?? '', $rowNumber, 'Fajr Adhan', true),
-                    'fajr_jamaat' => $this->parseTime($row[$headerMapping['fajr_jamaat']] ?? '', $rowNumber, 'Fajr Jamaat', true),
-                    'zohar' => $this->parseTime($row[$headerMapping['zohar']] ?? '', $rowNumber, 'Zohar'),
-                    'zohar_adhan' => $this->parseTime($row[$headerMapping['zohar_adhan']] ?? '', $rowNumber, 'Zohar Adhan', true),
-                    'zohar_jamaat' => $this->parseTime($row[$headerMapping['zohar_jamaat']] ?? '', $rowNumber, 'Zohar Jamaat', true),
-                    'asr' => $this->parseTime($row[$headerMapping['asr']] ?? '', $rowNumber, 'Asr'),
-                    'asr_adhan' => $this->parseTime($row[$headerMapping['asr_adhan']] ?? '', $rowNumber, 'Asr Adhan', true),
-                    'asr_jamaat' => $this->parseTime($row[$headerMapping['asr_jamaat']] ?? '', $rowNumber, 'Asr Jamaat', true),
-                    'maghrib' => $this->parseTime($row[$headerMapping['maghrib']] ?? '', $rowNumber, 'Maghrib'),
-                    'maghrib_adhan' => $this->parseTime($row[$headerMapping['maghrib_adhan']] ?? '', $rowNumber, 'Maghrib Adhan', true),
-                    'maghrib_jamaat' => $this->parseTime($row[$headerMapping['maghrib_jamaat']] ?? '', $rowNumber, 'Maghrib Jamaat', true),
-                    'isha' => $this->parseTime($row[$headerMapping['isha']] ?? '', $rowNumber, 'Isha'),
-                    'isha_adhan' => $this->parseTime($row[$headerMapping['isha_adhan']] ?? '', $rowNumber, 'Isha Adhan', true),
-                    'isha_jamaat' => $this->parseTime($row[$headerMapping['isha_jamaat']] ?? '', $rowNumber, 'Isha Jamaat', true),
-                    'sun_rise' => $this->parseTime($row[$headerMapping['sun_rise']] ?? '', $rowNumber, 'Sun Rise', true),
-                    'jumah_1' => $this->parseTime($row[$headerMapping['jumah_1']] ?? '', $rowNumber, 'Jumah 1', true),
-                    'jumah_2' => $this->parseTime($row[$headerMapping['jumah_2']] ?? '', $rowNumber, 'Jumah 2', true),
+                    'fajr' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'fajr'), $rowNumber, 'Fajr'),
+                    'fajr_adhan' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'fajr_adhan'), $rowNumber, 'Fajr Adhan', true),
+                    'fajr_jamaat' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'fajr_jamaat'), $rowNumber, 'Fajr Jamaat', true),
+                    'zohar' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'zohar'), $rowNumber, 'Zohar'),
+                    'zohar_adhan' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'zohar_adhan'), $rowNumber, 'Zohar Adhan', true),
+                    'zohar_jamaat' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'zohar_jamaat'), $rowNumber, 'Zohar Jamaat', true),
+                    'asr' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'asr'), $rowNumber, 'Asr'),
+                    'asr_adhan' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'asr_adhan'), $rowNumber, 'Asr Adhan', true),
+                    'asr_jamaat' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'asr_jamaat'), $rowNumber, 'Asr Jamaat', true),
+                    'maghrib' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'maghrib'), $rowNumber, 'Maghrib'),
+                    'maghrib_adhan' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'maghrib_adhan'), $rowNumber, 'Maghrib Adhan', true),
+                    'maghrib_jamaat' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'maghrib_jamaat'), $rowNumber, 'Maghrib Jamaat', true),
+                    'isha' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'isha'), $rowNumber, 'Isha'),
+                    'isha_adhan' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'isha_adhan'), $rowNumber, 'Isha Adhan', true),
+                    'isha_jamaat' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'isha_jamaat'), $rowNumber, 'Isha Jamaat', true),
+                    'sun_rise' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'sun_rise'), $rowNumber, 'Sun Rise', true),
+                    'jumah_1' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'jumah_1'), $rowNumber, 'Jumah 1', true),
+                    'jumah_2' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'jumah_2'), $rowNumber, 'Jumah 2', true),
+                    'eid_prayer_1' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'eid_prayer_1'), $rowNumber, 'Eid Prayer 1', true),
+                    'eid_prayer_2' => $this->parseTime($this->getMappedCellValue($row, $headerMapping, 'eid_prayer_2'), $rowNumber, 'Eid Prayer 2', true),
                 ];
 
                 $prayerTimes[] = $prayerTime;
@@ -321,18 +325,25 @@ class GoogleSheetsService
         $mapping = [
             'date' => 0,
             'fajr' => 1,
+            'fajr_adhan' => null,
             'fajr_jamaat' => 2,
             'zohar' => 4,
+            'zohar_adhan' => null,
             'zohar_jamaat' => 5,
             'asr' => 6,
+            'asr_adhan' => null,
             'asr_jamaat' => 7,
             'maghrib' => 8,
+            'maghrib_adhan' => null,
             'maghrib_jamaat' => 9,
             'isha' => 10,
+            'isha_adhan' => null,
             'isha_jamaat' => 11,
             'sun_rise' => 3,
             'jumah_1' => 12,
             'jumah_2' => 13,
+            'eid_prayer_1' => null,
+            'eid_prayer_2' => null,
         ];
 
         // Try to auto-detect headers if they exist
@@ -485,9 +496,40 @@ class GoogleSheetsService
                     }
                 }
             }
+
+            foreach ($headerRow as $index => $header) {
+                if (strpos($header, 'eid') === false) {
+                    continue;
+                }
+
+                if (
+                    strpos($header, '1') !== false ||
+                    strpos($header, 'one') !== false ||
+                    strpos($header, 'first') !== false
+                ) {
+                    $mapping['eid_prayer_1'] = $index;
+                } elseif (
+                    strpos($header, '2') !== false ||
+                    strpos($header, 'two') !== false ||
+                    strpos($header, 'second') !== false
+                ) {
+                    $mapping['eid_prayer_2'] = $index;
+                }
+            }
         }
 
         return $mapping;
+    }
+
+    private function getMappedCellValue(array $row, array $mapping, string $key)
+    {
+        $index = $mapping[$key] ?? null;
+
+        if ($index === null || $index === '') {
+            return '';
+        }
+
+        return $row[$index] ?? '';
     }
 
     /**
@@ -564,6 +606,10 @@ class GoogleSheetsService
         }
 
         $timeString = trim($timeString);
+
+        if ($optional && in_array(strtolower($timeString), ['--:--', '--', '-', 'n/a', 'na'], true)) {
+            return null;
+        }
 
         // Check for zero time values (00:00:00, 0:00:00, etc.)
         if ($timeString === '00:00:00' || $timeString === '0:00:00' || $timeString === '00:00' || $timeString === '0:00') {

@@ -89,8 +89,7 @@ class TimetableController extends Controller
         $defaults = BoxSetting::getDefaultBoxSettings();
         $storedBoxes = BoxSetting::orderBy('sort_order')
             ->get()
-            ->keyBy('box_type')
-            ->reject(fn ($box) => $box->box_type === 'hadeeth_box');
+            ->keyBy('box_type');
         $result = [];
 
         foreach ($defaults as $boxType => $default) {

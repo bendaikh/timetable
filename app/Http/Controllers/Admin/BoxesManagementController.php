@@ -11,6 +11,20 @@ use Illuminate\Support\Facades\Validator;
 
 class BoxesManagementController extends Controller
 {
+    private function normalizeSettingArray($value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+
+        return [];
+    }
+
     /**
      * Display the boxes management dashboard
      */
@@ -94,8 +108,8 @@ class BoxesManagementController extends Controller
 
         // Merge styling settings with existing ones (don't replace them)
         // Ensure existing settings are arrays, not strings
-        $existingStyleSettings = is_array($box->styling_settings) ? $box->styling_settings : (is_string($box->styling_settings) ? json_decode($box->styling_settings, true) ?? [] : []);
-        $requestStyleSettings = is_array($request->styling_settings) ? $request->styling_settings : (is_string($request->styling_settings) ? json_decode($request->styling_settings, true) ?? [] : []);
+        $existingStyleSettings = $this->normalizeSettingArray($box->styling_settings);
+        $requestStyleSettings = $this->normalizeSettingArray($request->styling_settings);
         
         $stylingSettings = array_merge(
             $existingStyleSettings,
@@ -121,8 +135,8 @@ class BoxesManagementController extends Controller
 
         // Merge content settings with existing ones
         // Ensure existing settings are arrays, not strings
-        $existingContentSettings = is_array($box->content_settings) ? $box->content_settings : (is_string($box->content_settings) ? json_decode($box->content_settings, true) ?? [] : []);
-        $requestContentSettings = is_array($request->content_settings) ? $request->content_settings : (is_string($request->content_settings) ? json_decode($request->content_settings, true) ?? [] : []);
+        $existingContentSettings = $this->normalizeSettingArray($box->content_settings);
+        $requestContentSettings = $this->normalizeSettingArray($request->content_settings);
         
         $contentSettings = array_merge(
             $existingContentSettings,
@@ -131,8 +145,8 @@ class BoxesManagementController extends Controller
 
         // Merge layout settings with existing ones
         // Ensure existing settings are arrays, not strings
-        $existingLayoutSettings = is_array($box->layout_settings) ? $box->layout_settings : (is_string($box->layout_settings) ? json_decode($box->layout_settings, true) ?? [] : []);
-        $requestLayoutSettings = is_array($request->layout_settings) ? $request->layout_settings : (is_string($request->layout_settings) ? json_decode($request->layout_settings, true) ?? [] : []);
+        $existingLayoutSettings = $this->normalizeSettingArray($box->layout_settings);
+        $requestLayoutSettings = $this->normalizeSettingArray($request->layout_settings);
         
         $layoutSettings = array_merge(
             $existingLayoutSettings,
@@ -180,55 +194,69 @@ class BoxesManagementController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $updateData = [];
-        
-        if ($request->has('box_name')) {
-            $updateData['box_name'] = $request->box_name;
-        }
-        
-        if ($request->has('content_settings')) {
-            $updateData['content_settings'] = $request->content_settings;
-        }
-        
-        if ($request->has('styling_settings')) {
-            $stylingSettings = $request->styling_settings;
-            // Convert hex background color to RGBA for storage
-            if (isset($stylingSettings['background_color']) && strpos($stylingSettings['background_color'], '#') === 0) {
-                $hex = $stylingSettings['background_color'];
-                $r = hexdec(substr($hex, 1, 2));
-                $g = hexdec(substr($hex, 3, 2));
-                $b = hexdec(substr($hex, 5, 2));
-                
-                // For timetable background box, keep as hex for full opacity
-                if ($box->box_type === 'timetable_background_box') {
-                    $stylingSettings['background_color'] = $hex;
-                } else {
-                    $stylingSettings['background_color'] = $box->box_type === 'header_box' 
-                        ? "rgba($r, $g, $b, 0.95)" 
-                        : "rgba($r, $g, $b, 0.9)";
-                }
+        try {
+            $updateData = [];
+            
+            if ($request->has('box_name')) {
+                $updateData['box_name'] = $request->box_name;
             }
-            $updateData['styling_settings'] = $stylingSettings;
-        }
-        
-        if ($request->has('layout_settings')) {
-            $updateData['layout_settings'] = $request->layout_settings;
-        }
-        
-        if ($request->has('is_active')) {
-            $updateData['is_active'] = $request->input('is_active', 0) == 1 || $request->boolean('is_active');
-        }
+            
+            if ($request->has('content_settings')) {
+                $existingContentSettings = $this->normalizeSettingArray($box->content_settings);
+                $requestContentSettings = $this->normalizeSettingArray($request->content_settings);
+                $updateData['content_settings'] = array_merge($existingContentSettings, $requestContentSettings);
+            }
+            
+            if ($request->has('styling_settings')) {
+                $existingStyleSettings = $this->normalizeSettingArray($box->styling_settings);
+                $requestStyleSettings = $this->normalizeSettingArray($request->styling_settings);
+                $stylingSettings = array_merge($existingStyleSettings, $requestStyleSettings);
+            // Convert hex background color to RGBA for storage
+                if (isset($stylingSettings['background_color']) && strpos($stylingSettings['background_color'], '#') === 0) {
+                    $hex = $stylingSettings['background_color'];
+                    $r = hexdec(substr($hex, 1, 2));
+                    $g = hexdec(substr($hex, 3, 2));
+                    $b = hexdec(substr($hex, 5, 2));
+                    
+                    // For timetable background box, keep as hex for full opacity
+                    if ($box->box_type === 'timetable_background_box') {
+                        $stylingSettings['background_color'] = $hex;
+                    } else {
+                        $stylingSettings['background_color'] = $box->box_type === 'header_box' 
+                            ? "rgba($r, $g, $b, 0.95)" 
+                            : "rgba($r, $g, $b, 0.9)";
+                    }
+                }
+                $updateData['styling_settings'] = $stylingSettings;
+            }
+            
+            if ($request->has('layout_settings')) {
+                $existingLayoutSettings = $this->normalizeSettingArray($box->layout_settings);
+                $requestLayoutSettings = $this->normalizeSettingArray($request->layout_settings);
+                $updateData['layout_settings'] = array_merge($existingLayoutSettings, $requestLayoutSettings);
+            }
+            
+            if ($request->has('is_active')) {
+                $updateData['is_active'] = $request->input('is_active', 0) == 1 || $request->boolean('is_active');
+            }
 
-        $box->update($updateData);
+            $box->update($updateData);
 
-        // Ensure boxes-based styling is enabled so changes are visible on the timetable preview
-        Setting::set('use_boxes_styling', 'enabled', 'string', 'Use boxes-based styling (enabled|disabled)');
+            // Ensure boxes-based styling is enabled so changes are visible on the timetable preview
+            Setting::set('use_boxes_styling', 'enabled', 'string', 'Use boxes-based styling (enabled|disabled)');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Box settings updated successfully.',
-            'box' => $box->fresh()
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Box settings updated successfully.',
+                'box' => $box->fresh()
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'error' => 'Preview update failed: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

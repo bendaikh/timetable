@@ -748,14 +748,6 @@
         min-height: 100% !important;
     }
 
-    @media (max-width: 3839px) {
-        #tv-display-wrapper #header-box .time-large,
-        #tv-display-wrapper #header-box .gregorian-date,
-        #tv-display-wrapper #header-box .islamic-date {
-            font-size: clamp(2.2rem, 3.2vw, 3.8rem) !important;
-        }
-    }
-
     /* Next Prayer Info Container - Prevent overflow and ensure proper spacing */
     .next-prayer-info {
         max-height: 350px !important;

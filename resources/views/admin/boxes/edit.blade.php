@@ -214,10 +214,10 @@
                                 <!-- Preview will be updated here -->
                             </div>
                             <div class="mt-3">
-                                <button class="btn btn-sm btn-outline-primary" onclick="refreshPreview()">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshPreview()">
                                     <i class="bi bi-arrow-clockwise"></i> Refresh
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary" onclick="toggleFullPreview()">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openFullPreview()">
                                     <i class="bi bi-arrows-fullscreen"></i> Full Preview
                                 </button>
                             </div>
@@ -290,6 +290,23 @@
             element.addEventListener('input', debounce(updatePreview, 500));
             element.addEventListener('change', updatePreview);
         });
+
+        ['time_font_size', 'date_font_size'].forEach((fieldId) => {
+            const field = document.getElementById(fieldId);
+
+            if (!field) {
+                return;
+            }
+
+            field.addEventListener('blur', function() {
+                const normalized = normalizeHeaderFontInput(this.value);
+
+                if (normalized && normalized !== this.value) {
+                    this.value = normalized;
+                    updatePreview();
+                }
+            });
+        });
     });
 
     // Debounce function to limit API calls
@@ -330,24 +347,85 @@
         return trimmed;
     }
 
+    function normalizeHeaderFontInput(value) {
+        const trimmed = String(value ?? '').trim();
+
+        if (!trimmed) {
+            return '';
+        }
+
+        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+            return `${trimmed}rem`;
+        }
+
+        return trimmed;
+    }
+
     // Update live preview
-    function updatePreview() {
-        const formData = new FormData(document.getElementById('boxEditForm'));
-        const data = Object.fromEntries(formData.entries());
-        
-        // Parse nested arrays
-        const parsedData = {};
-        Object.keys(data).forEach(key => {
-            if (key.includes('[') && key.includes(']')) {
-                const [parent, child] = key.split('[');
-                const childKey = child.replace(']', '');
-                
-                if (!parsedData[parent]) parsedData[parent] = {};
-                parsedData[parent][childKey] = data[key];
-            } else {
-                parsedData[key] = data[key];
-            }
+    function tokenizeFormKey(key) {
+        const tokens = [];
+        key.replace(/([^[\]]+)|\[(.*?)\]/g, (_, plain, bracket) => {
+            tokens.push(typeof plain !== 'undefined' ? plain : bracket);
         });
+        return tokens;
+    }
+
+    function assignFormValue(target, key, value) {
+        const tokens = tokenizeFormKey(key);
+        let current = target;
+
+        tokens.forEach((token, index) => {
+            const isLast = index === tokens.length - 1;
+            const nextToken = tokens[index + 1];
+
+            if (isLast) {
+                if (token === '') {
+                    current.push(value);
+                } else {
+                    current[token] = value;
+                }
+                return;
+            }
+
+            if (token === '') {
+                const newEntry = nextToken === '' ? [] : {};
+                current.push(newEntry);
+                current = newEntry;
+                return;
+            }
+
+            if (!Object.prototype.hasOwnProperty.call(current, token)) {
+                current[token] = nextToken === '' ? [] : {};
+            }
+
+            current = current[token];
+        });
+    }
+
+    function serializeBoxForm(form) {
+        const parsedData = {};
+
+        for (const [key, value] of new FormData(form).entries()) {
+            if (key === '_token' || key === '_method') {
+                continue;
+            }
+
+            assignFormValue(parsedData, key, value);
+        }
+
+        if (parsedData.styling_settings) {
+            ['time_font_size', 'date_font_size'].forEach((field) => {
+                if (typeof parsedData.styling_settings[field] !== 'undefined') {
+                    parsedData.styling_settings[field] = normalizeHeaderFontInput(parsedData.styling_settings[field]);
+                }
+            });
+        }
+
+        return parsedData;
+    }
+
+    function updatePreview(options = {}) {
+        const parsedData = serializeBoxForm(document.getElementById('boxEditForm'));
 
         fetch(`{{ route('admin.boxes.update-ajax', $box->box_type) }}`, {
             method: 'POST',
@@ -360,20 +438,31 @@
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json()
+                    .catch(() => ({}))
+                    .then((payload) => {
+                        const message = payload.error || payload.message || JSON.stringify(payload.errors || {}) || `HTTP error! status: ${response.status}`;
+                        throw new Error(message);
+                    });
             }
             return response.json();
         })
         .then(data => {
             if (data.success) {
                 refreshPreview();
-                refreshFullPreview();
+                if (options.openModal) {
+                    toggleFullPreview();
+                } else {
+                    refreshFullPreview();
+                }
             } else {
                 console.error('Update failed:', data.error || data.message);
+                alert(data.error || data.message || 'Preview could not be updated.');
             }
         })
         .catch(error => {
             console.error('Error updating preview:', error);
+            alert(error.message || 'Preview could not be updated. Please try again.');
         });
     }
 
@@ -399,6 +488,27 @@
             });
     }
 
+    function toPreviewRem(value, fallbackRem, maxRem) {
+        const numericValue = Number.parseFloat(String(value ?? '').replace(/rem$/i, '').trim());
+        const safeValue = Number.isFinite(numericValue) ? numericValue : fallbackRem;
+        return `${Math.min(safeValue, maxRem)}rem`;
+    }
+
+    function getPreviewHeaderFontSizes(styling) {
+        const rawTimeRem = Number.parseFloat(String(styling.time_font_size ?? '').replace(/rem$/i, '').trim());
+        const rawDateRem = Number.parseFloat(String(styling.date_font_size ?? '').replace(/rem$/i, '').trim());
+
+        const safeTimeRem = Number.isFinite(rawTimeRem) ? rawTimeRem : 3;
+        const safeDateRem = Number.isFinite(rawDateRem) ? rawDateRem : 1.6;
+
+        const scale = Math.min(1, 3.4 / safeTimeRem, 2.1 / safeDateRem);
+
+        return {
+            time: `${(safeTimeRem * scale).toFixed(2)}rem`,
+            date: `${(safeDateRem * scale).toFixed(2)}rem`,
+        };
+    }
+
     // Generate preview HTML
     function generatePreviewHTML(boxData, boxType) {
         const styling = boxData.styling_settings || {};
@@ -417,13 +527,21 @@
         
         switch(boxType) {
             case 'header_box':
+                const previewFontSizes = getPreviewHeaderFontSizes(styling);
+                const previewPadding = normalizeCssValue(styling.padding, 'px') || '15px';
                 return `
-                    <div style="${styleString}">
-                        <div style="font-size: 24px; font-weight: bold;">02:24:13 PM</div>
-                        <div style="font-size: 14px;">Wed 15 Oct 2025</div>
-                        <div style="font-size: 14px;">18 Safar 1447</div>
-                        <div style="text-align: right; margin-top: 10px;">
-                            <button class="btn btn-sm btn-light">⛶</button>
+                    <div style="${styleString}; width: 100%; overflow: hidden; padding: ${previewPadding};">
+                        <div style="display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 10px; min-height: 110px; position: relative; padding-right: 44px;">
+                            <div style="text-align: center; min-width: 0; overflow: hidden;">
+                                <div style="font-size: ${previewFontSizes.time}; font-weight: bold; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">02:24:13 PM</div>
+                            </div>
+                            <div style="text-align: center; min-width: 0; overflow: hidden;">
+                                <div style="font-size: ${previewFontSizes.date}; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Wed 15 Oct 2025</div>
+                            </div>
+                            <div style="text-align: center; min-width: 0; overflow: hidden;">
+                                <div style="font-size: ${previewFontSizes.date}; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">18 Safar 1447</div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-light" onclick="openFullPreview()" style="position: absolute; right: 0; bottom: 0;" title="Open full preview">⛶</button>
                         </div>
                     </div>
                 `;
@@ -559,8 +677,11 @@
 
     // Preview changes
     function previewChanges() {
-        updatePreview();
-        setTimeout(refreshFullPreview, 1000);
+        updatePreview({ openModal: true });
+    }
+
+    function openFullPreview() {
+        updatePreview({ openModal: true });
     }
 
     // Refresh full preview

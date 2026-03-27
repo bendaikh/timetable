@@ -15,19 +15,6 @@
         body {
             background-color: #f8f9fa;
         }
-
-        body.admin-zoomed {
-            zoom: 0.67;
-        }
-
-        @supports not (zoom: 1) {
-            body.admin-zoomed {
-                transform: scale(0.67);
-                transform-origin: top left;
-                width: calc(100% / 0.67);
-                height: calc(100% / 0.67);
-            }
-        }
         
         .sidebar {
             background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
@@ -37,6 +24,7 @@
             left: 0;
             width: 250px;
             z-index: 1000;
+            overflow-y: auto;
         }
         
         .sidebar .nav-link {
@@ -54,6 +42,8 @@
         
         .main-content {
             margin-left: 250px;
+            width: calc(100% - 250px);
+            max-width: calc(100% - 250px);
             padding: 20px;
         }
         
@@ -185,6 +175,8 @@
             
             .main-content {
                 margin-left: 0;
+                width: 100%;
+                max-width: 100%;
             }
         }
     </style>
@@ -286,9 +278,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Boxes Management JS -->
-    @if(file_exists(public_path('build/manifest.json')))
-        @vite('resources/js/boxes-management.js')
-    @else
+    @if(request()->routeIs('admin.boxes.index'))
+        @if(file_exists(public_path('build/manifest.json')))
+            @vite('resources/js/boxes-management.js')
+        @else
         <script>
             // Fallback: Inline boxes management functionality
             console.warn('Vite build not found, using fallback boxes management');
@@ -448,6 +441,7 @@
             // Export for global use
             window.BoxesManager = BoxesManager;
         </script>
+        @endif
     @endif
     
     <!-- Mobile sidebar toggle -->
@@ -464,18 +458,6 @@
         });
     </script>
 
-    <script>
-        function applyAdminZoom() {
-            const isLaptop = window.innerWidth <= 1440 || window.innerHeight <= 900;
-            document.body.classList.toggle('admin-zoomed', isLaptop);
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            applyAdminZoom();
-            window.addEventListener('resize', applyAdminZoom);
-        });
-    </script>
-    
     @yield('scripts')
     @stack('scripts')
 </body>

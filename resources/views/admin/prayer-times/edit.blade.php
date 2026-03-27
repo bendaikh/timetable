@@ -330,6 +330,40 @@
                         </div>
                     </div>
 
+                    <!-- Eid Prayers -->
+                    <div class="card mb-3 border-success">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0"><i class="bi bi-stars me-2"></i>Eid Prayers (Optional)</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="eid_prayer_1" class="form-label fw-bold">Eid Prayer 1</label>
+                                    <input type="time"
+                                           class="form-control @error('eid_prayer_1') is-invalid @enderror"
+                                           id="eid_prayer_1"
+                                           name="eid_prayer_1"
+                                           value="{{ old('eid_prayer_1', $prayerTime->eid_prayer_1 ? \Carbon\Carbon::parse($prayerTime->eid_prayer_1)->format('H:i') : '') }}">
+                                    @error('eid_prayer_1')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="eid_prayer_2" class="form-label fw-bold">Eid Prayer 2</label>
+                                    <input type="time"
+                                           class="form-control @error('eid_prayer_2') is-invalid @enderror"
+                                           id="eid_prayer_2"
+                                           name="eid_prayer_2"
+                                           value="{{ old('eid_prayer_2', $prayerTime->eid_prayer_2 ? \Carbon\Carbon::parse($prayerTime->eid_prayer_2)->format('H:i') : '') }}">
+                                    @error('eid_prayer_2')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="d-flex justify-content-between mt-4">
                         <a href="{{ route('admin.prayer-times.index') }}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left me-2"></i>

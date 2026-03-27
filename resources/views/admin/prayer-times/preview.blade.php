@@ -54,6 +54,8 @@
                                 <th>Sun Rise</th>
                                 <th>Jumah 1</th>
                                 <th>Jumah 2</th>
+                                <th>Eid Prayer 1</th>
+                                <th>Eid Prayer 2</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -102,6 +104,20 @@
                                     @endif
                                 </td>
                                 <td>
+                                    @if($prayerTime['eid_prayer_1'])
+                                        <span class="badge bg-info text-dark">{{ \Carbon\Carbon::parse($prayerTime['eid_prayer_1'])->format('h:i A') }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($prayerTime['eid_prayer_2'])
+                                        <span class="badge bg-info text-dark">{{ \Carbon\Carbon::parse($prayerTime['eid_prayer_2'])->format('h:i A') }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
                                     @if(in_array($prayerTime['date'], $existingDates))
                                         <span class="badge bg-warning">Exists</span>
                                     @else
@@ -122,15 +138,9 @@
                     </a>
                     
                     @if(!empty($prayerTimes))
-                    <form method="POST" action="{{ route('admin.prayer-times.import.process') }}" class="d-inline" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route('admin.prayer-times.import.process') }}" class="d-inline">
                         @csrf
-                        <input type="hidden" name="import_type" value="{{ $request->import_type }}">
-                        @if($request->import_type === 'url')
-                            <input type="hidden" name="google_sheets_url" value="{{ $request->google_sheets_url }}">
-                        @else
-                            <input type="file" name="google_sheets_file" style="display: none;" id="hidden_file_input">
-                        @endif
-                        <input type="hidden" name="range" value="{{ $request->range }}">
+                        <input type="hidden" name="use_preview_data" value="1">
                         <div class="form-check d-inline-block me-3">
                             <input class="form-check-input" type="checkbox" id="overwrite_existing" name="overwrite_existing" value="1">
                             <label class="form-check-label" for="overwrite_existing">
@@ -149,4 +159,3 @@
     </div>
 </div>
 @endsection
-
