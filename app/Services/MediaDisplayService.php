@@ -18,7 +18,12 @@ class MediaDisplayService
     public function getCurrentMedia(): ?array
     {
         $now = $this->nowInAppTimezone();
-        
+
+        // Countdown windows always override posters (same rule as getScreenState()).
+        if ($this->isAdhanOrCountdownActive($now)) {
+            return null;
+        }
+
         // Get all active schedules ordered by ID (creation order)
         $schedules = MediaSchedule::with(['mediaItems' => function($query) {
                 $query->where('media_schedule_media.is_active', true)
@@ -286,28 +291,36 @@ class MediaDisplayService
             return null;
         }
 
-        // Find which media should be displayed based on priority order and duration
-        // Media 1: 0-29s, Media 2: 30-59s, etc.
+        // Loop media for the entire schedule window (same approach as full-time posters).
+        $totalCycleDuration = $activeMediaItems->sum(function ($media) {
+            return ($media->pivot->duration * 60) + ($media->pivot->gap_duration ?? 0);
+        });
+
+        if ($totalCycleDuration <= 0) {
+            return null;
+        }
+
+        $positionInCycle = $elapsedSeconds % $totalCycleDuration;
+
         $accumulatedDuration = 0;
         foreach ($activeMediaItems as $media) {
-            // Convert pivot duration from minutes to seconds
             $mediaDuration = $media->pivot->duration * 60;
-            $mediaEndTime = $accumulatedDuration + $mediaDuration;
-            
-            // Check if current time falls within this media's time window
-            if ($elapsedSeconds >= $accumulatedDuration && $elapsedSeconds < $mediaEndTime) {
+            $gapDuration = $media->pivot->gap_duration ?? 0;
+            $slotDuration = $mediaDuration + $gapDuration;
+
+            if ($positionInCycle >= $accumulatedDuration && $positionInCycle < ($accumulatedDuration + $mediaDuration)) {
                 return [
                     'media' => $media,
                     'duration' => $mediaDuration,
                     'priority' => $media->pivot->priority,
-                    'schedule' => $schedule
+                    'schedule' => $schedule,
                 ];
             }
-            
-            $accumulatedDuration = $mediaEndTime;
+
+            $accumulatedDuration += $slotDuration;
         }
 
-        // If we've gone through all media, return null (schedule has ended)
+        // In a configured gap between media items, show the timetable until the next item.
         return null;
     }
 

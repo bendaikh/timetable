@@ -3053,6 +3053,50 @@
         mediaPollingTimer = setInterval(requestMediaSync, POLL_INTERVALS.media);
     }
 
+    function hidePosterOverlay() {
+        const overlay = document.getElementById('media-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+
+        clearTimeout(mediaDisplayTimer);
+        mediaDisplayTimer = null;
+        hideMediaNodes();
+    }
+
+    function isPosterScreenState(state) {
+        return normalizeScreenStateValue(state) === 'MEDIA';
+    }
+
+    function isCountdownPopupActive() {
+        const popup = document.getElementById('countdown-popup');
+        if (!popup) {
+            return false;
+        }
+
+        const visible = popup.style.display === 'flex' || getComputedStyle(popup).display === 'flex';
+        if (!visible) {
+            return false;
+        }
+
+        const timer = document.getElementById('countdown-popup-timer');
+        const timerText = timer ? timer.textContent.trim() : '';
+        return timerText !== '00';
+    }
+
+    function shouldRejectPosterDuringCountdown(screenStateData) {
+        if (!screenStateData || !isPosterScreenState(screenStateData.state)) {
+            return false;
+        }
+
+        // Countdown reached 00 — allow before/after prayer posters to resume.
+        if (isCountdownStuckAtZero()) {
+            return false;
+        }
+
+        return currentScreenState === 'COUNTDOWN' || isCountdownPopupActive();
+    }
+
     function clearAllScreenContent() {
         const mediaOverlay = document.getElementById('media-overlay');
         const countdownPopup = document.getElementById('countdown-popup');
@@ -3084,6 +3128,8 @@
     }
 
     function renderCountdownState(data) {
+        hidePosterOverlay();
+
         const countdownPopup = document.getElementById('countdown-popup');
         const popupTitle = document.getElementById('countdown-popup-title');
         const popupPrayer = document.getElementById('countdown-popup-prayer');
@@ -3281,6 +3327,7 @@
         }
 
         let hasRequestedSync = false;
+        let hasScheduledFinalize = false;
         let lastLoggedSecond = null;
         const startedAtMs = Date.now();
         const expectedDurationSec = 30;
@@ -3320,10 +3367,21 @@
                 lastLoggedSecond = secondsRemaining;
             }
 
-            if (distance <= 0 && !hasRequestedSync) {
-                hasRequestedSync = true;
-                logCountdownDebug('reached-zero', { phase, countdownEnd });
-                setTimeout(() => requestMediaSync(), 150);
+            if (distance <= 0) {
+                if (!hasRequestedSync) {
+                    hasRequestedSync = true;
+                    logCountdownDebug('reached-zero', { phase, countdownEnd });
+                    setTimeout(() => requestMediaSync(), 150);
+                }
+
+                if (!hasScheduledFinalize) {
+                    hasScheduledFinalize = true;
+                    setTimeout(() => {
+                        if (isCountdownStuckAtZero()) {
+                            finalizeCountdownCompletion(null);
+                        }
+                    }, 750);
+                }
             }
         }
 
@@ -3332,14 +3390,9 @@
         countdownTimer = setInterval(tick, 250);
     }
 
-    function shouldDeferCountdownClear(screenStateData) {
-        if (!screenStateData || screenStateData.state !== 'TIMETABLE' || currentScreenState !== 'COUNTDOWN') {
-            return false;
-        }
-
+    function isCountdownStuckAtZero() {
         const popup = document.getElementById('countdown-popup');
-        const popupTimer = document.getElementById('countdown-popup-timer');
-        if (!popup || !popupTimer) {
+        if (!popup) {
             return false;
         }
 
@@ -3348,7 +3401,44 @@
             return false;
         }
 
-        return popupTimer.textContent.trim() !== '00';
+        const timer = document.getElementById('countdown-popup-timer');
+        return timer && timer.textContent.trim() === '00';
+    }
+
+    function shouldDeferCountdownClear(screenStateData) {
+        if (!screenStateData || screenStateData.state !== 'TIMETABLE' || currentScreenState !== 'COUNTDOWN') {
+            return false;
+        }
+
+        return !isCountdownStuckAtZero();
+    }
+
+    function finalizeCountdownCompletion(screenStateData) {
+        logCountdownDebug('finalize-countdown-completion', {
+            currentScreenState,
+            serverState: screenStateData?.state || null,
+            timer: document.getElementById('countdown-popup-timer')?.textContent?.trim() || null,
+        });
+
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+        countdownVerification.sessionKey = null;
+
+        const payload = (screenStateData && screenStateData.state && screenStateData.state !== 'COUNTDOWN')
+            ? screenStateData
+            : {
+                state: 'TIMETABLE',
+                timestamp: (screenStateData && screenStateData.timestamp) || new Date().toISOString(),
+            };
+
+        lastAppliedScreenSignature = computeScreenStateSignature(payload);
+        const serverTimestampMs = Date.parse(payload.timestamp || '');
+        if (!Number.isNaN(serverTimestampMs)) {
+            lastAppliedServerTimestampMs = serverTimestampMs;
+        }
+
+        applyScreenState(payload);
+        requestMediaSync();
     }
 
     function applyScreenState(screenStateData) {
@@ -3464,12 +3554,35 @@
                     logCountdownDebug('defer-timetable-until-zero', {
                         timer: document.getElementById('countdown-popup-timer')?.textContent?.trim() || null,
                     });
+                } else if (shouldRejectPosterDuringCountdown(screenStateData)) {
+                    logCountdownDebug('reject-poster-during-countdown', {
+                        state: screenStateData.state,
+                        timer: document.getElementById('countdown-popup-timer')?.textContent?.trim() || null,
+                    });
+                    hidePosterOverlay();
                 } else {
                     if (!Number.isNaN(serverTimestampMs)) {
                         lastAppliedServerTimestampMs = serverTimestampMs;
                     }
                     lastAppliedScreenSignature = nextScreenSignature;
                     applyScreenState(screenStateData);
+                }
+            } else if (isCountdownStuckAtZero()) {
+                const serverState = screenStateData.state;
+                const serverSecondsRaw = screenStateData.countdown
+                    ? Number(screenStateData.countdown.seconds_remaining)
+                    : null;
+                const serverSecondsAtZero = Number.isFinite(serverSecondsRaw) && serverSecondsRaw <= 0;
+
+                if (serverState === 'TIMETABLE' || isPosterScreenState(serverState) || serverSecondsAtZero) {
+                    finalizeCountdownCompletion(
+                        (serverState === 'TIMETABLE' || isPosterScreenState(serverState))
+                            ? screenStateData
+                            : {
+                                state: 'TIMETABLE',
+                                timestamp: screenStateData.timestamp || new Date().toISOString(),
+                            }
+                    );
                 }
             }
 

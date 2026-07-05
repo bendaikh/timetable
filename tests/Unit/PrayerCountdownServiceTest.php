@@ -167,4 +167,13 @@ class PrayerCountdownServiceTest extends TestCase
         $this->assertSame('adhan', $diagnostic['log']['countdown_phase']);
         $this->assertSame(self::TZ, $diagnostic['log']['server_timezone']);
     }
+
+    public function test_get_current_media_returns_null_during_countdown(): void
+    {
+        $now = Carbon::parse("{$this->date} 14:40:00", self::TZ);
+        Carbon::setTestNow($now);
+
+        $this->assertTrue($this->service->isAdhanOrCountdownActive($now));
+        $this->assertNull($this->service->getCurrentMedia());
+    }
 }
