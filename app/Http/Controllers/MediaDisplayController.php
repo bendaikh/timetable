@@ -35,20 +35,8 @@ class MediaDisplayController extends Controller
             return response()->json($this->withVersions(['media' => null], 'NO_MEDIA'));
         }
 
-        $media = $mediaInfo['media'];
-        $duration = $mediaInfo['duration'];
-
         $payload = [
-            'media' => [
-                'id' => $media->id,
-                'title' => $media->title,
-                'type' => $media->type,
-                'file_url' => $media->file_url,
-                'display_duration' => $duration, // Use duration from pivot table
-                'description' => $media->description,
-                'priority' => $mediaInfo['priority'],
-                'schedule_id' => $mediaInfo['schedule']->id ?? null
-            ]
+            'media' => $this->formatMediaPayload($mediaInfo),
         ];
 
         return response()->json($this->withVersions($payload, $this->buildMediaSignatureForCurrentMedia($payload['media'])));
@@ -226,16 +214,7 @@ class MediaDisplayController extends Controller
             if ($schedule->schedule_type !== 'full_time_poster') {
                 $payload = [
                     'state' => 'PRAYER_POSTER',
-                    'media' => [
-                        'id' => $prayerPosterMedia['media']->id,
-                        'title' => $prayerPosterMedia['media']->title,
-                        'type' => $prayerPosterMedia['media']->type,
-                        'file_url' => $prayerPosterMedia['media']->file_url,
-                        'display_duration' => $prayerPosterMedia['duration'],
-                        'description' => $prayerPosterMedia['media']->description,
-                        'priority' => $prayerPosterMedia['priority'],
-                        'schedule_id' => $schedule->id
-                    ],
+                    'media' => $this->formatMediaPayload($prayerPosterMedia),
                     'timestamp' => $now->toIso8601String()
                 ];
 
@@ -250,16 +229,7 @@ class MediaDisplayController extends Controller
             if ($schedule->schedule_type === 'full_time_poster') {
                 $payload = [
                     'state' => 'FULLTIME_POSTER',
-                    'media' => [
-                        'id' => $prayerPosterMedia['media']->id,
-                        'title' => $prayerPosterMedia['media']->title,
-                        'type' => $prayerPosterMedia['media']->type,
-                        'file_url' => $prayerPosterMedia['media']->file_url,
-                        'display_duration' => $prayerPosterMedia['duration'],
-                        'description' => $prayerPosterMedia['media']->description,
-                        'priority' => $prayerPosterMedia['priority'],
-                        'schedule_id' => $schedule->id
-                    ],
+                    'media' => $this->formatMediaPayload($prayerPosterMedia),
                     'timestamp' => $now->toIso8601String()
                 ];
 
@@ -370,5 +340,29 @@ class MediaDisplayController extends Controller
         }
 
         return 'SCREEN_STATE:TIMETABLE';
+    }
+
+    private function formatMediaPayload(array $mediaInfo): array
+    {
+        $media = $mediaInfo['media'];
+        $pivot = $media->pivot ?? null;
+        $schedule = $mediaInfo['schedule'] ?? null;
+
+        return [
+            'id' => $media->id,
+            'title' => $media->title,
+            'type' => $media->type,
+            'file_url' => $media->file_url,
+            'display_duration' => $mediaInfo['duration'],
+            'description' => $media->description,
+            'priority' => $mediaInfo['priority'],
+            'schedule_id' => $schedule?->id,
+            'display_window' => [
+                'start_date' => $pivot?->start_date,
+                'start_time' => $pivot?->start_time,
+                'end_date' => $pivot?->expiry_date,
+                'end_time' => $pivot?->expiry_time,
+            ],
+        ];
     }
 }

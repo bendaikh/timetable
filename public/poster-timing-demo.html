@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poster timing demo</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+            background: #f4f7f4;
+            color: #122;
+            line-height: 1.5;
+        }
+        h1 { margin-top: 0; font-size: 1.6rem; }
+        h2 { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
+        .card {
+            background: #fff;
+            border: 2px solid #1e4d2b;
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin: 12px 0;
+        }
+        .highlight { background: #e8f5e9; font-weight: 600; }
+        .warn { background: #fff3cd; }
+        .ok { background: #d4edda; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #ddd; }
+        th { background: #1e4d2b; color: #fff; }
+        code { background: #eee; padding: 2px 6px; border-radius: 4px; }
+        .links a {
+            display: inline-block;
+            margin: 6px 12px 6px 0;
+            color: #1e4d2b;
+            font-weight: 600;
+        }
+        #status { font-size: 0.95rem; color: #555; }
+        .big-time { font-size: 1.4rem; font-weight: 700; color: #1e4d2b; }
+    </style>
+</head>
+<body>
+    <h1>Poster timing — live demo</h1>
+    <p id="status">Loading data from your local server…</p>
+
+    <div class="links card">
+        <strong>Open these tabs:</strong><br>
+        <a href="/" target="_blank">Main timetable display</a>
+        <a href="/api/countdown-diagnostic" target="_blank">Raw JSON: countdown diagnostic</a>
+        <a href="/api/screen-state" target="_blank">Raw JSON: current screen state</a>
+    </div>
+
+    <div class="card" id="now-card"></div>
+    <div class="card" id="explain-card">
+        <h2>What the problem was (simple)</h2>
+        <p>Posters use <strong>Iqamah (Jamaat)</strong> time — the <em>right-hand</em> column on the timetable — <strong>not</strong> Beginning/Adhan.</p>
+        <p>If you set <code>20 minutes before prayer</code>, the poster should start at:</p>
+        <p class="big-time">Jamaat time − 20 minutes</p>
+        <p class="warn card">The built-in <strong>Adhan countdown</strong> also starts exactly <strong>20 minutes before Jamaat</strong> (for 30 seconds). So at that moment you see the countdown first; the poster appears right after those 30 seconds — still inside the poster window.</p>
+    </div>
+
+    <div class="card" id="zohar-card"></div>
+    <div class="card" id="all-prayers-card"></div>
+    <div class="card" id="screen-card"></div>
+
+    <script>
+        function fmtTime(iso) {
+            if (!iso) return '—';
+            return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function fmtClock(hms) {
+            if (!hms) return '—';
+            const p = hms.split(':');
+            return `${p[0]}:${p[1]}`;
+        }
+
+        function addMinutesToHms(hms, minutes) {
+            const [h, m, s = '0'] = hms.split(':').map(Number);
+            const total = h * 3600 + m * 60 + Number(s) + minutes * 60;
+            const nh = Math.floor((total / 3600) % 24);
+            const nm = Math.floor((total % 3600) / 60);
+            const ns = total % 60;
+            return `${String(nh).padStart(2,'0')}:${String(nm).padStart(2,'0')}:${String(ns).padStart(2,'0')}`;
+        }
+
+        async function load() {
+            const status = document.getElementById('status');
+            try {
+                const [diag, screen] = await Promise.all([
+                    fetch('/api/countdown-diagnostic').then(r => r.json()),
+                    fetch('/api/screen-state').then(r => r.json()),
+                ]);
+
+                const log = diag.log || {};
+                const zohar = (diag.prayers || []).find(p => p.prayer === 'zohar');
+
+                document.getElementById('now-card').innerHTML = `
+                    <h2>Server clock (used for posters)</h2>
+                    <p class="big-time">${fmtTime(log.server_time)}</p>
+                    <p>Timezone: <code>${log.server_timezone || '?'}</code> · Date: <code>${log.prayer_date || '?'}</code></p>
+                    <p>Browser clock: <code>${new Date().toLocaleTimeString('en-GB')}</code> (posters ignore this — server decides)</p>
+                `;
+
+                if (zohar) {
+                    const jamaat = zohar.jamaat_time;
+                    const poster20Start = addMinutesToHms(jamaat, -20);
+                    const poster20End = addMinutesToHms(jamaat, -5);
+                    const adhanCd = zohar.windows?.adhan_countdown;
+
+                    document.getElementById('zohar-card').innerHTML = `
+                        <h2>Today — Zohar (example)</h2>
+                        <table>
+                            <tr><th>Field</th><th>Time</th><th>Used for posters?</th></tr>
+                            <tr><td>Beginning (left column)</td><td><strong>${fmtClock(zohar.beginning_time)}</strong></td><td>No</td></tr>
+                            <tr><td>Adhan</td><td>${fmtClock(zohar.adhan_time)}</td><td>No</td></tr>
+                            <tr class="highlight"><td>Jamaat / Iqamah (right column)</td><td><strong>${fmtClock(jamaat)}</strong></td><td>Yes — anchor</td></tr>
+                        </table>
+                        <h2>If poster = "20 minutes before prayer"</h2>
+                        <table>
+                            <tr><th>Event</th><th>Time</th></tr>
+                            <tr class="ok"><td>Poster window opens</td><td><strong>${fmtClock(poster20Start)}</strong> (Jamaat − 20 min)</td></tr>
+                            <tr><td>Adhan countdown popup (30 sec)</td><td>${fmtTime(adhanCd?.start)} → ${fmtTime(adhanCd?.end)}</td></tr>
+                            <tr><td>Poster visible on screen*</td><td>~${fmtClock(addMinutesToHms(poster20Start, 1))} (after countdown ends)</td></tr>
+                            <tr><td>Poster window closes</td><td><strong>${fmtClock(poster20End)}</strong> (Jamaat − 5 min)</td></tr>
+                        </table>
+                        <p style="font-size:0.9rem">* Countdown has priority for the first 30 seconds at ${fmtClock(poster20Start)}.</p>
+                        <p class="warn">If you measured from <strong>Beginning ${fmtClock(zohar.beginning_time)}</strong> instead of <strong>Jamaat ${fmtClock(jamaat)}</strong>, the difference is <strong>${Math.round((new Date('1970-01-01T'+jamaat) - new Date('1970-01-01T'+zohar.beginning_time))/60000)} minutes</strong> — that often looks like the poster is "too early".</p>
+                    `;
+                }
+
+                let rows = (diag.prayers || []).map(p => {
+                    const j = p.jamaat_time;
+                    const start20 = addMinutesToHms(j, -20);
+                    return `<tr>
+                        <td>${p.prayer}</td>
+                        <td>${fmtClock(p.beginning_time)}</td>
+                        <td><strong>${fmtClock(j)}</strong></td>
+                        <td>${fmtClock(start20)}</td>
+                        <td>${p.active_now ? '✓ ' + p.active_phase : '—'}</td>
+                    </tr>`;
+                }).join('');
+
+                document.getElementById('all-prayers-card').innerHTML = `
+                    <h2>All prayers — 20 min before Jamaat</h2>
+                    <table>
+                        <tr><th>Prayer</th><th>Beginning</th><th>Jamaat</th><th>Poster start (20 min before)</th><th>Active now</th></tr>
+                        ${rows}
+                    </table>
+                `;
+
+                document.getElementById('screen-card').innerHTML = `
+                    <h2>What the display is showing right now</h2>
+                    <p>Screen state: <strong>${screen.state || '?'}</strong></p>
+                    ${screen.state === 'PRAYER_POSTER' ? '<p class="ok">A prayer poster is active.</p>' : ''}
+                    ${screen.state === 'COUNTDOWN' ? '<p class="warn">Countdown active — poster hidden until countdown ends.</p>' : ''}
+                    ${screen.state === 'TIMETABLE' ? '<p>Normal timetable (no poster).</p>' : ''}
+                `;
+
+                status.textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB') + ' — refreshes every 5 seconds';
+            } catch (e) {
+                status.textContent = 'Error: ' + e.message + ' — is the server running at http://127.0.0.1:8000 ?';
+            }
+        }
+
+        load();
+        setInterval(load, 5000);
+    </script>
+</body>
+</html>

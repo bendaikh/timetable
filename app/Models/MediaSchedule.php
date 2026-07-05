@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Support\PrayerJamaatTime;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Carbon\Carbon;
-use App\Models\Setting;
 
 class MediaSchedule extends Model
 {
@@ -37,7 +37,7 @@ class MediaSchedule extends Model
     public function mediaItems(): BelongsToMany
     {
         return $this->belongsToMany(Media::class, 'media_schedule_media')
-            ->withPivot('duration', 'priority', 'is_active', 'expiry_date', 'expiry_time', 'gap_duration', 'days_of_week')
+            ->withPivot('duration', 'priority', 'is_active', 'start_date', 'start_time', 'expiry_date', 'expiry_time', 'gap_duration', 'days_of_week')
             ->orderBy('media_schedule_media.priority', 'asc')
             ->withTimestamps();
     }
@@ -58,7 +58,7 @@ class MediaSchedule extends Model
             return true; // Active every day if no specific days set
         }
 
-        $today = Carbon::now()->dayOfWeekIso; // 1-7 (Monday-Sunday)
+        $today = PrayerJamaatTime::now()->dayOfWeekIso; // 1-7 (Monday-Sunday)
         return in_array($today, $this->days_of_week);
     }
 
@@ -71,59 +71,29 @@ class MediaSchedule extends Model
         return $this->prayer_name === $prayerName;
     }
 
-
     /**
      * Check if this schedule should be active based on minutes before prayer (uses JAMAAT TIME)
      */
-    public function isActiveForMinutesBeforePrayer(): bool
+    public function isActiveForMinutesBeforePrayer(?Carbon $now = null): bool
     {
-        if (!$this->is_active || !$this->prayer_name || !$this->minutes_before_prayer) {
-            return false;
-        }
+        $window = $this->resolveBeforePrayerWindow($now);
 
-        // Get today's prayer times
-        $prayerTime = PrayerTime::getTodayPrayerTimes();
-        
-        if (!$prayerTime) {
-            return false;
-        }
-
-        $jamaatTime = $this->resolveJamaatTime($prayerTime);
-        if (!$jamaatTime) {
-            return false;
-        }
-        
-        $displayStartTime = $jamaatTime->copy()->subMinutes($this->minutes_before_prayer);
-        $displayEndTime = $jamaatTime->copy()->subMinutes(5); // Stop 5 minutes before Jamaat
-
-        $now = Carbon::now();
-
-        return $now->between($displayStartTime, $displayEndTime);
+        return $window
+            ? PrayerJamaatTime::isWithinWindow(PrayerJamaatTime::now($now), $window['start'], $window['end'])
+            : false;
     }
 
     /**
      * Get the display start time for this schedule (based on JAMAAT TIME)
      */
-    public function getDisplayStartTime(): ?Carbon
+    public function getDisplayStartTime(?Carbon $now = null): ?Carbon
     {
-        if ($this->schedule_type === 'minutes_before_prayer' && $this->prayer_name && $this->minutes_before_prayer) {
-            $prayerTime = PrayerTime::getTodayPrayerTimes();
-            if ($prayerTime) {
-                $jamaatTime = $this->resolveJamaatTime($prayerTime);
-                if ($jamaatTime) {
-                    return $jamaatTime->subMinutes($this->minutes_before_prayer);
-                }
-            }
+        if ($this->schedule_type === 'minutes_before_prayer') {
+            return $this->resolveBeforePrayerWindow($now)['start'] ?? null;
         }
-        
-        if ($this->schedule_type === 'minutes_after_prayer' && $this->prayer_name && $this->minutes_after_prayer) {
-            $prayerTime = PrayerTime::getTodayPrayerTimes();
-            if ($prayerTime) {
-                $jamaatTime = $this->resolveJamaatTime($prayerTime);
-                if ($jamaatTime) {
-                    return $jamaatTime->addMinutes($this->minutes_after_prayer);
-                }
-            }
+
+        if ($this->schedule_type === 'minutes_after_prayer') {
+            return $this->resolveAfterPrayerWindow($now)['start'] ?? null;
         }
 
         return null;
@@ -132,28 +102,14 @@ class MediaSchedule extends Model
     /**
      * Get the display end time for this schedule (based on JAMAAT TIME)
      */
-    public function getDisplayEndTime(): ?Carbon
+    public function getDisplayEndTime(?Carbon $now = null): ?Carbon
     {
-        if ($this->schedule_type === 'minutes_before_prayer' && $this->prayer_name && $this->minutes_before_prayer) {
-            $prayerTime = PrayerTime::getTodayPrayerTimes();
-            if ($prayerTime) {
-                $jamaatTime = $this->resolveJamaatTime($prayerTime);
-                if ($jamaatTime) {
-                    return $jamaatTime->subMinutes(5); // Stop 5 minutes before Jamaat
-                }
-            }
+        if ($this->schedule_type === 'minutes_before_prayer') {
+            return $this->resolveBeforePrayerWindow($now)['end'] ?? null;
         }
-        
-        if ($this->schedule_type === 'minutes_after_prayer' && $this->prayer_name && $this->minutes_after_prayer) {
-            $prayerTime = PrayerTime::getTodayPrayerTimes();
-            if ($prayerTime) {
-                $jamaatTime = $this->resolveJamaatTime($prayerTime);
-                if ($jamaatTime) {
-                    // End at start time + media duration window; as a simple rule, end at + (minutes_after + 10)
-                    // The service will cycle media by its own display duration; here we just mark an end window.
-                    return $jamaatTime->addMinutes($this->minutes_after_prayer + 10);
-                }
-            }
+
+        if ($this->schedule_type === 'minutes_after_prayer') {
+            return $this->resolveAfterPrayerWindow($now)['end'] ?? null;
         }
 
         return null;
@@ -191,46 +147,47 @@ class MediaSchedule extends Model
     /**
      * Check if this schedule should be active based on minutes after prayer (uses JAMAAT TIME)
      */
-    public function isActiveForMinutesAfterPrayer(): bool
+    public function isActiveForMinutesAfterPrayer(?Carbon $now = null): bool
     {
-        if (!$this->is_active || !$this->prayer_name || !$this->minutes_after_prayer) {
-            return false;
+        $window = $this->resolveAfterPrayerWindow($now);
+
+        return $window
+            ? PrayerJamaatTime::isWithinWindow(PrayerJamaatTime::now($now), $window['start'], $window['end'])
+            : false;
+    }
+
+    /**
+     * @return array{jamaat: Carbon, start: Carbon, end: Carbon}|null
+     */
+    public function resolveBeforePrayerWindow(?Carbon $now = null): ?array
+    {
+        if (!$this->is_active || !$this->prayer_name || !$this->minutes_before_prayer) {
+            return null;
         }
 
         $prayerTime = PrayerTime::getTodayPrayerTimes();
         if (!$prayerTime) {
-            return false;
-        }
-
-        $jamaatTime = $this->resolveJamaatTime($prayerTime);
-        if (!$jamaatTime) {
-            return false;
-        }
-        
-        $displayStartTime = $jamaatTime->copy()->addMinutes($this->minutes_after_prayer);
-        $displayEndTime = $this->getDisplayEndTime() ?? $displayStartTime->copy()->addMinutes(10);
-
-        $now = Carbon::now();
-        return $now->between($displayStartTime, $displayEndTime);
-    }
-
-    private function resolveJamaatTime(PrayerTime $prayerTime): ?Carbon
-    {
-        $jamaatField = $this->prayer_name . '_jamaat';
-        $jamaatTime = $prayerTime->$jamaatField ?? null;
-        if (is_string($jamaatTime) && trim($jamaatTime) !== '') {
-            return Carbon::parse($jamaatTime);
-        }
-
-        $prayerTimeField = $this->prayer_name;
-        if (!isset($prayerTime->$prayerTimeField)) {
             return null;
         }
 
-        $beginningTime = Carbon::parse($prayerTime->$prayerTimeField);
-        $jamaatOffset = (int) Setting::get($this->prayer_name . '_jamaat_offset', 0);
+        return PrayerJamaatTime::beforePrayerPosterWindow($this, $prayerTime, $now);
+    }
 
-        return $beginningTime->addMinutes($jamaatOffset);
+    /**
+     * @return array{jamaat: Carbon, start: Carbon, end: Carbon}|null
+     */
+    public function resolveAfterPrayerWindow(?Carbon $now = null): ?array
+    {
+        if (!$this->is_active || !$this->prayer_name || !$this->minutes_after_prayer) {
+            return null;
+        }
+
+        $prayerTime = PrayerTime::getTodayPrayerTimes();
+        if (!$prayerTime) {
+            return null;
+        }
+
+        return PrayerJamaatTime::afterPrayerPosterWindow($this, $prayerTime, $now);
     }
 
     public function getPrayerNameLabel(): string

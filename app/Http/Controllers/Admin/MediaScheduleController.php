@@ -7,6 +7,8 @@ use App\Models\Media;
 use App\Models\MediaSchedule;
 use App\Models\PrayerTime;
 use App\Models\Setting;
+use App\Support\PrayerJamaatTime;
+use App\Support\ScheduledMediaWindow;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -52,7 +54,11 @@ class MediaScheduleController extends Controller
             'media_durations.*' => 'required|numeric|min:0.5',
             'media_priorities' => 'required|array',
             'media_priorities.*' => 'required|integer|min:1|max:100',
-            // New fields for pivot table
+            // Pivot table display window fields
+            'media_start_dates' => 'nullable|array',
+            'media_start_dates.*' => 'nullable|date',
+            'media_start_times' => 'nullable|array',
+            'media_start_times.*' => 'nullable|date_format:H:i',
             'media_expiry_dates' => 'nullable|array',
             'media_expiry_dates.*' => 'nullable|date',
             'media_expiry_times' => 'nullable|array',
@@ -62,6 +68,15 @@ class MediaScheduleController extends Controller
             'media_days_of_week' => 'nullable|array',
             'media_days_of_week.*' => 'nullable|array'
         ]);
+
+        ScheduledMediaWindow::validateRequestWindows(
+            $request->media_ids,
+            $request->media_start_dates,
+            $request->media_start_times,
+            $request->media_expiry_dates,
+            $request->media_expiry_times,
+            Setting::get('timezone', 'Europe/London')
+        );
 
         $data = [
             'schedule_type' => $request->schedule_type,
@@ -89,8 +104,10 @@ class MediaScheduleController extends Controller
             $pivotData[$mediaId] = [
                 'duration' => $request->media_durations[$index] ?? 30,
                 'priority' => $request->media_priorities[$index] ?? ($index + 1),
-                'expiry_date' => $request->media_expiry_dates[$index] ?? null,
-                'expiry_time' => $request->media_expiry_times[$index] ?? null,
+                'start_date' => filled($request->media_start_dates[$index] ?? null) ? $request->media_start_dates[$index] : null,
+                'start_time' => filled($request->media_start_times[$index] ?? null) ? $request->media_start_times[$index] : null,
+                'expiry_date' => filled($request->media_expiry_dates[$index] ?? null) ? $request->media_expiry_dates[$index] : null,
+                'expiry_time' => filled($request->media_expiry_times[$index] ?? null) ? $request->media_expiry_times[$index] : null,
                 'gap_duration' => $request->media_gap_durations[$index] ?? 0,
                 'days_of_week' => isset($request->media_days_of_week[$index]) && !empty($request->media_days_of_week[$index])
                     ? json_encode($request->media_days_of_week[$index]) 
@@ -144,7 +161,11 @@ class MediaScheduleController extends Controller
             'media_durations.*' => 'required|numeric|min:0.5',
             'media_priorities' => 'required|array',
             'media_priorities.*' => 'required|integer|min:1|max:100',
-            // New fields for pivot table
+            // Pivot table display window fields
+            'media_start_dates' => 'nullable|array',
+            'media_start_dates.*' => 'nullable|date',
+            'media_start_times' => 'nullable|array',
+            'media_start_times.*' => 'nullable|date_format:H:i',
             'media_expiry_dates' => 'nullable|array',
             'media_expiry_dates.*' => 'nullable|date',
             'media_expiry_times' => 'nullable|array',
@@ -154,6 +175,15 @@ class MediaScheduleController extends Controller
             'media_days_of_week' => 'nullable|array',
             'media_days_of_week.*' => 'nullable|array'
         ]);
+
+        ScheduledMediaWindow::validateRequestWindows(
+            $request->media_ids,
+            $request->media_start_dates,
+            $request->media_start_times,
+            $request->media_expiry_dates,
+            $request->media_expiry_times,
+            Setting::get('timezone', 'Europe/London')
+        );
 
         $data = [
             'schedule_type' => $request->schedule_type,
@@ -181,8 +211,10 @@ class MediaScheduleController extends Controller
             $pivotData[$mediaId] = [
                 'duration' => $request->media_durations[$index] ?? 30,
                 'priority' => $request->media_priorities[$index] ?? ($index + 1),
-                'expiry_date' => $request->media_expiry_dates[$index] ?? null,
-                'expiry_time' => $request->media_expiry_times[$index] ?? null,
+                'start_date' => filled($request->media_start_dates[$index] ?? null) ? $request->media_start_dates[$index] : null,
+                'start_time' => filled($request->media_start_times[$index] ?? null) ? $request->media_start_times[$index] : null,
+                'expiry_date' => filled($request->media_expiry_dates[$index] ?? null) ? $request->media_expiry_dates[$index] : null,
+                'expiry_time' => filled($request->media_expiry_times[$index] ?? null) ? $request->media_expiry_times[$index] : null,
                 'gap_duration' => $request->media_gap_durations[$index] ?? 0,
                 'days_of_week' => isset($request->media_days_of_week[$index]) && !empty($request->media_days_of_week[$index])
                     ? json_encode($request->media_days_of_week[$index]) 
@@ -251,18 +283,20 @@ class MediaScheduleController extends Controller
         }
         
         // Calculate the display start and end time based on JAMAAT TIME (not beginning time)
-        $beginningTime = Carbon::parse($prayerTimes->$prayerName);
-        
-        // Get Jamaat offset from settings and add to beginning time to get Jamaat time
-        $jamaatOffset = (int) Setting::get($prayerName . '_jamaat_offset', 0);
-        $jamaatTime = $beginningTime->copy()->addMinutes($jamaatOffset);
+        $jamaatTime = PrayerJamaatTime::resolve($prayerTimes, $prayerName);
+        if (!$jamaatTime) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Jamaat time not available for ' . $prayerName,
+            ]);
+        }
         
         if ($scheduleType === 'minutes_before_prayer') {
             $displayStart = $jamaatTime->copy()->subMinutes((int) $minutes);
             $displayEnd = $jamaatTime->copy()->subMinutes(5); // Stops 5 minutes before Jamaat
         } else { // minutes_after_prayer
             $displayStart = $jamaatTime->copy()->addMinutes((int) $minutes);
-            $displayEnd = $displayStart->copy()->addSeconds($mediaDuration); // Use actual media duration
+            $displayEnd = $jamaatTime->copy()->addMinutes((int) $minutes + 10);
         }
         
         // Find all active schedules
@@ -324,13 +358,16 @@ class MediaScheduleController extends Controller
         
         return response()->json([
             'success' => true,
+            'jamaat_time' => $jamaatTime->format('h:i A'),
             'display_start' => $displayStart->format('h:i A'),
             'display_end' => $displayEnd->format('h:i A'),
+            'display_start_iso' => $displayStart->toIso8601String(),
+            'display_end_iso' => $displayEnd->toIso8601String(),
+            'jamaat_time_iso' => $jamaatTime->toIso8601String(),
             'overlapping_schedules' => $overlappingSchedules,
             'suggested_priority' => $suggestedPriority,
             'available_priorities' => $availablePriorities,
             'used_priorities' => $usedPrioritiesInOverlap
         ]);
     }
-
 }

@@ -743,10 +743,41 @@
         border: 0 !important;
         box-sizing: border-box !important;
         flex: 0 0 auto !important;
+        order: 20 !important;
+    }
+
+    .unified-container {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100vh !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    #header-box,
+    .unified-container > .board-header {
+        order: 10 !important;
+        flex: 0 0 auto !important;
+    }
+
+    [data-box-root="special_times_box"] {
+        order: 40 !important;
+        flex: 0 0 auto !important;
+    }
+
+    [data-box-root="welcome_box"] {
+        order: 50 !important;
+        flex: 0 0 auto !important;
+    }
+
+    [data-box-root="sliding_text_box"] {
+        order: 60 !important;
+        flex: 0 0 auto !important;
     }
 
     /* Force 2/3 + 1/3 layout with identical top alignment for both columns */
     .board-main-content {
+        order: 30 !important;
         display: flex !important;
         flex-direction: column !important;
         flex: 1 1 0 !important;
@@ -1074,13 +1105,15 @@
 
 @section('scripts')
 @php
-    // Today's prayer times (jamaat times)
+    use App\Support\PrayerJamaatTime;
+
+    // Today's prayer times (resolved jamaat / iqamah values)
     $prayerTimesJson = [
-        'fajr' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat ?: $prayerTimes->fajr)->format('H:i') : null,
-        'zohar' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat ?: $prayerTimes->zohar)->format('H:i') : null,
-        'asr' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat ?: $prayerTimes->asr)->format('H:i') : null,
-        'maghrib' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat ?: $prayerTimes->maghrib)->format('H:i') : null,
-        'isha' => $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat ?: $prayerTimes->isha)->format('H:i') : null,
+        'fajr' => $prayerTimes ? PrayerJamaatTime::resolve($prayerTimes, 'fajr')?->format('H:i') : null,
+        'zohar' => $prayerTimes ? PrayerJamaatTime::resolve($prayerTimes, 'zohar')?->format('H:i') : null,
+        'asr' => $prayerTimes ? PrayerJamaatTime::resolve($prayerTimes, 'asr')?->format('H:i') : null,
+        'maghrib' => $prayerTimes ? PrayerJamaatTime::resolve($prayerTimes, 'maghrib')?->format('H:i') : null,
+        'isha' => $prayerTimes ? PrayerJamaatTime::resolve($prayerTimes, 'isha')?->format('H:i') : null,
     ];
     
     // Today's beginning times
@@ -1094,11 +1127,11 @@
     
     // Tomorrow's prayer times
     $tomorrowPrayerTimesJson = [
-        'fajr' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->fajr_jamaat ?: $tomorrowPrayerTimes->fajr)->format('H:i') : null,
-        'zohar' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->zohar_jamaat ?: $tomorrowPrayerTimes->zohar)->format('H:i') : null,
-        'asr' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->asr_jamaat ?: $tomorrowPrayerTimes->asr)->format('H:i') : null,
-        'maghrib' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->maghrib_jamaat ?: $tomorrowPrayerTimes->maghrib)->format('H:i') : null,
-        'isha' => $tomorrowPrayerTimes ? \Carbon\Carbon::parse($tomorrowPrayerTimes->isha_jamaat ?: $tomorrowPrayerTimes->isha)->format('H:i') : null,
+        'fajr' => $tomorrowPrayerTimes ? PrayerJamaatTime::resolve($tomorrowPrayerTimes, 'fajr')?->format('H:i') : null,
+        'zohar' => $tomorrowPrayerTimes ? PrayerJamaatTime::resolve($tomorrowPrayerTimes, 'zohar')?->format('H:i') : null,
+        'asr' => $tomorrowPrayerTimes ? PrayerJamaatTime::resolve($tomorrowPrayerTimes, 'asr')?->format('H:i') : null,
+        'maghrib' => $tomorrowPrayerTimes ? PrayerJamaatTime::resolve($tomorrowPrayerTimes, 'maghrib')?->format('H:i') : null,
+        'isha' => $tomorrowPrayerTimes ? PrayerJamaatTime::resolve($tomorrowPrayerTimes, 'isha')?->format('H:i') : null,
     ];
     
     // Tomorrow's beginning times
@@ -2356,7 +2389,10 @@
             return;
         }
 
-        let spacer = container.querySelector(':scope > .board-header-content-gap');
+        const spacers = Array.from(container.querySelectorAll(':scope > .board-header-content-gap'));
+        let spacer = spacers[0] || null;
+        spacers.slice(1).forEach((duplicate) => duplicate.remove());
+
         if (!spacer) {
             spacer = document.createElement('div');
             spacer.className = 'board-header-content-gap';
@@ -2372,6 +2408,8 @@
     }
 
     function syncBoardColumnLayout(boxSettings = null) {
+        restoreFixedBoardLayout();
+
         const configPadding = boxSettings
             ? resolveBoardColumnPadding(boxSettings)
             : getComputedStyle(document.querySelector('.board-main-content') || document.body).getPropertyValue('--board-column-padding').trim();

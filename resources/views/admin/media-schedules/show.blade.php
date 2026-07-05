@@ -53,6 +53,12 @@
                                                     </div>
                                                     <div class="mt-2">
                                                         <small class="text-muted">{{ ucfirst($media->type) }}</small>
+                                                        @if($media->pivot->start_date && $media->pivot->start_time)
+                                                            <div><small class="text-muted">Starts: {{ \Carbon\Carbon::parse($media->pivot->start_date . ' ' . $media->pivot->start_time)->format('M j, Y g:i A') }}</small></div>
+                                                        @endif
+                                                        @if($media->pivot->expiry_date && $media->pivot->expiry_time)
+                                                            <div><small class="text-muted">Ends: {{ \Carbon\Carbon::parse($media->pivot->expiry_date . ' ' . $media->pivot->expiry_time)->format('M j, Y g:i A') }}</small></div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
@@ -187,6 +193,7 @@
                                         @elseif($mediaSchedule->schedule_type === 'full_time_poster')
                                             <li><i class="bi bi-check-circle text-success me-2"></i>Media will cycle continuously throughout the day</li>
                                         @endif
+                                        <li><i class="bi bi-info-circle text-info me-2"></i>Optional start/end date and time can limit each media item</li>
                                         
                                         @if($mediaSchedule->days_of_week)
                                             <li><i class="bi bi-check-circle text-success me-2"></i>Only active on selected days</li>

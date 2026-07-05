@@ -76,6 +76,8 @@ class PrayerPosterScheduleTest extends TestCase
             $table->decimal('duration', 8, 2)->default(1);
             $table->integer('priority')->default(1);
             $table->boolean('is_active')->default(true);
+            $table->date('start_date')->nullable();
+            $table->time('start_time')->nullable();
             $table->date('expiry_date')->nullable();
             $table->time('expiry_time')->nullable();
             $table->integer('gap_duration')->default(0);

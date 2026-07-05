@@ -74,15 +74,49 @@ html, body {
 }
 
 .unified-container {
-    display: grid;
-    grid-template-rows: auto auto 1fr auto;
+    display: flex;
+    flex-direction: column;
     height: 100vh;
     width: 100%;
     gap: 0;
     padding: 0;
     margin: 0;
     overflow: hidden;
+    min-height: 0;
     --board-header-content-gap: clamp(8px, 1vh, 14px);
+}
+
+/* Pin vertical stack regardless of DOM order or display toggles during polling */
+.unified-container > #header-box,
+.unified-container > .board-header {
+    order: 10;
+    flex: 0 0 auto;
+}
+
+.unified-container > .board-header-content-gap {
+    order: 20;
+    flex: 0 0 auto;
+}
+
+.unified-container > .board-main-content {
+    order: 30;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.unified-container > [data-box-root="special_times_box"] {
+    order: 40;
+    flex: 0 0 auto;
+}
+
+.unified-container > [data-box-root="welcome_box"] {
+    order: 50;
+    flex: 0 0 auto;
+}
+
+.unified-container > [data-box-root="sliding_text_box"] {
+    order: 60;
+    flex: 0 0 auto;
 }
 
 .board-header-content-gap {
@@ -845,11 +879,10 @@ html, body {
     box-sizing: border-box;
 }
 
-/* Ensure no parent hides bottom content */
+/* Keep the board shell clipped; only allow internal sections to scroll */
 .digital-board,
-.unified-container,
-.board-main-content {
-    overflow: visible;
+.unified-container {
+    overflow: hidden;
 }
 
 /* Prayer times section - must allow internal scroll only */
@@ -952,16 +985,18 @@ html, body {
     .digital-board {
         width: 100%;
         height: 100vh;
-        display: grid;
-        grid-template-rows: auto 1fr auto auto;
+        display: flex;
+        flex-direction: column;
         gap: 0;
         overflow: hidden;
     }
     
     .unified-container {
-        display: grid;
-        grid-template-rows: auto 1fr auto;
-        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        height: 100%;
+        min-height: 0;
         width: 100%;
         gap: 0;
         padding: 0;

@@ -186,8 +186,16 @@ $existingMediaData = $mediaSchedule->mediaItems->mapWithKeys(function($media) {
         $media->id => [
             'duration' => $media->pivot->duration,
             'priority' => $media->pivot->priority,
+            'start_date' => $media->pivot->start_date,
+            'start_time' => $media->pivot->start_time
+                ? \Carbon\Carbon::parse($media->pivot->start_time)->format('H:i')
+                : null,
             'expiry_date' => $media->pivot->expiry_date,
-            'expiry_time' => $media->pivot->expiry_time,
+            'expiry_time' => $media->pivot->expiry_time
+                ? \Carbon\Carbon::parse($media->pivot->expiry_time)->format('H:i')
+                : null,
+            'start_date' => $media->pivot->start_date,
+            'start_time' => $media->pivot->start_time,
             'gap_duration' => $media->pivot->gap_duration ?? 0,
             'days_of_week' => $media->pivot->days_of_week,
         ],
@@ -255,6 +263,8 @@ function updateMediaConfig() {
         const oldPriority = @json(old('media_priorities', []));
         const oldExpiryDates = @json(old('media_expiry_dates', []));
         const oldExpiryTimes = @json(old('media_expiry_times', []));
+        const oldStartDates = @json(old('media_start_dates', []));
+        const oldStartTimes = @json(old('media_start_times', []));
         const oldGapDurations = @json(old('media_gap_durations', []));
         const oldDaysOfWeek = @json(old('media_days_of_week', []));
         
@@ -264,6 +274,8 @@ function updateMediaConfig() {
             const priority = oldPriority[index] || existingMediaData[media.id]?.priority || (index + 1);
             const expiryDate = oldExpiryDates[index] || existingMediaData[media.id]?.expiry_date || '';
             const expiryTime = oldExpiryTimes[index] || existingMediaData[media.id]?.expiry_time || '';
+            const startDate = oldStartDates[index] || existingMediaData[media.id]?.start_date || '';
+            const startTime = oldStartTimes[index] || existingMediaData[media.id]?.start_time || '';
             const gapDuration = oldGapDurations[index] || existingMediaData[media.id]?.gap_duration || 0;
             
             // Handle days of week for this media
@@ -293,20 +305,37 @@ function updateMediaConfig() {
                                        min="1" max="100" required>
                             </div>
                         </div>
-                        
-                        ${isFullTimePoster ? `
+
                         <div class="row mt-2">
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Display Window <span class="text-muted">(optional calendar limits)</span></label>
+                            </div>
                             <div class="col-md-6 mb-2">
-                                <label class="form-label small">Expiry Date <span class="text-muted">(optional)</span></label>
-                                <input type="date" class="form-control form-control-sm" 
+                                <label class="form-label small">Start Date</label>
+                                <input type="date" class="form-control form-control-sm"
+                                       name="media_start_dates[]" value="${startDate}">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small">Start Time</label>
+                                <input type="time" class="form-control form-control-sm"
+                                       name="media_start_times[]" value="${startTime}">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small">End Date</label>
+                                <input type="date" class="form-control form-control-sm"
                                        name="media_expiry_dates[]" value="${expiryDate}">
                             </div>
                             <div class="col-md-6 mb-2">
-                                <label class="form-label small">Expiry Time <span class="text-muted">(optional)</span></label>
-                                <input type="time" class="form-control form-control-sm" 
+                                <label class="form-label small">End Time</label>
+                                <input type="time" class="form-control form-control-sm"
                                        name="media_expiry_times[]" value="${expiryTime}">
                             </div>
+                            <div class="col-12">
+                                <small class="text-muted">Optional extra limits on top of the prayer schedule window above. The poster only shows when <strong>both</strong> the prayer window and this calendar window match. Leave blank for no calendar limit.</small>
+                            </div>
                         </div>
+
+                        ${isFullTimePoster ? `
                         <div class="row mt-2">
                             <div class="col-12 mb-2">
                                 <label class="form-label small">Gap Duration (seconds) <span class="text-muted">(time between this and next media)</span></label>
@@ -315,7 +344,7 @@ function updateMediaConfig() {
                                        min="0" max="3600">
                             </div>
                         </div>
-                        ` : ''}
+                        ` : `<input type="hidden" name="media_gap_durations[]" value="0">`}
                         
                         <div class="row mt-2">
                             <div class="col-12">
@@ -372,10 +401,51 @@ function updateMediaConfig() {
         });
         
         configContainer.innerHTML = html;
+        configContainer.querySelectorAll('input[name="media_start_dates[]"], input[name="media_start_times[]"], input[name="media_expiry_dates[]"], input[name="media_expiry_times[]"]').forEach((input) => {
+            input.addEventListener('change', checkDisplayTime);
+            input.addEventListener('input', checkDisplayTime);
+        });
     } else {
         configSection.style.display = 'none';
         configContainer.innerHTML = '';
     }
+}
+
+function getCalendarWindowSummary() {
+    const startDate = document.querySelector('input[name="media_start_dates[]"]')?.value || '';
+    const startTime = document.querySelector('input[name="media_start_times[]"]')?.value || '';
+    const endDate = document.querySelector('input[name="media_expiry_dates[]"]')?.value || '';
+    const endTime = document.querySelector('input[name="media_expiry_times[]"]')?.value || '';
+
+    if (!startDate && !startTime && !endDate && !endTime) {
+        return null;
+    }
+
+    return { startDate, startTime, endDate, endTime };
+}
+
+function buildCalendarOverlapNote(data) {
+    const calendar = getCalendarWindowSummary();
+    if (!calendar || !calendar.startDate || !calendar.startTime || !calendar.endDate || !calendar.endTime) {
+        if (calendar && (calendar.startDate || calendar.startTime || calendar.endDate || calendar.endTime)) {
+            return '<div class="text-warning mt-2"><small>Calendar window is incomplete. Set both date and time for start and end.</small></div>';
+        }
+        return '';
+    }
+
+    const prayerStart = new Date(data.display_start_iso);
+    const prayerEnd = new Date(data.display_end_iso);
+    const calendarStart = new Date(`${calendar.startDate}T${calendar.startTime}`);
+    const calendarEnd = new Date(`${calendar.endDate}T${calendar.endTime}`);
+    const overlaps = calendarStart < prayerEnd && calendarEnd > prayerStart;
+
+    const calendarLabel = `${calendar.startDate} ${calendar.startTime} → ${calendar.endDate} ${calendar.endTime}`;
+
+    if (!overlaps) {
+        return `<div class="alert alert-warning mt-2 mb-0 py-2"><small><strong>Calendar window does not overlap the prayer window.</strong><br>Calendar: ${calendarLabel}<br>The poster will never display with these settings.</small></div>`;
+    }
+
+    return `<div class="text-success mt-2"><small>Calendar window overlaps prayer window: ${calendarLabel}</small></div>`;
 }
 
 function checkDisplayTime() {
@@ -428,8 +498,10 @@ function checkDisplayTime() {
             if (data.success) {
                 // Update display time
                 displayContent.innerHTML = `
-                    <div><strong>Start:</strong> ${data.display_start}</div>
-                    <div><strong>End:</strong> ${data.display_end}</div>
+                    <div><strong>Jamaat:</strong> ${data.jamaat_time}</div>
+                    <div><strong>Prayer window start:</strong> ${data.display_start}</div>
+                    <div><strong>Prayer window end:</strong> ${data.display_end}</div>
+                    ${buildCalendarOverlapNote(data)}
                 `;
                 
                 // Show overlapping schedules if any

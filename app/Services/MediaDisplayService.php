@@ -7,6 +7,8 @@ use App\Models\MediaSchedule;
 use App\Models\PrayerTime;
 use App\Models\Setting;
 use App\Support\PrayerCountdownWindows;
+use App\Support\PrayerJamaatTime;
+use App\Support\ScheduledMediaWindow;
 use Carbon\Carbon;
 
 class MediaDisplayService
@@ -79,7 +81,7 @@ class MediaDisplayService
         }
 
         // Get the start time of the schedule
-        $scheduleStart = $this->getScheduleStartTime($schedule);
+        $scheduleStart = $this->getScheduleStartTime($schedule, $now);
         if (!$scheduleStart) {
             return null;
         }
@@ -90,7 +92,7 @@ class MediaDisplayService
         }
 
         // For prayer-based schedules, check if we're within the display window
-        $scheduleEnd = $this->getScheduleEndTime($schedule);
+        $scheduleEnd = $this->getScheduleEndTime($schedule, $now);
         if (!$scheduleEnd || !$now->between($scheduleStart, $scheduleEnd)) {
             return null;
         }
@@ -106,9 +108,9 @@ class MediaDisplayService
     {
         switch ($schedule->schedule_type) {
             case 'minutes_before_prayer':
-                return $schedule->isActiveForMinutesBeforePrayer();
+                return $schedule->isActiveForMinutesBeforePrayer($now);
             case 'minutes_after_prayer':
-                return $schedule->isActiveForMinutesAfterPrayer();
+                return $schedule->isActiveForMinutesAfterPrayer($now);
             case 'full_time_poster':
                 return true; // Always active
             default:
@@ -119,27 +121,26 @@ class MediaDisplayService
     /**
      * Get schedule start time
      */
-    private function getScheduleStartTime(MediaSchedule $schedule): ?Carbon
+    private function getScheduleStartTime(MediaSchedule $schedule, Carbon $now): ?Carbon
     {
         if ($schedule->schedule_type === 'full_time_poster') {
-            // Start from beginning of today
-            return Carbon::today();
+            // Start from beginning of today in app timezone
+            return PrayerJamaatTime::now($now)->copy()->startOfDay();
         }
         
-        return $schedule->getDisplayStartTime();
+        return $schedule->getDisplayStartTime($now);
     }
 
     /**
      * Get schedule end time
      */
-    private function getScheduleEndTime(MediaSchedule $schedule): ?Carbon
+    private function getScheduleEndTime(MediaSchedule $schedule, Carbon $now): ?Carbon
     {
         if ($schedule->schedule_type === 'full_time_poster') {
-            // End at end of today
-            return Carbon::today()->endOfDay();
+            return PrayerJamaatTime::now($now)->copy()->endOfDay();
         }
         
-        return $schedule->getDisplayEndTime();
+        return $schedule->getDisplayEndTime($now);
     }
 
     /**
@@ -158,31 +159,13 @@ class MediaDisplayService
             return null;
         }
 
-        // Filter out expired media and media not active for today
-        $activeMediaItems = $mediaItems->filter(function($media) use ($now) {
-            // Check expiry date/time
-            if ($media->pivot->expiry_date && $media->pivot->expiry_time) {
-                $expiryDateTime = Carbon::parse($media->pivot->expiry_date . ' ' . $media->pivot->expiry_time);
-                if ($now->greaterThanOrEqualTo($expiryDateTime)) {
-                    return false; // Media has expired
-                }
+        // Filter out media outside its optional start/end window or day restrictions.
+        $activeMediaItems = $mediaItems->filter(function ($media) use ($now) {
+            if (!$this->isPivotMediaEligible($media, $now)) {
+                return false;
             }
-            
-            // Check days of week for this media
-            if ($media->pivot->days_of_week) {
-                $daysOfWeek = is_string($media->pivot->days_of_week) 
-                    ? json_decode($media->pivot->days_of_week, true) 
-                    : $media->pivot->days_of_week;
-                    
-                if (!empty($daysOfWeek)) {
-                    $today = $now->dayOfWeekIso; // 1-7 (Monday-Sunday)
-                    if (!in_array($today, $daysOfWeek)) {
-                        return false; // Media not active for today
-                    }
-                }
-            }
-            
-            return true; // Media is active
+
+            return $this->isPivotMediaActiveForToday($media, $now);
         });
 
         if ($activeMediaItems->isEmpty()) {
@@ -259,23 +242,13 @@ class MediaDisplayService
             return null;
         }
 
-        // Filter media based on days_of_week at media level
-        $activeMediaItems = $mediaItems->filter(function($media) use ($now) {
-            // Check days of week for this media
-            if ($media->pivot->days_of_week) {
-                $daysOfWeek = is_string($media->pivot->days_of_week) 
-                    ? json_decode($media->pivot->days_of_week, true) 
-                    : $media->pivot->days_of_week;
-                    
-                if (!empty($daysOfWeek)) {
-                    $today = $now->dayOfWeekIso; // 1-7 (Monday-Sunday)
-                    if (!in_array($today, $daysOfWeek)) {
-                        return false; // Media not active for today
-                    }
-                }
+        // Filter media based on optional start/end window and days_of_week at media level.
+        $activeMediaItems = $mediaItems->filter(function ($media) use ($now) {
+            if (!$this->isPivotMediaEligible($media, $now)) {
+                return false;
             }
-            
-            return true; // Media is active
+
+            return $this->isPivotMediaActiveForToday($media, $now);
         });
 
         if ($activeMediaItems->isEmpty()) {
@@ -370,7 +343,7 @@ class MediaDisplayService
         $activeCountdown = null;
 
         foreach (['fajr', 'zohar', 'asr', 'maghrib', 'isha'] as $name) {
-            $iqamahTime = $this->resolveIqamahTime($prayerTimes, $name, $now);
+            $iqamahTime = PrayerJamaatTime::resolve($prayerTimes, $name, $now);
             if (!$iqamahTime) {
                 continue;
             }
@@ -401,7 +374,7 @@ class MediaDisplayService
         $prayers = [];
         if ($prayerTimes) {
             foreach (['fajr', 'zohar', 'asr', 'maghrib', 'isha'] as $name) {
-                $iqamahTime = $this->resolveIqamahTime($prayerTimes, $name, $now);
+                $iqamahTime = PrayerJamaatTime::resolve($prayerTimes, $name, $now);
                 if (!$iqamahTime) {
                     continue;
                 }
@@ -484,51 +457,18 @@ class MediaDisplayService
 
     private function nowInAppTimezone(?Carbon $now = null): Carbon
     {
-        return $now
-            ? $now->copy()->timezone($this->appTimezone())
-            : Carbon::now($this->appTimezone());
-    }
-
-    private function parsePrayerClockTime(string $date, ?string $time, Carbon $referenceNow): ?Carbon
-    {
-        if (!is_string($time) || trim($time) === '') {
-            return null;
-        }
-
-        $normalized = strlen($time) === 5 ? $time . ':00' : $time;
-
-        return Carbon::parse($date . ' ' . $normalized, $this->appTimezone());
+        return PrayerJamaatTime::now($now);
     }
 
     private function resolveAdhanTime(PrayerTime $prayerTimes, string $prayerName, Carbon $referenceNow): ?Carbon
     {
         $adhanField = $prayerName . '_adhan';
-        $adhanTime = $prayerTimes->$adhanField ?? null;
-
-        return $this->parsePrayerClockTime(
-            $referenceNow->toDateString(),
-            is_string($adhanTime) ? $adhanTime : null,
-            $referenceNow
-        );
-    }
-
-    private function resolveIqamahTime(PrayerTime $prayerTimes, string $prayerName, Carbon $referenceNow): ?Carbon
-    {
-        $jamaatField = $prayerName . '_jamaat';
-        $jamaatTime = $prayerTimes->$jamaatField ?? null;
-        if (is_string($jamaatTime) && trim($jamaatTime) !== '') {
-            return $this->parsePrayerClockTime($referenceNow->toDateString(), $jamaatTime, $referenceNow);
-        }
-
-        $baseTime = $prayerTimes->$prayerName ?? null;
-        if (!is_string($baseTime) || trim($baseTime) === '') {
+        $adhanTime = PrayerJamaatTime::normalizeClockValue($prayerTimes->$adhanField ?? null);
+        if ($adhanTime === null) {
             return null;
         }
 
-        $offsetMinutes = (int) Setting::get($prayerName . '_jamaat_offset', 0);
-
-        return $this->parsePrayerClockTime($referenceNow->toDateString(), $baseTime, $referenceNow)
-            ?->addMinutes($offsetMinutes);
+        return PrayerJamaatTime::parseClockOnDate($referenceNow->toDateString(), $adhanTime);
     }
 
     /**
@@ -568,5 +508,27 @@ class MediaDisplayService
             ->orderBy('id', 'desc')
             ->get()
             ->toArray();
+    }
+
+    private function isPivotMediaEligible($media, Carbon $now): bool
+    {
+        return ScheduledMediaWindow::isEligible($media->pivot, $now, $this->appTimezone());
+    }
+
+    private function isPivotMediaActiveForToday($media, Carbon $now): bool
+    {
+        if (!$media->pivot->days_of_week) {
+            return true;
+        }
+
+        $daysOfWeek = is_string($media->pivot->days_of_week)
+            ? json_decode($media->pivot->days_of_week, true)
+            : $media->pivot->days_of_week;
+
+        if (empty($daysOfWeek)) {
+            return true;
+        }
+
+        return in_array($now->dayOfWeekIso, $daysOfWeek, true);
     }
 }
