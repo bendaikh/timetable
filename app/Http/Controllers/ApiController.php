@@ -7,6 +7,7 @@ use App\Models\PrayerTime;
 use App\Models\Announcement;
 use App\Models\Setting;
 use App\Models\BoxSetting;
+use App\Models\SlidingText;
 use App\Services\DisplayStateVersionService;
 use Carbon\Carbon;
 
@@ -86,6 +87,7 @@ class ApiController extends Controller
             'theme_variables' => $themeVariables,
             'box_settings' => $boxSettings,
             'box_order' => $boxOrder,
+            'sliding_texts' => SlidingText::getActiveTexts(),
             ...$this->displayStateVersionService->getVersions(),
         ]);
     }
@@ -108,6 +110,14 @@ class ApiController extends Controller
 
         return response()->json([
             'announcements' => $announcements,
+            ...$this->displayStateVersionService->getVersions(),
+        ]);
+    }
+
+    public function slidingTexts()
+    {
+        return response()->json([
+            'sliding_texts' => SlidingText::getActiveTexts(),
             ...$this->displayStateVersionService->getVersions(),
         ]);
     }

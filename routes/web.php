@@ -16,15 +16,18 @@ use App\Http\Controllers\MediaDisplayController;
 use App\Http\Controllers\ApiController;
 
 // Public Routes
-Route::get('/', [TimetableController::class, 'index'])->name('timetable.index');
+Route::get('/', [TimetableController::class, 'index'])
+    ->name('timetable.index')
+    ->middleware('no-cache-dashboard');
 
 // API Routes for real-time data
-Route::prefix('api')->group(function () {
+Route::prefix('api')->middleware('no-cache-dashboard')->group(function () {
     Route::get('/screen-config', [ApiController::class, 'screenConfig']);
     Route::get('/timetable', [ApiController::class, 'timetable']);
     Route::get('/prayer-times', [ApiController::class, 'prayerTimes']);
     Route::get('/tomorrow-prayer-times', [ApiController::class, 'tomorrowPrayerTimes']);
     Route::get('/announcements', [ApiController::class, 'announcements']);
+    Route::get('/sliding-texts', [ApiController::class, 'slidingTexts']);
 
     Route::get('/next-prayer', [ApiController::class, 'nextPrayer']);
     Route::get('/settings', [ApiController::class, 'settings']);
@@ -35,6 +38,7 @@ Route::prefix('api')->group(function () {
     Route::get('/media-status', [MediaDisplayController::class, 'getStatus']);
     Route::get('/debug-schedules', [MediaDisplayController::class, 'debugSchedules']);
     Route::get('/debug-priority', [MediaDisplayController::class, 'debugPriority']);
+    Route::get('/countdown-diagnostic', [MediaDisplayController::class, 'getCountdownDiagnostic']);
     Route::get('/screen-state', [MediaDisplayController::class, 'getScreenState']); // NEW: Unified state endpoint
 });
 

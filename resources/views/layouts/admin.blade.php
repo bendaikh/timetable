@@ -139,15 +139,40 @@
             border-radius: 8px;
             padding: 15px;
             background-color: #f9f9f9;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Full timetable iframe on boxes index */
+        .preview-container.preview-container-frame,
+        .preview-container:has(iframe) {
+            min-height: auto;
+            padding: 0;
+            border: none;
+            background: transparent;
+            overflow: visible;
+        }
+
+        /* Compact HTML preview on box edit pages */
+        .preview-container.preview-container-compact,
+        .preview-container:not(:has(iframe)) {
+            max-height: 420px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
+            overflow: hidden;
         }
         
         .box-preview {
             width: 100%;
             max-width: 300px;
             margin: 0 auto;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        #livePreview .box-preview {
+            max-width: 100%;
         }
         
         .form-control-color {
@@ -457,6 +482,21 @@
             }
         });
     </script>
+
+    @if(session('success'))
+        <script>
+            try {
+                localStorage.setItem('timetable-display-sync', String(Date.now()));
+                if ('BroadcastChannel' in window) {
+                    const channel = new BroadcastChannel('timetable-display');
+                    channel.postMessage({ type: 'sync', at: Date.now() });
+                    channel.close();
+                }
+            } catch (error) {
+                // Ignore storage failures in restricted contexts.
+            }
+        </script>
+    @endif
 
     @yield('scripts')
     @stack('scripts')

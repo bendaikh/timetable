@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BoxSetting;
 use App\Models\Setting;
+use App\Support\CssUnits;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -23,6 +24,18 @@ class BoxesManagementController extends Controller
         }
 
         return [];
+    }
+
+    private function normalizeAnnouncementsStylingSettings(array $stylingSettings): array
+    {
+        if (isset($stylingSettings['title_font_size'])) {
+            $stylingSettings['title_font_size'] = CssUnits::normalizeBoxRem(
+                $stylingSettings['title_font_size'],
+                '1.2rem'
+            );
+        }
+
+        return $stylingSettings;
     }
 
     /**
@@ -115,6 +128,10 @@ class BoxesManagementController extends Controller
             $existingStyleSettings,
             $requestStyleSettings
         );
+
+        if ($box->box_type === 'announcements_box') {
+            $stylingSettings = $this->normalizeAnnouncementsStylingSettings($stylingSettings);
+        }
         
         // Convert hex background color to RGBA for storage
         if (isset($stylingSettings['background_color']) && strpos($stylingSettings['background_color'], '#') === 0) {
@@ -211,6 +228,11 @@ class BoxesManagementController extends Controller
                 $existingStyleSettings = $this->normalizeSettingArray($box->styling_settings);
                 $requestStyleSettings = $this->normalizeSettingArray($request->styling_settings);
                 $stylingSettings = array_merge($existingStyleSettings, $requestStyleSettings);
+
+                if ($box->box_type === 'announcements_box') {
+                    $stylingSettings = $this->normalizeAnnouncementsStylingSettings($stylingSettings);
+                }
+
             // Convert hex background color to RGBA for storage
                 if (isset($stylingSettings['background_color']) && strpos($stylingSettings['background_color'], '#') === 0) {
                     $hex = $stylingSettings['background_color'];

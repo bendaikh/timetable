@@ -136,3 +136,17 @@
 </div>
 @endsection
 
+@section('scripts')
+<script>
+    document.querySelector('form')?.addEventListener('submit', function() {
+        try {
+            localStorage.setItem('timetable-display-sync', String(Date.now()));
+            const channel = new BroadcastChannel('timetable-display');
+            channel.postMessage({ type: 'sync', at: Date.now() });
+            channel.close();
+        } catch (error) {
+            // Ignore unsupported browsers.
+        }
+    });
+</script>
+@endsection

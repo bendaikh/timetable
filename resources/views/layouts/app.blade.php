@@ -175,7 +175,10 @@
         .prayer-times-section {
             background: rgba(255, 255, 255, 0.9);
             border: 2px solid #000;
-            padding: clamp(15px, 2.5vh, 25px);
+            padding-top: 0;
+            padding-left: clamp(15px, 2.5vh, 25px);
+            padding-right: clamp(15px, 2.5vh, 25px);
+            padding-bottom: clamp(15px, 2.5vh, 25px);
             height: 100%;
             position: relative;
             overflow-y: auto;
@@ -199,20 +202,33 @@
             pointer-events: none;
         }
         
+        .prayer-header,
+        .announcements-header {
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: none;
+            padding-bottom: 10px;
+            flex-shrink: 0;
+            font-size: clamp(1.5rem, 2.5vw, 3.5rem);
+            box-sizing: border-box;
+            position: relative;
+            z-index: 2;
+        }
+
         .prayer-header {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
-            margin-bottom: 15px;
-            font-weight: bold;
-            text-align: center;
-            border-bottom: 1px solid #000;
-            padding-bottom: 10px;
-            position: relative;
-            z-index: 2;
         }
         
-        .prayer-col-header {
+        .announcements-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background-color: var(--announcements-header-bg, #1E4D2B);
+            color: var(--announcements-header-text, #ffffff);
         }
         
         .prayer-list {
@@ -311,21 +327,21 @@
         /* Announcements Section */
         .announcements-section {
             background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #000;
-            padding: clamp(15px, 2.5vh, 25px);
+            border: none;
+            padding-top: 0;
+            padding-left: clamp(15px, 2.5vh, 25px);
+            padding-right: clamp(15px, 2.5vh, 25px);
+            padding-bottom: clamp(15px, 2.5vh, 25px);
             height: 100%;
-            overflow-y: auto;
-        }
-        
-        .announcements-header {
-            font-size: clamp(1.2rem, 1.5vw, 1.6rem);
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: clamp(15px, 2vh, 20px);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
         }
         
         .announcements-content {
-            height: calc(100% - 60px);
+            flex: 1 1 0;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             align-items: stretch;
@@ -354,13 +370,12 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: clamp(5px, 0.8vh, 8px);
             border-left: clamp(3px, 0.4vw, 5px) solid #0b3d0b;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
+            transition: background 0.3s ease;
+            min-height: 0;
         }
         
         .announcement-item:hover {
             background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-1px);
         }
         
         .announcement-title {
@@ -578,7 +593,10 @@
             .prayer-times-section,
             .hadeeth-section,
             .announcements-section {
-                padding: clamp(12px, 2.5vh, 25px);
+                padding-top: 0;
+                padding-left: clamp(12px, 2.5vh, 25px);
+                padding-right: clamp(12px, 2.5vh, 25px);
+                padding-bottom: clamp(12px, 2.5vh, 25px);
             }
             
             .board-bottom-times,
@@ -601,7 +619,10 @@
             .prayer-times-section,
             .hadeeth-section,
             .announcements-section {
-                padding: 30px;
+                padding-top: 0;
+                padding-left: 30px;
+                padding-right: 30px;
+                padding-bottom: 30px;
             }
             
             .board-bottom-times,
@@ -617,9 +638,12 @@
                 font-size: 2.2rem;
             }
             
-            .hadeeth-header,
-            .announcements-header {
+            .hadeeth-header {
                 font-size: 1.8rem;
+            }
+
+            .announcements-header {
+                font-size: clamp(1.5rem, 2.5vw, 3.5rem);
             }
             
             .arabic-hadeeth {
@@ -755,7 +779,7 @@
         }
 
         .countdown-label {
-            font-size: 2rem;
+            font-size: var(--type-xl, 2rem);
             margin-bottom: 20px;
             font-weight: bold;
             text-transform: uppercase;
@@ -763,14 +787,14 @@
         }
 
         .countdown-prayer {
-            font-size: 4rem;
+            font-size: var(--type-5xl, 4rem);
             margin-bottom: 30px;
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .countdown-time {
-            font-size: 6rem;
+            font-size: var(--type-7xl, 6rem);
             font-weight: bold;
             font-family: 'Courier New', monospace;
             text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
@@ -846,7 +870,7 @@
         }
 
         .countdown-popup-title {
-            font-size: 2.5rem;
+            font-size: var(--type-2xl, 2.5rem);
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -859,7 +883,7 @@
         }
 
         .countdown-popup-timer {
-            font-size: 8rem;
+            font-size: var(--type-8xl, 8rem);
             font-weight: bold;
             font-family: 'Courier New', monospace;
             color: #F8B803;
@@ -869,7 +893,7 @@
         }
 
         .countdown-popup-label {
-            font-size: 1.8rem;
+            font-size: var(--type-lg, 1.5rem);
             font-weight: 600;
             color: #ffffff;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
@@ -880,7 +904,7 @@
         }
 
         .countdown-popup-prayer {
-            font-size: 2rem;
+            font-size: var(--type-xl, 2rem);
             font-weight: bold;
             color: #F8B803;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);

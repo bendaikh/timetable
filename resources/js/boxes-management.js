@@ -55,10 +55,84 @@ class BoxesManager {
             'border_color': '#0066cc',
             'header_background_color': '#0066cc',
             'header_text_color': '#ffffff',
-            'title_color': '#000000',
+            'title_background_color': '#1E4D2B',
+            'title_color': '#ffffff',
             'accent_color': '#90EE90'
         };
         return defaults[inputId] || '#000000';
+    }
+
+    normalizeRemFontSize(value, defaultRem = '1.2rem') {
+        const trimmed = String(value ?? '').trim();
+
+        if (!trimmed) {
+            return defaultRem;
+        }
+
+        if (/rem$/i.test(trimmed)) {
+            return trimmed;
+        }
+
+        if (/px$/i.test(trimmed)) {
+            const numeric = parseFloat(trimmed);
+            if (!Number.isFinite(numeric)) {
+                return defaultRem;
+            }
+
+            const rem = Math.round((numeric / 16) * 1000) / 1000;
+            return `${rem}rem`;
+        }
+
+        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+            const rem = Math.round((parseFloat(trimmed) / 16) * 1000) / 1000;
+            return `${rem}rem`;
+        }
+
+        return trimmed;
+    }
+
+    parseTitleRemValue(value, fallbackRem = 1.2) {
+        const trimmed = String(value ?? '').trim();
+        if (!trimmed) {
+            return fallbackRem;
+        }
+
+        if (/rem$/i.test(trimmed)) {
+            const numeric = parseFloat(trimmed);
+            return Number.isFinite(numeric) ? numeric : fallbackRem;
+        }
+
+        if (/px$/i.test(trimmed)) {
+            const numeric = parseFloat(trimmed);
+            return Number.isFinite(numeric) ? numeric / 16 : fallbackRem;
+        }
+
+        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+            return parseFloat(trimmed);
+        }
+
+        return fallbackRem;
+    }
+
+    getPreviewAnnouncementsFontSizes(styling) {
+        const titleRem = this.parseTitleRemValue(styling.title_font_size, 1.2);
+        const titleScale = Math.min(1, 1.25 / titleRem);
+        const previewTitleRem = Math.max(0.85, titleRem * titleScale);
+
+        return {
+            title: `${previewTitleRem.toFixed(2)}rem`,
+            body: '0.8rem',
+            bodyStrong: '0.85rem',
+            bodySmall: '0.72rem',
+        };
+    }
+
+    getPreviewPadding(value, fallbackPx = '12px', maxPx = 16) {
+        const trimmed = String(value ?? '').trim();
+        const normalized = /^\d+(\.\d+)?$/.test(trimmed) ? `${trimmed}px` : (trimmed || fallbackPx);
+        const numeric = parseInt(normalized, 10);
+        const safeNumeric = Number.isFinite(numeric) ? numeric : parseInt(fallbackPx, 10);
+        return `${Math.min(safeNumeric, maxPx)}px`;
     }
 
     setupPreviewUpdates() {
@@ -123,8 +197,13 @@ class BoxesManager {
 
     getCurrentBoxType() {
         const path = window.location.pathname;
-        const match = path.match(/\/edit\/([^\/]+)/);
-        return match ? match[1] : null;
+        const boxesMatch = path.match(/\/boxes\/([^/]+)\/edit/);
+        if (boxesMatch) {
+            return boxesMatch[1];
+        }
+
+        const legacyMatch = path.match(/\/edit\/([^/]+)/);
+        return legacyMatch ? legacyMatch[1] : null;
     }
 
     generatePreviewHTML(data, boxType) {
@@ -197,22 +276,52 @@ class BoxesManager {
                     </div>
                 `;
                 
-            case 'announcements_box':
+            case 'announcements_box': {
+                const previewFonts = this.getPreviewAnnouncementsFontSizes(styling);
+                const previewPadding = this.getPreviewPadding(styling.padding, '12px', 16);
+                const titleBackground = styling.title_background_color || '#1E4D2B';
+                const titleTextColor = styling.title_color || '#ffffff';
+                const titleText = content.title || 'Announcements';
+
                 return `
-                    <div style="${styleString}">
-                        <div style="font-weight: bold; margin-bottom: 15px; font-size: ${styling.title_font_size || '18px'}; color: ${styling.title_color || '#000000'};">
-                            ${content.title || 'Announcements'}
-                        </div>
-                        <div style="margin-bottom: 10px;">
-                            <strong>Community Iftar</strong><br>
-                            <small>Community Iftar every evening during Ramadan. All families are welcome to join.</small>
-                        </div>
-                        <div>
-                            <strong>Donation Appeal</strong><br>
-                            <small>Help support our masjid expansion project. Donations are greatly appreciated.</small>
+                    <div class="box-preview">
+                        <div style="
+                            background-color: ${styling.background_color || '#f5f5dc'};
+                            color: ${styling.text_color || '#000000'};
+                            font-family: ${styling.font_family || 'Arial, sans-serif'};
+                            font-size: ${previewFonts.body};
+                            border: ${styling.border_width || '1px'} solid ${styling.border_color || '#0066cc'};
+                            border-radius: ${styling.border_radius || '0px'};
+                            padding: ${previewPadding};
+                            width: 100%;
+                            max-width: 100%;
+                            box-sizing: border-box;
+                            overflow: hidden;
+                        ">
+                            <div style="
+                                font-weight: bold;
+                                margin: 0 0 8px 0;
+                                padding: 6px 8px;
+                                text-align: center;
+                                font-size: ${previewFonts.title};
+                                line-height: 1.2;
+                                background-color: ${titleBackground};
+                                color: ${titleTextColor};
+                                word-break: break-word;
+                                overflow: hidden;
+                            ">${titleText}</div>
+                            <div style="margin-bottom: 8px; line-height: 1.35;">
+                                <strong style="font-size: ${previewFonts.bodyStrong};">Community Iftar</strong><br>
+                                <span style="font-size: ${previewFonts.bodySmall};">Community Iftar every evening during Ramadan. All families are welcome to join.</span>
+                            </div>
+                            <div style="line-height: 1.35;">
+                                <strong style="font-size: ${previewFonts.bodyStrong};">Donation Appeal</strong><br>
+                                <span style="font-size: ${previewFonts.bodySmall};">Help support our masjid expansion project. Donations are greatly appreciated.</span>
+                            </div>
                         </div>
                     </div>
                 `;
+            }
                 
             case 'welcome_box':
                 return `
@@ -245,6 +354,14 @@ class BoxesManager {
         .then(response => response.json())
         .then(result => {
             if (result.success) {
+                try {
+                    localStorage.setItem('timetable-display-sync', String(Date.now()));
+                    const channel = new BroadcastChannel('timetable-display');
+                    channel.postMessage({ type: 'sync', at: Date.now() });
+                    channel.close();
+                } catch (error) {
+                    // Ignore unsupported browsers.
+                }
                 this.refreshPreviewFrame();
             } else {
                 console.error('Update failed:', result.error);

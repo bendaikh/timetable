@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'no-cache-dashboard' => \App\Http\Middleware\NoCacheDashboard::class,
         ]);
+
+        $middleware->append(\App\Http\Middleware\VerifyTimeOverride::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

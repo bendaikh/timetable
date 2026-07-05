@@ -198,7 +198,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge bg-primary">{{ ceil($announcement->display_duration / 60) }}m</span>
+                                        <span class="badge bg-primary">{{ $announcement->formattedDisplayDuration() }}</span>
                                     </td>
                                     <td>
                                         <small class="text-muted">{{ $announcement->created_at->format('M j, Y') }}</small>

@@ -103,6 +103,8 @@ class PrayerTimeController extends Controller
 
         PrayerTime::create($data);
 
+        PrayerTime::refreshUploadedTimetableRange();
+
         return redirect()->route('admin.prayer-times.index')
             ->with('success', 'Prayer times created successfully.');
     }
@@ -156,6 +158,8 @@ class PrayerTimeController extends Controller
 
         $prayerTime->update($data);
 
+        PrayerTime::refreshUploadedTimetableRange();
+
         return redirect()->route('admin.prayer-times.index')
             ->with('success', 'Prayer times updated successfully.');
     }
@@ -188,6 +192,8 @@ class PrayerTimeController extends Controller
 
         $prayerTime->update($data);
 
+        PrayerTime::refreshUploadedTimetableRange();
+
         return redirect()->route('admin.dashboard')
             ->with('success', 'Today\'s Jumu\'ah and Eid times were updated successfully.');
     }
@@ -198,6 +204,8 @@ class PrayerTimeController extends Controller
     public function destroy(PrayerTime $prayerTime)
     {
         $prayerTime->delete();
+
+        PrayerTime::refreshUploadedTimetableRange();
 
         return redirect()->route('admin.prayer-times.index')
             ->with('success', 'Prayer times deleted successfully.');
@@ -297,10 +305,7 @@ class PrayerTimeController extends Controller
                 DB::commit();
 
                 // Persist the uploaded timetable coverage so the display doesn't show out-of-range years
-                if ($importedDates->isNotEmpty()) {
-                    Setting::set('timetable_min_date', $importedDates->first(), 'string', 'Earliest date available in uploaded timetable');
-                    Setting::set('timetable_max_date', $importedDates->last(), 'string', 'Latest date available in uploaded timetable');
-                }
+                PrayerTime::refreshUploadedTimetableRange();
                 
                 $message = "Import completed successfully! ";
                 $message .= "Imported: {$imported}, Updated: {$updated}, Skipped: {$skipped}";

@@ -92,11 +92,16 @@ class PrayerTime extends Model
         $timezone = (string) (Setting::get('timezone', config('app.timezone')) ?: config('app.timezone'));
         $today = Carbon::now($timezone)->toDateString();
 
+        $record = self::whereDate('date', $today)->first();
+        if ($record) {
+            return $record;
+        }
+
         if (!self::isDateWithinUploadedTimetableRange($today)) {
             return null;
         }
 
-        return self::whereDate('date', $today)->first();
+        return null;
     }
 
     public static function getTomorrowPrayerTimes()
@@ -104,11 +109,40 @@ class PrayerTime extends Model
         $timezone = (string) (Setting::get('timezone', config('app.timezone')) ?: config('app.timezone'));
         $tomorrow = Carbon::now($timezone)->addDay()->toDateString();
 
+        $record = self::whereDate('date', $tomorrow)->first();
+        if ($record) {
+            return $record;
+        }
+
         if (!self::isDateWithinUploadedTimetableRange($tomorrow)) {
             return null;
         }
 
-        return self::whereDate('date', $tomorrow)->first();
+        return null;
+    }
+
+    public static function refreshUploadedTimetableRange(): void
+    {
+        $min = self::min('date');
+        $max = self::max('date');
+
+        if ($min) {
+            Setting::set(
+                'timetable_min_date',
+                Carbon::parse($min)->toDateString(),
+                'string',
+                'Earliest date available in uploaded timetable'
+            );
+        }
+
+        if ($max) {
+            Setting::set(
+                'timetable_max_date',
+                Carbon::parse($max)->toDateString(),
+                'string',
+                'Latest date available in uploaded timetable'
+            );
+        }
     }
 
     public static function getNextPrayer()

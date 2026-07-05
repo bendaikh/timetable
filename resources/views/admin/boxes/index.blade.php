@@ -45,7 +45,7 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <div class="preview-container">
+                            <div class="preview-container preview-container-frame">
                                 <iframe id="previewFrame" src="{{ route('timetable.index') }}" 
                                         style="width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 5px;">
                                 </iframe>

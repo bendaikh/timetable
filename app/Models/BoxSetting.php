@@ -134,10 +134,11 @@ class BoxSetting extends Model
                 'styling_settings' => [
                     'background_color' => 'rgba(253, 247, 230, 0.9)',
                     'text_color' => '#000000',
-                    'title_color' => '#000000',
+                    'title_background_color' => '#1E4D2B',
+                    'title_color' => '#ffffff',
                     'font_family' => 'Courier New, monospace',
-                    'font_size' => '24',
-                    'title_font_size' => '28',
+                    'font_size' => '1.5rem',
+                    'title_font_size' => '1.2rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',
                     'padding' => '20px'

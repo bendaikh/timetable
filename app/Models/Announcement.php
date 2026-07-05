@@ -96,4 +96,18 @@ class Announcement extends Model
 
         return true;
     }
+
+    public function formattedDisplayDuration(): string
+    {
+        $seconds = max(1, (int) $this->display_duration);
+
+        if ($seconds < 60) {
+            return "{$seconds}s";
+        }
+
+        $minutes = intdiv($seconds, 60);
+        $remainder = $seconds % 60;
+
+        return $remainder > 0 ? "{$minutes}m {$remainder}s" : "{$minutes}m";
+    }
 }

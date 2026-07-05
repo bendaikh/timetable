@@ -6,6 +6,7 @@ use App\Models\Media;
 use App\Models\MediaSchedule;
 use App\Models\PrayerTime;
 use App\Models\Setting;
+use App\Support\PrayerCountdownWindows;
 use Carbon\Carbon;
 
 class MediaDisplayService
@@ -16,7 +17,7 @@ class MediaDisplayService
      */
     public function getCurrentMedia(): ?array
     {
-        $now = Carbon::now();
+        $now = $this->nowInAppTimezone();
         
         // Get all active schedules ordered by ID (creation order)
         $schedules = MediaSchedule::with(['mediaItems' => function($query) {
@@ -337,81 +338,184 @@ class MediaDisplayService
     }
 
     /**
-     * Get countdown information for next prayer
+     * Get countdown information when a prayer countdown window is active.
+     *
+     * Two windows only, both anchored to iqamah (jamaat) time:
+     * - adhan:  [iqamah - 20m, iqamah - 20m + 30s)
+     * - iqamah: [iqamah - 30s, iqamah)
      */
-    public function getCountdownInfo(): ?array
+    public function getCountdownInfo(?Carbon $now = null): ?array
     {
-        $now = Carbon::now();
-        $today = $now->format('Y-m-d');
-        
-        $prayerTimes = PrayerTime::whereDate('date', $today)->first();
-        
+        $now = $this->nowInAppTimezone($now);
+        $today = $now->toDateString();
+
+        $prayerTimes = PrayerTime::whereDate('date', $today)->orderBy('id')->first();
         if (!$prayerTimes) {
             return null;
         }
 
-        $nextPrayer = null;
-        $nextPrayerTime = null;
+        $activeCountdown = null;
 
         foreach (['fajr', 'zohar', 'asr', 'maghrib', 'isha'] as $name) {
-            $candidateTime = $this->resolveNextCountdownTarget($prayerTimes, $name, $now);
-            if (!$candidateTime) {
+            $iqamahTime = $this->resolveIqamahTime($prayerTimes, $name, $now);
+            if (!$iqamahTime) {
                 continue;
             }
 
-            if (!$nextPrayerTime || $candidateTime->lt($nextPrayerTime)) {
-                $nextPrayer = $name;
-                $nextPrayerTime = $candidateTime;
+            $phase = PrayerCountdownWindows::resolveActivePhase($now, $iqamahTime);
+            if (!$phase) {
+                continue;
+            }
+
+            $candidate = PrayerCountdownWindows::buildPayload($name, $iqamahTime, $phase, $now);
+            if (!$activeCountdown || $iqamahTime->lt($activeCountdown['iqamah_time'])) {
+                $activeCountdown = $candidate;
             }
         }
 
-        if (!$nextPrayer || !$nextPrayerTime) {
-            return null;
+        return $activeCountdown;
+    }
+
+    public function getCountdownDiagnostic(?Carbon $now = null): array
+    {
+        $now = $this->nowInAppTimezone($now);
+        $today = $now->toDateString();
+        $timezone = $this->appTimezone();
+
+        $prayerTimes = PrayerTime::whereDate('date', $today)->orderBy('id')->first();
+        $active = $this->getCountdownInfo($now);
+
+        $prayers = [];
+        if ($prayerTimes) {
+            foreach (['fajr', 'zohar', 'asr', 'maghrib', 'isha'] as $name) {
+                $iqamahTime = $this->resolveIqamahTime($prayerTimes, $name, $now);
+                if (!$iqamahTime) {
+                    continue;
+                }
+
+                $adhanTime = $this->resolveAdhanTime($prayerTimes, $name, $now);
+                $phase = PrayerCountdownWindows::resolveActivePhase($now, $iqamahTime);
+                $schedule = PrayerCountdownWindows::windowSchedule($iqamahTime);
+
+                $prayers[] = [
+                    'prayer' => $name,
+                    'beginning_time' => $prayerTimes->$name,
+                    'adhan_time' => $prayerTimes->{$name . '_adhan'} ?? null,
+                    'jamaat_time' => $prayerTimes->{$name . '_jamaat'} ?? null,
+                    'resolved_adhan_time' => $adhanTime?->toIso8601String(),
+                    'resolved_jamaat_time' => $iqamahTime->toIso8601String(),
+                    'windows' => $schedule,
+                    'active_now' => $phase !== null,
+                    'active_phase' => $phase,
+                ];
+            }
         }
 
-        $countdownDuration = (int) Setting::get('adhan_countdown_duration', 30);
-        $countdownStart = $nextPrayerTime->copy()->subSeconds($countdownDuration);
+        $log = [
+            'server_time' => $now->toIso8601String(),
+            'server_timezone' => $timezone,
+            'prayer_date' => $today,
+            'prayer_row_id' => $prayerTimes?->id,
+            'countdown_active' => $active !== null,
+            'target_prayer' => $active['prayer_name'] ?? null,
+            'countdown_phase' => $active['phase'] ?? null,
+            'target_field' => $active['target_field'] ?? null,
+            'target_time' => isset($active['target_time']) ? $active['target_time']->toIso8601String() : null,
+            'countdown_start' => isset($active['countdown_start']) ? $active['countdown_start']->toIso8601String() : null,
+            'countdown_end' => isset($active['countdown_end']) ? $active['countdown_end']->toIso8601String() : null,
+            'seconds_remaining' => $active['seconds_remaining'] ?? null,
+            'message' => $active['message'] ?? null,
+        ];
 
         return [
-            'prayer_name' => ucfirst($nextPrayer),
-            'prayer_time' => $nextPrayerTime,
-            'countdown_start' => $countdownStart,
-            'countdown_duration' => $countdownDuration,
-            'is_countdown_time' => $now->between($countdownStart, $nextPrayerTime)
+            'log' => $log,
+            'prayers' => $prayers,
+            'active_countdown' => $this->formatCountdownForApi($active),
+            'screen_state' => $active ? 'COUNTDOWN' : 'TIMETABLE',
         ];
     }
 
-    private function resolveNextCountdownTarget(PrayerTime $prayerTimes, string $prayerName, Carbon $now): ?Carbon
+    public function formatCountdownForApi(?array $countdown): ?array
     {
-        $candidates = [];
-
-        $adhanField = $prayerName . '_adhan';
-        $adhanTime = $prayerTimes->$adhanField ?? null;
-        if (is_string($adhanTime) && trim($adhanTime) !== '') {
-            $candidates[] = Carbon::parse($adhanTime);
+        if (!$countdown) {
+            return null;
         }
 
+        $format = static fn (?Carbon $value) => $value?->toIso8601String();
+
+        return [
+            'phase' => $countdown['phase'],
+            'prayer_name' => $countdown['prayer_name'],
+            'target_field' => $countdown['target_field'],
+            'target_time' => $format($countdown['target_time'] ?? null),
+            'iqamah_time' => $format($countdown['iqamah_time'] ?? null),
+            'countdown_start' => $format($countdown['countdown_start'] ?? null),
+            'countdown_end' => $format($countdown['countdown_end'] ?? null),
+            'countdown_duration' => $countdown['countdown_duration'],
+            'seconds_remaining' => $countdown['seconds_remaining'],
+            'message' => $countdown['message'],
+            'is_countdown_time' => $countdown['is_countdown_time'],
+            'prayer_time' => $format($countdown['prayer_time'] ?? null),
+        ];
+    }
+
+    public function getAppTimezone(): string
+    {
+        return (string) (Setting::get('timezone', config('app.timezone')) ?: config('app.timezone'));
+    }
+
+    private function appTimezone(): string
+    {
+        return $this->getAppTimezone();
+    }
+
+    private function nowInAppTimezone(?Carbon $now = null): Carbon
+    {
+        return $now
+            ? $now->copy()->timezone($this->appTimezone())
+            : Carbon::now($this->appTimezone());
+    }
+
+    private function parsePrayerClockTime(string $date, ?string $time, Carbon $referenceNow): ?Carbon
+    {
+        if (!is_string($time) || trim($time) === '') {
+            return null;
+        }
+
+        $normalized = strlen($time) === 5 ? $time . ':00' : $time;
+
+        return Carbon::parse($date . ' ' . $normalized, $this->appTimezone());
+    }
+
+    private function resolveAdhanTime(PrayerTime $prayerTimes, string $prayerName, Carbon $referenceNow): ?Carbon
+    {
+        $adhanField = $prayerName . '_adhan';
+        $adhanTime = $prayerTimes->$adhanField ?? null;
+
+        return $this->parsePrayerClockTime(
+            $referenceNow->toDateString(),
+            is_string($adhanTime) ? $adhanTime : null,
+            $referenceNow
+        );
+    }
+
+    private function resolveIqamahTime(PrayerTime $prayerTimes, string $prayerName, Carbon $referenceNow): ?Carbon
+    {
         $jamaatField = $prayerName . '_jamaat';
         $jamaatTime = $prayerTimes->$jamaatField ?? null;
         if (is_string($jamaatTime) && trim($jamaatTime) !== '') {
-            $candidates[] = Carbon::parse($jamaatTime);
+            return $this->parsePrayerClockTime($referenceNow->toDateString(), $jamaatTime, $referenceNow);
         }
 
         $baseTime = $prayerTimes->$prayerName ?? null;
-        if (is_string($baseTime) && trim($baseTime) !== '') {
-            $candidates[] = Carbon::parse($baseTime);
+        if (!is_string($baseTime) || trim($baseTime) === '') {
+            return null;
         }
 
-        $nextCandidate = null;
-        foreach ($candidates as $candidate) {
-            if ($candidate->isToday() && $candidate->gt($now)) {
-                if (!$nextCandidate || $candidate->lt($nextCandidate)) {
-                    $nextCandidate = $candidate;
-                }
-            }
-        }
+        $offsetMinutes = (int) Setting::get($prayerName . '_jamaat_offset', 0);
 
-        return $nextCandidate;
+        return $this->parsePrayerClockTime($referenceNow->toDateString(), $baseTime, $referenceNow)
+            ?->addMinutes($offsetMinutes);
     }
 
     /**
@@ -426,28 +530,16 @@ class MediaDisplayService
      * Check if ADHAN or COUNTDOWN is currently active
      * This takes HIGHEST PRIORITY - blocks ALL media
      */
+    public function currentTime(): Carbon
+    {
+        return $this->nowInAppTimezone();
+    }
+
     public function isAdhanOrCountdownActive(?Carbon $now = null): bool
     {
-        if (!$now) {
-            $now = Carbon::now();
-        }
+        $countdownInfo = $this->getCountdownInfo($now);
 
-        $countdownInfo = $this->getCountdownInfo();
-        
-        // If no prayer times exist, countdown can't be active
-        if (!$countdownInfo) {
-            return false;
-        }
-
-        // Check if we're in countdown or adhan window
-        // Countdown: from (prayer_time - duration) until prayer_time
-        // Adhan: from prayer_time until (prayer_time + 5 seconds)
-        $prayerTime = $countdownInfo['prayer_time'];
-        $countdownStart = $countdownInfo['countdown_start'];
-        $adhanEnd = $prayerTime->copy()->addSeconds(5);
-
-        // Check if current time is between countdown start and adhan end
-        return $now->between($countdownStart, $adhanEnd);
+        return $countdownInfo !== null && ($countdownInfo['is_countdown_time'] ?? false);
     }
 
     /**

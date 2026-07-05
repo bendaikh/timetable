@@ -40,27 +40,21 @@
 @php
     $timetableBgBox = $boxSettings['timetable_background_box'] ?? null;
     $timetableBgStyling = $timetableBgBox['styling_settings'] ?? [];
-    $bgColor = $timetableBgStyling['background_color'] ?? '#fdf7e6';
+    $bgColor = $timetableBgStyling['background_color']
+        ?? ($settings['display_background_color'] ?? '#ffffff');
+    $pageGapColor = $settings['display_background_color'] ?? '#ffffff';
     $backgroundStyle = "background-color: {$bgColor};";
 @endphp
-<div id="timetable-background-box" data-box-root="timetable_background_box" class="container-fluid digital-board" style="{{ $backgroundStyle }}; padding: 0; margin: 0;">
+<div id="timetable-background-box" data-box-root="timetable_background_box" class="container-fluid digital-board" style="{{ $backgroundStyle }} padding: 0; margin: 0;">
     <!-- Unified Container for Consistent Width -->
-    <div class="unified-container" style="padding: 0; margin: 0;">
+    <div class="unified-container" style="padding: 0; margin: 0; --board-header-content-gap: clamp(8px, 1vh, 14px);">
         <!-- Top Header Row -->
         @if($useBoxesStyling && isset($boxSettings['header_box']))
             @php
                 $headerBox = $boxSettings['header_box'] ?? null;
                 $headerStyling = $headerBox['styling_settings'] ?? [];
-                // Convert numeric font sizes to rem units
-                $timeFontSize = $headerStyling['time_font_size'] ?? '5rem';
-                $dateFontSize = $headerStyling['date_font_size'] ?? '4rem';
-                // Add 'rem' if only number is provided
-                if (is_numeric($timeFontSize)) {
-                    $timeFontSize = $timeFontSize . 'rem';
-                }
-                if (is_numeric($dateFontSize)) {
-                    $dateFontSize = $dateFontSize . 'rem';
-                }
+                $timeFontSize = \App\Support\CssUnits::normalizeBoxRem($headerStyling['time_font_size'] ?? null, '3rem');
+                $dateFontSize = \App\Support\CssUnits::normalizeBoxRem($headerStyling['date_font_size'] ?? null, '1.6rem');
             @endphp
             <div id="header-box" data-box-root="header_box" class="board-header" style="
                 {{ ($useBoxesStyling && !($boxSettings['header_box']['is_active'] ?? true)) ? 'display:none;' : '' }}
@@ -151,35 +145,48 @@
             @endif
         @endif
 
+        <div class="board-header-content-gap" aria-hidden="true" style="background-color: {{ $pageGapColor }};"></div>
+
         <!-- Main Content Area -->
-        <div class="board-main-content" style="padding: 0; margin: 0;">
-            <div class="row h-100 m-0" style="display: flex; flex-direction: row;">
+        @php
+            $prayerBoxForPadding = $useBoxesStyling && isset($boxSettings['prayer_times_box']) ? $boxSettings['prayer_times_box'] : null;
+            $announcementsBoxForPadding = $useBoxesStyling && isset($boxSettings['announcements_box']) ? $boxSettings['announcements_box'] : null;
+            $boardColumnPadding = $prayerBoxForPadding['styling_settings']['padding']
+                ?? $announcementsBoxForPadding['styling_settings']['padding']
+                ?? '15';
+        @endphp
+        <div class="board-main-content" style="margin: 0; --board-column-padding: {{ $boardColumnPadding }}px;">
+            <div class="row h-100 m-0" style="display: flex; flex-direction: row; align-items: stretch;">
             <!-- Left Column - Prayer Times (2/3 width) -->
             @php $__showPrayer = ($useBoxesStyling ? isset($boxSettings['prayer_times_box']) : (!isset($activeBoxTypes) || in_array('prayer_times_box', $activeBoxTypes))); @endphp
             @if($__showPrayer)
-            <div id="prayer-times-box" data-box-root="prayer_times_box" class="col-md-8 p-0" style="{{ ($useBoxesStyling && !($boxSettings['prayer_times_box']['is_active'] ?? true)) ? 'display:none;' : '' }}; display: flex; flex-direction: column;">
+            <div id="prayer-times-box" data-box-root="prayer_times_box" class="col-md-8 p-0" style="{{ ($useBoxesStyling && !($boxSettings['prayer_times_box']['is_active'] ?? true)) ? 'display:none;' : '' }}; display: flex; flex-direction: column; height: 100%; min-height: 0;">
                 @php
                     $prayerBox = $useBoxesStyling && isset($boxSettings['prayer_times_box']) ? $boxSettings['prayer_times_box'] : null;
                     $prayerStyling = $prayerBox['styling_settings'] ?? [];
                     $prayerLayout = $prayerBox['layout_settings'] ?? [];
                     // Safe style variables to avoid undefined array key errors on servers with older saved settings
-                    $prayer_names_font_size = $prayerStyling['prayer_names_font_size'] ?? null;
-                    $beginning_font_size = $prayerStyling['beginning_font_size'] ?? null;
-                    $jamaat_font_size = $prayerStyling['jamaat_font_size'] ?? null;
-                    $header_font_size = $prayerStyling['header_font_size'] ?? null;
-                    $next_prayer_font_size = $prayerStyling['next_prayer_font_size'] ?? null;
-                    $next_prayer_countdown_font_size = $prayerStyling['next_prayer_countdown_font_size'] ?? null;
-                    $next_prayer_name_font_size = $prayerStyling['next_prayer_name_font_size'] ?? null;
+                    $prayer_names_font_size = \App\Support\CssUnits::normalizeBoxRem($prayerStyling['prayer_names_font_size'] ?? null, '3rem');
+                    $beginning_font_size = \App\Support\CssUnits::normalizeBoxRem($prayerStyling['beginning_font_size'] ?? null, '2rem');
+                    $jamaat_font_size = \App\Support\CssUnits::normalizeBoxRem($prayerStyling['jamaat_font_size'] ?? null, '2rem');
+                    $header_font_size = \App\Support\CssUnits::normalizeBoxRem($prayerStyling['header_font_size'] ?? null, '1.2rem');
+                    $next_prayer_font_size = \App\Support\CssUnits::normalizeBoxRem($prayerStyling['next_prayer_font_size'] ?? null, '1.4rem');
+                    $next_prayer_countdown_font_size = \App\Support\CssUnits::normalizeBoxRem($prayerStyling['next_prayer_countdown_font_size'] ?? null, '1.4rem');
+                    $next_prayer_name_font_size = \App\Support\CssUnits::normalizeBoxRem($prayerStyling['next_prayer_name_font_size'] ?? null, '0.9rem');
+                    $prayer_box_font_size = \App\Support\CssUnits::normalizeBoxRem($prayerStyling['font_size'] ?? null, '2rem');
                 @endphp
                 @if($useBoxesStyling && isset($boxSettings['prayer_times_box']))
                     <div id="prayer-times-section" class="prayer-times-section" style="
                         background-color: {{ $prayerStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                         color: {{ $prayerStyling['text_color'] ?? '#000000' }};
                         font-family: {{ $prayerStyling['font_family'] ?? 'Arial, sans-serif' }};
-                        font-size: {{ $prayerStyling['font_size'] ?? '3.5rem' }}; /* Ensure rem values are applied directly */
+                        font-size: {{ $prayer_box_font_size }};
                         border: {{ $prayerStyling['border_width'] ?? '1px' }} solid {{ $prayerStyling['border_color'] ?? '#0066cc' }};
-                        padding: 10px 15px;
                         margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        flex: 1;
+                        min-height: 0;
                         @if($settings['logo_path'] ?? false)
                         --logo-bg-image: url('{{ app()->environment('production') ? url('public/storage/' . $settings['logo_path']) : asset('storage/' . $settings['logo_path']) }}');
                         @endif
@@ -187,9 +194,9 @@
                         <div class="prayer-header" style="
                             background-color: {{ $prayerStyling['header_background_color'] ?? 'transparent' }};
                             color: {{ $prayerStyling['header_text_color'] ?? '#000000' }};
-                            font-size: {{ $header_font_size ? (strpos($header_font_size, 'rem') !== false ? $header_font_size : $header_font_size . 'rem') : '1rem' }};
+                            font-size: {{ $header_font_size }};
                             margin: 0 0 10px 0;
-                            padding: 8px;
+                            padding: 8px 8px 10px 8px;
                             text-align: center;
                             font-weight: bold;
                             display: grid;
@@ -208,7 +215,8 @@
                             <div class="prayer-col-header">Jamaat Time</div>
                         </div>
                 @endif
-                    
+
+                    <div class="prayer-times-body">
                     @if($prayerTimes)
                         @if($useBoxesStyling && isset($boxSettings['prayer_times_box']))
                             @php
@@ -222,16 +230,16 @@
                                     <div class="next-prayer-text" style="
                                         margin-bottom: 8px; 
                                         font-weight: bold;
-                                        font-size: {{ $next_prayer_font_size ? (strpos($next_prayer_font_size, 'rem') !== false ? $next_prayer_font_size : $next_prayer_font_size . 'rem') : '1.4rem' }} !important;
+                                        font-size: {{ $next_prayer_font_size }} !important;
                                         color: {{ $prayerStyling['next_prayer_text_color'] ?? '#000000' }} !important;
                                     ">Next prayer in:</div>
                                     <div id="next-prayer-countdown" class="next-prayer-countdown" style="
-                                        font-size: {{ $next_prayer_countdown_font_size ? (strpos($next_prayer_countdown_font_size, 'rem') !== false ? $next_prayer_countdown_font_size : $next_prayer_countdown_font_size . 'rem') : '1.4rem' }} !important; 
+                                        font-size: {{ $next_prayer_countdown_font_size }} !important; 
                                         font-weight: bold;
                                         color: {{ $prayerStyling['next_prayer_countdown_color'] ?? '#000000' }} !important;
                                     ">--:--:--</div>
                                     <div id="next-prayer-name" class="next-prayer-name" style="
-                                        font-size: {{ $next_prayer_name_font_size ? (strpos($next_prayer_name_font_size, 'rem') !== false ? $next_prayer_name_font_size : $next_prayer_name_font_size . 'rem') : '0.9rem' }} !important; 
+                                        font-size: {{ $next_prayer_name_font_size }} !important; 
                                         margin-top: 5px; 
                                         opacity: 0.8;
                                         color: {{ $prayerStyling['next_prayer_name_color'] ?? '#666666' }} !important;
@@ -241,29 +249,29 @@
                         @endif
                         <div class="prayer-list">
                             <div class="prayer-row" data-prayer-name="fajr" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size ? (strpos($prayer_names_font_size, 'rem') !== false ? $prayer_names_font_size : $prayer_names_font_size . 'rem') : '3rem' }}; font-weight: bold;">Fajr</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size ? (strpos($beginning_font_size, 'rem') !== false ? $beginning_font_size : $beginning_font_size . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size ? (strpos($jamaat_font_size, 'rem') !== false ? $jamaat_font_size : $jamaat_font_size . 'rem') : '3rem' }};">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size }}; font-weight: bold;">Fajr</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size }};">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="zohar" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size ? (strpos($prayer_names_font_size, 'rem') !== false ? $prayer_names_font_size : $prayer_names_font_size . 'rem') : '3rem' }}; font-weight: bold;">Zohar</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size ? (strpos($beginning_font_size, 'rem') !== false ? $beginning_font_size : $beginning_font_size . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size ? (strpos($jamaat_font_size, 'rem') !== false ? $jamaat_font_size : $jamaat_font_size . 'rem') : '3rem' }};">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size }}; font-weight: bold;">Zohar</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size }};">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="asr" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size ? (strpos($prayer_names_font_size, 'rem') !== false ? $prayer_names_font_size : $prayer_names_font_size . 'rem') : '3rem' }}; font-weight: bold;">Asr</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size ? (strpos($beginning_font_size, 'rem') !== false ? $beginning_font_size : $beginning_font_size . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size ? (strpos($jamaat_font_size, 'rem') !== false ? $jamaat_font_size : $jamaat_font_size . 'rem') : '3rem' }};">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size }}; font-weight: bold;">Asr</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size }};">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="maghrib" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size ? (strpos($prayer_names_font_size, 'rem') !== false ? $prayer_names_font_size : $prayer_names_font_size . 'rem') : '3rem' }}; font-weight: bold;">Maghrib</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size ? (strpos($beginning_font_size, 'rem') !== false ? $beginning_font_size : $beginning_font_size . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size ? (strpos($jamaat_font_size, 'rem') !== false ? $jamaat_font_size : $jamaat_font_size . 'rem') : '3rem' }};">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size }}; font-weight: bold;">Maghrib</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size }};">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                             <div class="prayer-row" data-prayer-name="isha" style="display: grid; grid-template-columns: {{ $prayerLayout['column_widths'][0] ?? '45%' }} {{ $prayerLayout['column_widths'][1] ?? '25%' }} {{ $prayerLayout['column_widths'][2] ?? '25%' }}; gap: 10px; margin-bottom: 8px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size ? (strpos($prayer_names_font_size, 'rem') !== false ? $prayer_names_font_size : $prayer_names_font_size . 'rem') : '3rem' }}; font-weight: bold;">Isha</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size ? (strpos($beginning_font_size, 'rem') !== false ? $beginning_font_size : $beginning_font_size . 'rem') : '3rem' }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size ? (strpos($jamaat_font_size, 'rem') !== false ? $jamaat_font_size : $jamaat_font_size . 'rem') : '3rem' }};">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
+                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size }}; font-weight: bold;">Isha</div>
+                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
+                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size }};">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
                             </div>
                         </div>
                         
@@ -279,16 +287,16 @@
                                     <div class="next-prayer-text" style="
                                         margin-bottom: 8px; 
                                         font-weight: bold;
-                                        font-size: {{ $next_prayer_font_size ? (strpos($next_prayer_font_size, 'rem') !== false ? $next_prayer_font_size : $next_prayer_font_size . 'rem') : '1.4rem' }} !important;
+                                        font-size: {{ $next_prayer_font_size }} !important;
                                         color: {{ $prayerStyling['next_prayer_text_color'] ?? '#000000' }} !important;
                                     ">Next prayer in:</div>
                                     <div id="next-prayer-countdown" class="next-prayer-countdown" style="
-                                        font-size: {{ $next_prayer_countdown_font_size ? (strpos($next_prayer_countdown_font_size, 'rem') !== false ? $next_prayer_countdown_font_size : $next_prayer_countdown_font_size . 'rem') : '1.4rem' }} !important; 
+                                        font-size: {{ $next_prayer_countdown_font_size }} !important; 
                                         font-weight: bold;
                                         color: {{ $prayerStyling['next_prayer_countdown_color'] ?? '#000000' }} !important;
                                     ">--:--:--</div>
                                     <div id="next-prayer-name" class="next-prayer-name" style="
-                                        font-size: {{ $next_prayer_name_font_size ? (strpos($next_prayer_name_font_size, 'rem') !== false ? $next_prayer_name_font_size : $next_prayer_name_font_size . 'rem') : '0.9rem' }} !important; 
+                                        font-size: {{ $next_prayer_name_font_size }} !important; 
                                         margin-top: 5px; 
                                         opacity: 0.8;
                                         color: {{ $prayerStyling['next_prayer_name_color'] ?? '#666666' }} !important;
@@ -305,7 +313,7 @@
                                 background-color: {{ $noteStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                                 color: {{ $noteStyling['text_color'] ?? '#000000' }};
                                 font-family: {{ $noteStyling['font_family'] ?? 'Arial, sans-serif' }};
-                                font-size: {{ $noteStyling['font_size'] ?? '16px' }};
+                                font-size: {{ \App\Support\CssUnits::normalizeBoxRem($noteStyling['font_size'] ?? null, '1.2rem') }};
                                 border: {{ $noteStyling['border_width'] ?? '1px' }} solid {{ $noteStyling['border_color'] ?? '#0066cc' }};
                                 border-radius: {{ $noteStyling['border_radius'] ?? '0px' }};
                                 padding: {{ $noteStyling['padding'] ?? '10px' }};
@@ -327,6 +335,7 @@
                             <p>No prayer times available for today</p>
                         </div>
                     @endif
+                    </div>
                 </div>
                 </div>
             @endif
@@ -336,20 +345,24 @@
             <!-- Right Column - Announcements (1/3 width) -->
             @php $__showAnnouncements = ($useBoxesStyling ? isset($boxSettings['announcements_box']) : (!isset($activeBoxTypes) || in_array('announcements_box', $activeBoxTypes))); @endphp
             @if($__showAnnouncements)
-            <div class="col-md-4 p-0" data-box-root="announcements_box" style="{{ ($useBoxesStyling && !($boxSettings['announcements_box']['is_active'] ?? true)) ? 'display:none;' : '' }}; display: flex; flex-direction: column; height: 100%;">
+            <div class="col-md-4 p-0" data-box-root="announcements_box" style="{{ ($useBoxesStyling && !($boxSettings['announcements_box']['is_active'] ?? true)) ? 'display:none;' : '' }}; display: flex; flex-direction: column; height: 100%; min-height: 0;">
                 @if($useBoxesStyling && isset($boxSettings['announcements_box']))
                     @php
                         $announcementsBox = $boxSettings['announcements_box'] ?? null;
                         $announcementsStyling = $announcementsBox['styling_settings'] ?? [];
                         $announcementsLayout = $announcementsBox['layout_settings'] ?? [];
+                        $announcementsTitleBg = $announcementsStyling['title_background_color'] ?? '#1E4D2B';
+                        $announcementsTitleText = $announcementsStyling['title_color'] ?? '#ffffff';
+                        $announcementsTitleFontSize = \App\Support\CssUnits::normalizeBoxRem($announcementsStyling['title_font_size'] ?? null, '1.2rem');
                     @endphp
                     <div class="announcements-section" id="announcements-section" style="
+                        --announcements-header-bg: {{ $announcementsTitleBg }};
+                        --announcements-header-text: {{ $announcementsTitleText }};
                         background-color: {{ $announcementsStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                         color: {{ $announcementsStyling['text_color'] ?? '#000000' }};
                         font-family: {{ $announcementsStyling['font_family'] ?? 'Arial, sans-serif' }};
                         border: {{ $announcementsStyling['border_width'] ?? '1px' }} solid {{ $announcementsStyling['border_color'] ?? '#0066cc' }};
                         border-radius: 0px;
-                        padding: {{ $announcementsStyling['padding'] ?? '15' }}px;
                         margin: 0;
                         display: flex;
                         flex-direction: column;
@@ -357,51 +370,49 @@
                         min-height: 0;
                     ">
                         <div class="announcements-header" style="
-                            color: {{ $announcementsStyling['title_color'] ?? '#000000' }};
-                            font-size: {{ $announcementsStyling['title_font_size'] ? (is_numeric($announcementsStyling['title_font_size']) ? $announcementsStyling['title_font_size'] . 'px' : $announcementsStyling['title_font_size']) : '28px' }};
-                            font-weight: bold;
+                            background-color: {{ $announcementsTitleBg }};
+                            color: {{ $announcementsTitleText }};
+                            font-size: {{ $announcementsTitleFontSize }};
+                            margin: 0 0 10px 0;
+                            padding: 8px 8px 10px 8px;
                             text-align: center;
-                            margin: 0 0 15px 0;
-                            flex-shrink: 0;
+                            font-weight: bold;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
                         ">{{ $announcementsContent['title'] ?? 'Announcements' }}</div>
                 @elseif(!$useBoxesStyling)
-                    <div class="announcements-section" id="announcements-section" style=\"padding: 10px 15px; margin: 0;\">
-                        <div class="announcements-header" style=\"font-size: 3.5rem; margin: 0 0 10px 0;\">{{ $announcementsContent['title'] ?? 'Announcements' }}</div>
+                    <div class="announcements-section" id="announcements-section" style="--announcements-header-bg: #1E4D2B; --announcements-header-text: #ffffff; margin: 0;">
+                        <div class="announcements-header">{{ $announcementsContent['title'] ?? 'Announcements' }}</div>
                 @endif
-                    <div class="announcements-content" id="announcements-content" style="
-                        margin: 0;
-                        flex: 1;
-                        overflow: hidden;
-                        display: flex;
-                        flex-direction: column;
-                        min-height: 0;
-                    " data-display-mode="rotation">
+                    <div class="announcements-content" id="announcements-content" data-layout-version="0" style="margin: 0;" data-display-mode="rotation">
                         @if($announcements->count() > 0)
                             @foreach($announcements as $index => $announcement)
-                                <div class="announcement-item rotating-announcement" 
+                                <div class="announcement-item rotating-announcement{{ $index === 0 ? ' is-active' : '' }}" 
+                                     data-announcement-id="{{ $announcement->id }}"
                                      data-index="{{ $index }}" 
-                                     data-duration="{{ ($announcement->display_duration ?? 10) * 1000 }}" 
+                                     data-duration="{{ ($announcement->display_duration ?? 10) * 1000 }}"
+                                     data-display-duration-seconds="{{ $announcement->display_duration ?? 10 }}" 
                                      style="
-                                    display: {{ $index === 0 ? 'block' : 'none' }};
                                     margin: 0;
-                                    padding: 0;
+                                    padding: 12px;
+                                    box-sizing: border-box;
                                     word-wrap: break-word;
                                     word-break: break-word;
                                     overflow: hidden;
                                     background-color: {{ $announcement->background_color ?? '#ffffff' }};
-                                    height: 100%;
                                     width: 100%;
-                                    flex-direction: column;
-                                    flex: 1;
+                                    min-height: 0;
                                 ">
                                     <div class="announcement-title" style="
                                         font-weight: bold;
                                         margin-bottom: 8px;
                                         color: {{ $announcement->text_color ?? '#000000' }};
-                                        font-size: {{ $announcement->title_font_size ?? 36 }}px;
+                                        font-size: {{ \App\Support\CssUnits::normalizeRem($announcement->title_font_size ?? null, '2.25rem') }};
                                         line-height: 1.3;
-                                        overflow: hidden;
-                                        text-overflow: ellipsis;
+                                        white-space: normal;
+                                        overflow-wrap: break-word;
+                                        word-break: normal;
                                     ">{{ $announcement->title }}</div>
                                     @php
                                         // Calculate scroll speed for vertical scrolling (1-10)
@@ -412,22 +423,24 @@
                                         $animationDuration = max(5, $animationDuration); // minimum 5 seconds
                                     @endphp
                                     <div class="announcement-text-container" style="
-                                        flex: 1;
+                                        flex: 1 1 0;
+                                        min-height: 0;
                                         overflow: hidden;
                                         position: relative;
-                                        display: flex;
-                                        flex-direction: column;
-                                        justify-content: flex-start;
+                                        display: block;
+                                        padding: 0;
                                     ">
                                         <div class="announcement-text-scroll" style="
-                                            font-size: {{ $announcement->font_size ?? 24 }}px;
+                                            font-size: {{ \App\Support\CssUnits::normalizeRem($announcement->font_size ?? null, '1.5rem') }};
                                             color: {{ $announcement->text_color ?? '#000000' }};
                                             word-wrap: break-word;
-                                            line-height: 1.4;
+                                            overflow-wrap: break-word;
+                                            word-break: normal;
+                                            white-space: normal;
+                                            line-height: 1.45;
                                             margin: 0;
-                                            min-height: 100%;
-                                            animation: scroll-vertical {{ $animationDuration }}s linear infinite;
-                                            animation-play-state: running;
+                                            padding: 0.08em 0 0.35em;
+                                            transform: translate3d(0, 0, 0);
                                         " data-scroll-speed="{{ $scrollSpeed }}">{{ $announcement->content }}</div>
                                     </div>
                                 </div>
@@ -452,13 +465,15 @@
                 $specialBox = $boxSettings['special_times_box'] ?? null;
                 $specialStyling = $specialBox['styling_settings'] ?? [];
                 $specialLayout = $specialBox['layout_settings'] ?? [];
+                $specialFontSize = \App\Support\CssUnits::normalizeBoxRem($specialStyling['font_size'] ?? null, '4rem');
+                $specialHeaderFontSize = \App\Support\CssUnits::normalizeBoxRem($specialStyling['header_font_size'] ?? null, '4rem');
             @endphp
             <div class="board-bottom-times" data-box-root="special_times_box" style="
                 {{ ($useBoxesStyling && !($boxSettings['special_times_box']['is_active'] ?? true)) ? 'display:none;' : '' }}
                 background-color: {{ $specialStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                 color: {{ $specialStyling['text_color'] ?? '#000000' }};
                 font-family: {{ $specialStyling['font_family'] ?? 'Courier New, monospace' }};
-                font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }};
+                font-size: {{ $specialFontSize }};
                 border: {{ $specialStyling['border_width'] ?? '2px' }} solid {{ $specialStyling['border_color'] ?? '#000000' }};
                 border-radius: 0px;
                 padding: 10px 15px;
@@ -472,7 +487,7 @@
                             grid-template-columns: {{ implode(' ', $specialLayout['column_widths'] ?? ['14%', '14%', '14%', '14%', '14%', '15%', '15%']) }};
                             gap: 10px;
                             align-items: center;
-                            font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; /* Ensure font size is applied */
+                            font-size: {{ $specialFontSize }};
                         ">
                             @php
                                 $tableHeaders = [
@@ -496,32 +511,32 @@
                                 ];
                             @endphp
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[0] }}</div>
-                                <div class="time-value" data-special-time="sehri_ends" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[0] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialHeaderFontSize }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[0] }}</div>
+                                <div class="time-value" data-special-time="sehri_ends" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialFontSize }}; font-weight: bold;">{{ $times[0] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[1] }}</div>
-                                <div class="time-value" data-special-time="sun_rise" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[1] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialHeaderFontSize }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[1] }}</div>
+                                <div class="time-value" data-special-time="sun_rise" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialFontSize }}; font-weight: bold;">{{ $times[1] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[2] }}</div>
-                                <div class="time-value" data-special-time="noon" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[2] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialHeaderFontSize }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[2] }}</div>
+                                <div class="time-value" data-special-time="noon" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialFontSize }}; font-weight: bold;">{{ $times[2] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[3] }}</div>
-                                <div class="time-value" data-special-time="jumah_1" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[3] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialHeaderFontSize }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[3] }}</div>
+                                <div class="time-value" data-special-time="jumah_1" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialFontSize }}; font-weight: bold;">{{ $times[3] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[4] }}</div>
-                                <div class="time-value" data-special-time="jumah_2" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[4] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialHeaderFontSize }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[4] }}</div>
+                                <div class="time-value" data-special-time="jumah_2" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialFontSize }}; font-weight: bold;">{{ $times[4] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[5] }}</div>
-                                <div class="time-value" data-special-time="eid_prayer_1" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[5] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialHeaderFontSize }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[5] }}</div>
+                                <div class="time-value" data-special-time="eid_prayer_1" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialFontSize }}; font-weight: bold;">{{ $times[5] }}</div>
                             </div>
                             <div class="time-item">
-                                <div class="time-label" style="font-size: {{ $specialStyling['header_font_size'] ? $specialStyling['header_font_size'] . 'rem' : '1rem' }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[6] }}</div>
-                                <div class="time-value" data-special-time="eid_prayer_2" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialStyling['font_size'] ? $specialStyling['font_size'] . 'rem' : '2.5rem' }}; font-weight: bold;">{{ $times[6] }}</div>
+                                <div class="time-label" style="font-size: {{ $specialHeaderFontSize }}; color: {{ $specialStyling['header_text_color'] ?? '#000000' }};">{{ $tableHeaders[6] }}</div>
+                                <div class="time-value" data-special-time="eid_prayer_2" style="color: {{ $specialStyling['text_color'] ?? '#000000' }}; font-size: {{ $specialFontSize }}; font-weight: bold;">{{ $times[6] }}</div>
                             </div>
                         </div>
                     </div>
@@ -579,7 +594,7 @@
                 background-color: {{ $welcomeStyling['background_color'] ?? '#1e4d2b' }};
                 color: {{ $welcomeStyling['text_color'] ?? '#FFD700' }};
                 font-family: {{ $welcomeStyling['font_family'] ?? 'Arial, sans-serif' }};
-                font-size: {{ $welcomeStyling['font_size'] ?? '24px' }};
+                font-size: {{ \App\Support\CssUnits::normalizeBoxRem($welcomeStyling['font_size'] ?? null, '1.5rem') }};
                 font-weight: {{ $welcomeStyling['font_weight'] ?? 'bold' }};
                 border: {{ $welcomeStyling['border_width'] ?? '2px' }} solid {{ $welcomeStyling['border_color'] ?? '#0066cc' }};
                 border-radius: {{ $welcomeStyling['border_radius'] ?? '0px' }};
@@ -608,7 +623,7 @@
                 background-color: {{ $slidingStyling['background_color'] ?? 'rgba(253, 247, 230, 0.9)' }};
                 color: {{ $slidingStyling['text_color'] ?? '#000000' }};
                 font-family: {{ $slidingStyling['font_family'] ?? 'Courier New, monospace' }};
-                font-size: {{ $slidingStyling['font_size'] ?? '3rem' }};
+                font-size: {{ \App\Support\CssUnits::normalizeBoxRem($slidingStyling['font_size'] ?? null, '5rem') }};
                 border: {{ $slidingStyling['border_width'] ?? '2px' }} solid {{ $slidingStyling['border_color'] ?? '#000000' }};
                 text-align: {{ $slidingLayout['text_alignment'] ?? 'left' }};
                 margin: 0;
@@ -621,26 +636,26 @@
                                 @foreach($slidingTexts as $slidingText)
                                     @php
                                         $slidingFontSize = $slidingText->font_size
-                                            ? $slidingText->font_size . 'rem'
-                                            : ($slidingStyling['font_size'] ?? '3rem');
+                                            ? \App\Support\CssUnits::normalizeBoxRem($slidingText->font_size, '5rem')
+                                            : \App\Support\CssUnits::normalizeBoxRem($slidingStyling['font_size'] ?? null, '5rem');
                                         $slidingFontWeight = $slidingText->font_weight
                                             ?? ($slidingStyling['font_weight'] ?? '700');
                                         $slidingTextColor = $slidingText->text_color
                                             ?? ($slidingStyling['text_color'] ?? '#000000');
                                     @endphp
-                                    <span class="scroll-item" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
+                                    <span class="scroll-item" data-sliding-text-id="{{ $slidingText->id }}" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
                                 @endforeach
                                 @foreach($slidingTexts as $slidingText)
                                     @php
                                         $slidingFontSize = $slidingText->font_size
-                                            ? $slidingText->font_size . 'rem'
-                                            : ($slidingStyling['font_size'] ?? '3rem');
+                                            ? \App\Support\CssUnits::normalizeBoxRem($slidingText->font_size, '5rem')
+                                            : \App\Support\CssUnits::normalizeBoxRem($slidingStyling['font_size'] ?? null, '5rem');
                                         $slidingFontWeight = $slidingText->font_weight
                                             ?? ($slidingStyling['font_weight'] ?? '700');
                                         $slidingTextColor = $slidingText->text_color
                                             ?? ($slidingStyling['text_color'] ?? '#000000');
                                     @endphp
-                                    <span class="scroll-item" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
+                                    <span class="scroll-item" data-sliding-text-id="{{ $slidingText->id }}" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
                                 @endforeach
                             @else
                                 <span class="scroll-item">Welcome to the Masjid - No sliding text configured</span>
@@ -659,22 +674,22 @@
                                 @foreach($slidingTexts as $slidingText)
                                     @php
                                         $slidingFontSize = $slidingText->font_size
-                                            ? $slidingText->font_size . 'rem'
-                                            : '3rem';
+                                            ? \App\Support\CssUnits::normalizeBoxRem($slidingText->font_size, '5rem')
+                                            : '5rem';
                                         $slidingFontWeight = $slidingText->font_weight ?? '700';
                                         $slidingTextColor = $slidingText->text_color ?? '#000000';
                                     @endphp
-                                    <span class="scroll-item" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
+                                    <span class="scroll-item" data-sliding-text-id="{{ $slidingText->id }}" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
                                 @endforeach
                                 @foreach($slidingTexts as $slidingText)
                                     @php
                                         $slidingFontSize = $slidingText->font_size
-                                            ? $slidingText->font_size . 'rem'
-                                            : '3rem';
+                                            ? \App\Support\CssUnits::normalizeBoxRem($slidingText->font_size, '5rem')
+                                            : '5rem';
                                         $slidingFontWeight = $slidingText->font_weight ?? '700';
                                         $slidingTextColor = $slidingText->text_color ?? '#000000';
                                     @endphp
-                                    <span class="scroll-item" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
+                                    <span class="scroll-item" data-sliding-text-id="{{ $slidingText->id }}" style="font-size: {{ $slidingFontSize }}; font-weight: {{ $slidingFontWeight }}; color: {{ $slidingTextColor }};">{{ $slidingText->text }}</span>
                                 @endforeach
                             @else
                                 <span class="scroll-item">Welcome to the Masjid - No sliding text configured</span>
@@ -719,33 +734,115 @@
         transform: none;
     }
 
-    /* Force 2/3 + 1/3 layout regardless of external CSS or empty announcements */
+    .board-header-content-gap {
+        display: block !important;
+        width: 100% !important;
+        height: var(--board-header-content-gap, clamp(8px, 1vh, 14px)) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        box-sizing: border-box !important;
+        flex: 0 0 auto !important;
+    }
+
+    /* Force 2/3 + 1/3 layout with identical top alignment for both columns */
+    .board-main-content {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+    }
+
     .board-main-content .row {
         display: flex !important;
         flex-direction: row !important;
-        align-items: stretch !important;
+        align-items: flex-start !important;
+        flex: 1 1 0 !important;
         width: 100% !important;
         height: 100% !important;
         gap: 0 !important;
         min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
-    .board-main-content .col-md-8 {
+    .board-main-content .col-md-8,
+    .board-main-content .col-md-4,
+    [data-box-root="prayer_times_box"],
+    [data-box-root="announcements_box"] {
+        padding: 0 !important;
+        margin: 0 !important;
+        align-self: flex-start !important;
+        min-width: 0 !important;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    .board-main-content .col-md-8,
+    [data-box-root="prayer_times_box"] {
         flex: 0 0 66.666% !important;
         max-width: 66.666% !important;
-        min-width: 0 !important;
-        height: 100% !important;
+        width: 66.666% !important;
     }
 
-    .board-main-content .col-md-4 {
+    .board-main-content .col-md-4,
+    [data-box-root="announcements_box"] {
         flex: 0 0 33.334% !important;
         max-width: 33.334% !important;
-        min-width: 0 !important;
-        height: 100% !important;
+        width: 33.334% !important;
     }
 
-    .announcements-section {
-        min-height: 100% !important;
+    [data-box-root="prayer_times_box"] > .prayer-times-section,
+    [data-box-root="announcements_box"] > .announcements-section,
+    .prayer-times-section,
+    #announcements-section {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        padding-top: 0 !important;
+        padding-left: var(--board-column-padding, clamp(15px, 2.5vh, 25px)) !important;
+        padding-right: var(--board-column-padding, clamp(15px, 2.5vh, 25px)) !important;
+        padding-bottom: var(--board-column-padding, clamp(15px, 2.5vh, 25px)) !important;
+        border-top-width: 0 !important;
+    }
+
+    .prayer-times-body {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+
+    .announcements-content,
+    #announcements-content {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    .prayer-header,
+    .announcements-header {
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        min-height: var(--board-header-row-height, auto);
     }
 
     /* Next Prayer Info Container - Prevent overflow and ensure proper spacing */
@@ -786,35 +883,37 @@
         margin-top: 5px !important;
     }
 
-    /* Announcements Section - Overflow Management */
+    /* Announcements Section - full height flex chain */
     .announcements-section {
         display: flex !important;
         flex-direction: column !important;
+        flex: 1 1 0 !important;
         min-height: 0 !important;
-    }
-
-    .announcements-content {
-        flex: 1 !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        display: flex !important;
-        flex-direction: column !important;
-        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
     }
 
     .announcement-item {
         word-wrap: break-word !important;
         word-break: break-word !important;
         overflow: hidden !important;
-        flex-shrink: 0 !important;
+        align-items: stretch !important;
+        justify-content: flex-start !important;
+        box-sizing: border-box !important;
+        min-height: 0 !important;
+        flex-shrink: 1 !important;
     }
 
     .announcement-title {
-        overflow: hidden !important;
+        overflow: visible !important;
         white-space: normal !important;
-        display: -webkit-box !important;
-        -webkit-line-clamp: 2 !important;
-        -webkit-box-orient: vertical !important;
+        display: block !important;
+        flex: 0 0 auto !important;
+        flex-shrink: 0 !important;
+        text-overflow: clip !important;
+        overflow-wrap: break-word !important;
+        word-break: normal !important;
+        line-height: 1.3 !important;
     }
 
     .announcement-text {
@@ -825,42 +924,73 @@
         -webkit-box-orient: vertical !important;
     }
 
-    @keyframes scroll-vertical {
+    .announcement-text-container {
+        position: relative !important;
+        overflow: hidden !important;
+        min-height: 0 !important;
+        flex: 1 1 0 !important;
+        align-self: stretch !important;
+        display: block !important;
+        padding: 0 !important;
+    }
+
+    @keyframes scroll-vertical-measured {
         0% {
             transform: translateY(0);
         }
         100% {
-            transform: translateY(-100%);
+            transform: translateY(calc(-1 * var(--announcement-scroll-distance, 0px)));
         }
     }
 
     .announcement-text-scroll {
-        transition: animation 0.3s ease;
+        display: block !important;
+        white-space: normal !important;
+        overflow-wrap: break-word !important;
+        word-break: normal !important;
+        line-height: 1.45 !important;
+        transform: translate3d(0, 0, 0);
+        transform-origin: top left;
+        will-change: auto;
+        padding: 0.08em 0 0.35em;
+        position: relative;
+        top: 0;
+        left: 0;
+        backface-visibility: hidden;
     }
 
     .announcement-text-scroll.no-scroll {
         animation: none !important;
+        transform: translate3d(0, 0, 0) !important;
+        will-change: auto !important;
     }
 
-    /* Display Mode: Show All */
+    .announcement-text-scroll.is-scrolling {
+        will-change: transform !important;
+    }
+
+    /* Display Mode: Show All — equal-height rows, each with internal scroll */
     #announcements-content[data-display-mode="show-all"] {
-        overflow-y: auto;
-        flex-direction: column;
-        display: flex !important;
-        gap: 0;
-        padding: 0;
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        grid-auto-rows: minmax(0, 1fr) !important;
+        align-content: stretch !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        gap: 0 !important;
+        padding: 0 !important;
     }
 
     #announcements-content[data-display-mode="show-all"] .announcement-item {
         display: flex !important;
-        flex: 1 1 0 !important;
-        height: auto !important;
+        flex-direction: column !important;
         min-height: 0 !important;
+        max-height: 100% !important;
         margin: 0 !important;
         padding: 12px !important;
         border: none !important;
         border-radius: 0 !important;
-        flex-direction: column !important;
         position: relative !important;
         overflow: hidden !important;
     }
@@ -869,51 +999,75 @@
         font-weight: bold !important;
         margin-bottom: 5px !important;
         line-height: 1.2 !important;
-        flex-shrink: 0;
+        flex: 0 0 auto !important;
+        flex-shrink: 0 !important;
     }
 
     #announcements-content[data-display-mode="show-all"] .announcement-text-container {
         overflow: hidden !important;
-        flex: 1 !important;
-        display: flex !important;
-        flex-direction: column !important;
+        flex: 1 1 0 !important;
         min-height: 0 !important;
+        position: relative !important;
+        display: block !important;
     }
 
     #announcements-content[data-display-mode="show-all"] .announcement-text-scroll {
-        animation: scroll-vertical 20s linear infinite !important;
-        min-height: auto !important;
+        min-height: 0 !important;
         line-height: 1.4 !important;
     }
 
-    #announcements-content[data-display-mode="show-all"] .announcement-text-scroll.no-scroll {
-        animation: none !important;
-        animation-play-state: paused !important;
-    }
-
-    /* Display Mode: Rotation */
+    /* Display Mode: Rotation — only the active card is visible and fills the panel */
     #announcements-content[data-display-mode="rotation"] {
-        position: relative;
+        position: relative !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     #announcements-content[data-display-mode="rotation"] .announcement-item {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        height: 100%;
+        display: none !important;
+        flex-direction: column !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 12px !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        inset: 0 !important;
+    }
+
+    #announcements-content[data-display-mode="rotation"] .announcement-item.is-active {
+        display: flex !important;
+        position: relative !important;
+        inset: auto !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+    }
+
+    #announcements-content[data-display-mode="rotation"] .announcement-title {
+        flex: 0 0 auto !important;
+        flex-shrink: 0 !important;
+        margin-bottom: 8px !important;
+    }
+
+    #announcements-content[data-display-mode="rotation"] .announcement-text-container {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        position: relative !important;
+        display: block !important;
     }
 
     #announcements-content[data-display-mode="rotation"] .announcement-text-scroll {
-        animation: scroll-vertical 20s linear infinite !important;
+        min-height: 0 !important;
     }
 
-    #announcements-content[data-display-mode="rotation"] .announcement-text-scroll.no-scroll {
-        animation: none !important;
-        animation-play-state: paused !important;
-    }
 </style>
 
 @endsection
@@ -973,8 +1127,10 @@
         'maghrib_adhan' => $prayerTimes && $prayerTimes->maghrib_adhan ? \Carbon\Carbon::parse($prayerTimes->maghrib_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->maghrib)->format('H:i') : null),
         'isha_adhan' => $prayerTimes && $prayerTimes->isha_adhan ? \Carbon\Carbon::parse($prayerTimes->isha_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->isha)->format('H:i') : null),
     ];
+    $displayTimezone = $settings['timezone'] ?? config('app.timezone', 'Europe/London');
 @endphp
 <script>
+    const APP_DISPLAY_TIMEZONE = @json($displayTimezone);
     // Prayer times data from PHP
     const prayerTimesData = @json($prayerTimesJson);
     const todayBeginningTimes = @json($todayBeginningTimesJson);
@@ -983,12 +1139,6 @@
     const jamaatOffsets = @json($jamaatOffsetsJson);
     const adhanTimesData = @json($adhanTimesJson);
     
-    // Track which prayers have been updated to tomorrow
-    const updatedPrayers = new Set();
-
-    // Track which special times have been updated to tomorrow
-    const updatedSpecialTimes = new Set();
-
     // Store special times for today/tomorrow
     let todaySpecialTimesData = {};
     let tomorrowSpecialTimesData = {};
@@ -1009,16 +1159,42 @@
         'isha': { duration: 25, key: 'isha' }
     };
 
-    // Update next prayer countdown
+    function nowInAppTimezone() {
+        return new Date(new Date().toLocaleString('en-US', { timeZone: APP_DISPLAY_TIMEZONE }));
+    }
+
+    function getAppClockParts(date = new Date()) {
+        const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: APP_DISPLAY_TIMEZONE,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+        }).formatToParts(date);
+
+        const pick = (type) => parts.find((part) => part.type === type)?.value || '00';
+        return {
+            year: pick('year'),
+            month: pick('month'),
+            day: pick('day'),
+            hours: Number(pick('hour')),
+            minutes: Number(pick('minute')),
+            seconds: Number(pick('second')),
+        };
+    }
+
+    // Update next prayer countdown (uses mosque timezone + jamaat times)
     function updateNextPrayerCountdown() {
         const countdownElement = document.getElementById('next-prayer-countdown');
         const prayerNameElement = document.getElementById('next-prayer-name');
         
         if (!countdownElement || !prayerNameElement) return;
         
-        const now = new Date();
-        const currentTime = now.getHours() * 60 + now.getMinutes();
-        const currentSeconds = now.getSeconds();
+        const clock = getAppClockParts();
+        const currentTime = clock.hours * 60 + clock.minutes;
         
         let nextPrayer = null;
         let nextPrayerTime = null;
@@ -1057,7 +1233,7 @@
             const minutesUntilPrayer = nextPrayerMinutes - currentTime;
             const hoursUntil = Math.floor(minutesUntilPrayer / 60);
             const minutesUntil = Math.floor(minutesUntilPrayer % 60);
-            const secondsUntil = 60 - now.getSeconds();
+            const secondsUntil = 60 - clock.seconds;
             
             countdownElement.textContent = `${hoursUntil.toString().padStart(2, '0')}:${minutesUntil.toString().padStart(2, '0')}:${secondsUntil.toString().padStart(2, '0')}`;
             prayerNameElement.textContent = nextPrayer;
@@ -1084,38 +1260,6 @@
         return hours * 60 + minutes;
     }
     
-    // Function to update a prayer's displayed time to tomorrow's time
-    function updatePrayerToTomorrow(prayerName) {
-        if (updatedPrayers.has(prayerName)) {
-            return; // Already updated
-        }
-        
-        const prayerRow = document.querySelector(`[data-prayer-name="${prayerName}"]`);
-        if (!prayerRow) return;
-        
-        const beginningElement = prayerRow.querySelector('[data-time-type="beginning"]');
-        const jamaatElement = prayerRow.querySelector('[data-time-type="jamaat"]');
-        
-        if (!beginningElement || !jamaatElement) return;
-        
-        // Get tomorrow's times
-        const tomorrowBeginning = tomorrowBeginningTimes[prayerName];
-        const tomorrowJamaat = tomorrowPrayerTimesData[prayerName];
-        
-        if (!tomorrowBeginning || !tomorrowJamaat) return;
-        
-        // Update the displayed times
-        beginningElement.textContent = formatTimeForDisplay(tomorrowBeginning);
-        jamaatElement.textContent = formatTimeForDisplay(tomorrowJamaat);
-        
-        // Update the prayer times data for countdown calculations
-        prayerTimesData[prayerName] = tomorrowJamaat;
-        todayBeginningTimes[prayerName] = tomorrowBeginning;
-        
-        // Mark as updated
-        updatedPrayers.add(prayerName);
-    }
-
     function deriveSpecialTimes(dayData) {
         return {
             sehri_ends: dayData && dayData.fajr ? dayData.fajr : null,
@@ -1128,91 +1272,9 @@
         };
     }
 
-    function updateSpecialTimeToTomorrow(specialKey) {
-        if (updatedSpecialTimes.has(specialKey)) {
-            return;
-        }
-
-        const tomorrowValue = tomorrowSpecialTimesData && Object.prototype.hasOwnProperty.call(tomorrowSpecialTimesData, specialKey)
-            ? tomorrowSpecialTimesData[specialKey]
-            : null;
-
-        if (!tomorrowValue) {
-            return;
-        }
-
-        const formatted = formatTimeForDisplay(tomorrowValue);
-        document.querySelectorAll(`[data-special-time="${specialKey}"]`).forEach(element => {
-            if (element.textContent !== formatted) {
-                element.textContent = formatted;
-            }
-        });
-
-        updatedSpecialTimes.add(specialKey);
-    }
-    
-    // Function to check if jamaat times have passed and update accordingly
-    function checkAndUpdatePrayerTimes() {
-        const now = new Date();
-        const currentMinutes = now.getHours() * 60 + now.getMinutes();
-        const currentSeconds = now.getSeconds();
-        const currentTotalSeconds = currentMinutes * 60 + currentSeconds;
-
-        const prayers = ['fajr', 'zohar', 'asr', 'maghrib', 'isha'];
-        prayers.forEach(prayerName => {
-            if (updatedPrayers.has(prayerName)) {
-                return;
-            }
-
-            const jamaatTime = originalTodayTimes && originalTodayTimes.jamaat ? originalTodayTimes.jamaat[prayerName] : null;
-            if (!jamaatTime) {
-                return;
-            }
-
-            const minutes = timeToMinutes(jamaatTime);
-            if (minutes === null) {
-                return;
-            }
-
-            const totalSeconds = minutes * 60;
-            if (currentTotalSeconds > totalSeconds) {
-                updatePrayerToTomorrow(prayerName);
-            }
-        });
-
-        const specialKeys = ['sehri_ends', 'sun_rise', 'noon', 'jumah_1', 'jumah_2', 'eid_prayer_1', 'eid_prayer_2'];
-        specialKeys.forEach(specialKey => {
-            if (updatedSpecialTimes.has(specialKey)) {
-                return;
-            }
-
-            const originalValue = originalTodaySpecialTimesData && Object.prototype.hasOwnProperty.call(originalTodaySpecialTimesData, specialKey)
-                ? originalTodaySpecialTimesData[specialKey]
-                : null;
-
-            if (!originalValue) {
-                return;
-            }
-
-            const minutes = timeToMinutes(originalValue);
-            if (minutes === null) {
-                return;
-            }
-
-            const totalSeconds = minutes * 60;
-            if (currentTotalSeconds > totalSeconds) {
-                updateSpecialTimeToTomorrow(specialKey);
-            }
-        });
-    }
-    
     // Update countdown every second
     setInterval(updateNextPrayerCountdown, 1000);
     updateNextPrayerCountdown(); // Initial call
-    
-    // Check and update prayer times every second
-    setInterval(checkAndUpdatePrayerTimes, 1000);
-    checkAndUpdatePrayerTimes(); // Initial call
     
     // ========== AUTOMATIC DATE AND TIME UPDATE ==========
     let lastKnownDate = new Date().toISOString().slice(0, 10);
@@ -1252,15 +1314,15 @@
     }
 
     function updateTimeAndDate() {
-        const now = new Date();
-        const currentDateKey = now.toISOString().slice(0, 10);
+        const clock = getAppClockParts();
+        const currentDateKey = `${clock.year}-${clock.month}-${clock.day}`;
 
-        // Update current time display in real-time (every second)
+        // Mosque clock (UK), not the laptop's local timezone
         const timeElements = document.querySelectorAll('#current-time');
         if (timeElements.length > 0) {
-            let hours = now.getHours();
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
+            let hours = clock.hours;
+            const minutes = String(clock.minutes).padStart(2, '0');
+            const seconds = String(clock.seconds).padStart(2, '0');
             const ampm = hours >= 12 ? 'PM' : 'AM';
 
             hours = hours % 12;
@@ -1276,15 +1338,16 @@
             });
         }
 
-        updateGregorianDateDisplay(now);
+        updateGregorianDateDisplay(nowInAppTimezone());
 
         // Date changed (midnight) - refresh data via APIs only (no page reload)
         if (currentDateKey !== lastKnownDate) {
-            console.log('🕐 Midnight detected, syncing timetable and announcements...');
+            markUpdateSource('midnight-sync', { previousDate: lastKnownDate, nextDate: currentDateKey });
             lastKnownDate = currentDateKey;
             resetDailyRuntimeState();
             requestTimetableSync();
             requestAnnouncementsSync();
+            requestSlidingTextsSync();
             requestMediaSync();
             requestScreenConfigSync();
         }
@@ -1293,71 +1356,179 @@
     setInterval(updateTimeAndDate, 1000);
     updateTimeAndDate();
     
-    // Fullscreen functionality
-    function toggleFullscreen() {
+    function getFullscreenElement() {
+        return document.fullscreenElement
+            || document.webkitFullscreenElement
+            || document.mozFullScreenElement
+            || document.msFullscreenElement
+            || null;
+    }
+
+    function requestRootFullscreen() {
         const element = document.documentElement;
+
+        if (element.requestFullscreen) {
+            return element.requestFullscreen();
+        }
+        if (element.msRequestFullscreen) {
+            return element.msRequestFullscreen();
+        }
+        if (element.mozRequestFullScreen) {
+            return element.mozRequestFullScreen();
+        }
+        if (element.webkitRequestFullscreen) {
+            return element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        }
+
+        return Promise.reject(new Error('Fullscreen not supported'));
+    }
+
+    function exitRootFullscreen() {
+        if (document.exitFullscreen) {
+            return document.exitFullscreen();
+        }
+        if (document.msExitFullscreen) {
+            return document.msExitFullscreen();
+        }
+        if (document.mozCancelFullScreen) {
+            return document.mozCancelFullScreen();
+        }
+        if (document.webkitExitFullscreen) {
+            return document.webkitExitFullscreen();
+        }
+
+        return Promise.reject(new Error('Exit fullscreen not supported'));
+    }
+
+    function updateFullscreenButton() {
         const button = document.getElementById('fullscreenBtn');
-        
-        if (!document.fullscreenElement && !document.mozFullScreenElement && 
-            !document.webkitFullscreenElement && !document.msFullscreenElement) {
-            // Enter fullscreen
-            const fullscreenPromise = element.requestFullscreen ? 
-                element.requestFullscreen() :
-                element.msRequestFullscreen ? element.msRequestFullscreen() :
-                element.mozRequestFullScreen ? element.mozRequestFullScreen() :
-                element.webkitRequestFullscreen ? element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT) :
-                Promise.reject('Fullscreen not supported');
-            
-            fullscreenPromise.then(() => {
-                button.innerHTML = '<i class="bi bi-fullscreen-exit"></i> Exit Fullscreen';
-                document.body.classList.add('fullscreen-mode');
+        if (!button) {
+            return;
+        }
+
+        let icon = button.querySelector('i');
+        if (!icon) {
+            icon = document.createElement('i');
+            button.textContent = '';
+            button.appendChild(icon);
+        }
+
+        let labelNode = Array.from(button.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
+        if (!labelNode) {
+            labelNode = document.createTextNode('');
+            button.appendChild(labelNode);
+        }
+
+        if (getFullscreenElement()) {
+            icon.className = 'bi bi-fullscreen-exit';
+            labelNode.textContent = ' Exit Fullscreen';
+            document.body.classList.add('fullscreen-mode');
+            return;
+        }
+
+        icon.className = 'bi bi-arrows-fullscreen';
+        labelNode.textContent = ' Enter Fullscreen';
+        document.body.classList.remove('fullscreen-mode');
+    }
+
+    function scheduleFullscreenRestore(reason) {
+        if (!fullscreenState.restoreEnabled || getFullscreenElement()) {
+            return;
+        }
+
+        clearTimeout(fullscreenState.restoreTimer);
+        fullscreenState.restoreTimer = setTimeout(() => {
+            if (!fullscreenState.restoreEnabled || getFullscreenElement()) {
+                return;
+            }
+
+            debugLog('fullscreen', 'Attempting fullscreen restore', {
+                reason,
+                lastRenderCause: dashboardRuntime.lastRenderCause,
+                lastUpdateSource: dashboardRuntime.lastUpdateSource
+            });
+
+            requestRootFullscreen().catch((error) => {
+                debugLog('fullscreen', 'Fullscreen restore failed', {
+                    reason,
+                    error: error && error.message ? error.message : error
+                });
+            });
+        }, 250);
+    }
+
+    function toggleFullscreen() {
+        if (!getFullscreenElement()) {
+            fullscreenState.userActivated = true;
+            fullscreenState.restoreEnabled = true;
+            fullscreenState.manualExitRequested = false;
+
+            debugLog('fullscreen', 'Manual fullscreen request', {
+                lastRenderCause: dashboardRuntime.lastRenderCause
+            });
+
+            requestRootFullscreen().then(() => {
                 document.body.classList.add('show-controls');
-                
-                // Hide controls after 3 seconds
                 setTimeout(() => {
                     document.body.classList.remove('show-controls');
                 }, 3000);
+                updateFullscreenButton();
             }).catch((error) => {
-                console.log('Fullscreen permission denied or not supported:', error);
-                // Still show media even if fullscreen fails
+                debugLog('fullscreen', 'Fullscreen request failed', {
+                    error: error && error.message ? error.message : error
+                });
             });
-            
-        } else {
-            // Exit fullscreen
-            const exitPromise = document.exitFullscreen ? 
-                document.exitFullscreen() :
-                document.msExitFullscreen ? document.msExitFullscreen() :
-                document.mozCancelFullScreen ? document.mozCancelFullScreen() :
-                document.webkitExitFullscreen ? document.webkitExitFullscreen() :
-                Promise.reject('Exit fullscreen not supported');
-            
-            exitPromise.then(() => {
-                button.innerHTML = '<i class="bi bi-arrows-fullscreen"></i> Enter Fullscreen';
-                document.body.classList.remove('fullscreen-mode');
-            }).catch((error) => {
-                console.log('Exit fullscreen failed:', error);
+
+            return;
+        }
+
+        fullscreenState.restoreEnabled = false;
+        fullscreenState.manualExitRequested = true;
+        clearTimeout(fullscreenState.restoreTimer);
+        debugLog('fullscreen', 'Manual fullscreen exit requested', {});
+
+        exitRootFullscreen().catch((error) => {
+            debugLog('fullscreen', 'Fullscreen exit failed', {
+                error: error && error.message ? error.message : error
+            });
+        });
+    }
+
+    function handleFullscreenChange(event) {
+        const isActive = !!getFullscreenElement();
+
+        if (!isActive && fullscreenState.wasActive) {
+            const exitReason = fullscreenState.manualExitRequested ? 'manual-exit' : 'unexpected-exit';
+            debugLog('fullscreen', 'Fullscreen exited', {
+                reason: exitReason,
+                eventType: event ? event.type : 'fullscreenchange',
+                lastRenderCause: dashboardRuntime.lastRenderCause,
+                lastUpdateSource: dashboardRuntime.lastUpdateSource
+            });
+
+            if (fullscreenState.restoreEnabled && !fullscreenState.manualExitRequested && fullscreenState.userActivated) {
+                scheduleFullscreenRestore(exitReason);
+            }
+        }
+
+        if (isActive && !fullscreenState.wasActive) {
+            debugLog('fullscreen', 'Fullscreen active', {
+                eventType: event ? event.type : 'fullscreenchange'
             });
         }
-    }
-    
-    // Listen for fullscreen changes
-    document.addEventListener('fullscreenchange', updateFullscreenButton);
-    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
-    document.addEventListener('mozfullscreenchange', updateFullscreenButton);
-    document.addEventListener('MSFullscreenChange', updateFullscreenButton);
-    
-    function updateFullscreenButton() {
-        const button = document.getElementById('fullscreenBtn');
-        
-        if (document.fullscreenElement || document.webkitFullscreenElement || 
-            document.mozFullScreenElement || document.msFullscreenElement) {
-            button.innerHTML = '<i class="bi bi-fullscreen-exit"></i> Exit Fullscreen';
-            document.body.classList.add('fullscreen-mode');
-        } else {
-            button.innerHTML = '<i class="bi bi-arrows-fullscreen"></i> Enter Fullscreen';
-            document.body.classList.remove('fullscreen-mode');
+
+        if (!isActive) {
+            fullscreenState.manualExitRequested = false;
         }
+
+        fullscreenState.wasActive = isActive;
+        updateFullscreenButton();
     }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
     
     // Keyboard shortcuts
     document.addEventListener('keydown', function(e) {
@@ -1366,11 +1537,12 @@
             toggleFullscreen();
         } else if (e.key === 'Escape') {
             // Exit fullscreen on Escape (browser default)
-            if (document.fullscreenElement) {
-                toggleFullscreen();
+            if (getFullscreenElement()) {
+                fullscreenState.restoreEnabled = false;
+                fullscreenState.manualExitRequested = true;
             }
         } else if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
-            if (document.fullscreenElement) {
+            if (getFullscreenElement()) {
                 e.preventDefault(); // Prevent dev tools in fullscreen mode
             }
         }
@@ -1378,7 +1550,7 @@
     
     // Prevent right-click in fullscreen mode
     document.addEventListener('contextmenu', e => {
-        if (document.fullscreenElement) {
+        if (getFullscreenElement()) {
             e.preventDefault();
         }
     });
@@ -1386,7 +1558,7 @@
     // Show controls on mouse movement in fullscreen
     let mouseTimer;
     document.addEventListener('mousemove', function() {
-        if (document.fullscreenElement) {
+        if (getFullscreenElement()) {
             document.body.classList.add('show-controls');
             
             clearTimeout(mouseTimer);
@@ -1397,57 +1569,119 @@
     });
 
     // Media/Live Update System
-    const defaultSlowPollMs = Math.max(5000, (Number(@json($settings['auto_refresh_interval'] ?? 45)) || 45) * 1000);
+    const defaultSlowPollMs = 3000;
     const displayPollingConfig = window.displayPollingConfig || {};
     const POLL_INTERVALS = {
-        media: Math.max(3000, Number(displayPollingConfig.media) || 3000),
-        timetable: Math.max(5000, Number(displayPollingConfig.timetable) || defaultSlowPollMs),
-        announcements: Math.max(5000, Number(displayPollingConfig.announcements) || defaultSlowPollMs),
-        screenConfig: Math.max(5000, Number(displayPollingConfig.screenConfig) || 5000)
+        media: Math.max(1000, Number(displayPollingConfig.media) || 1000),
+        timetable: Math.max(3000, Number(displayPollingConfig.timetable) || defaultSlowPollMs),
+        announcements: Math.max(3000, Number(displayPollingConfig.announcements) || defaultSlowPollMs),
+        slidingTexts: Math.max(3000, Number(displayPollingConfig.slidingTexts) || defaultSlowPollMs),
+        screenConfig: Math.max(2000, Number(displayPollingConfig.screenConfig) || 2000)
     };
-    let announcementTextMaxHeight = (function() {
-        const existingContainer = document.querySelector('#announcements-content .announcement-text-container');
-        if (!existingContainer) {
-            return '400px';
+    let announcementSectionMaxHeight = (function() {
+        const existingSection = document.getElementById('announcements-section');
+        if (!existingSection) {
+            return '';
         }
 
-        if (existingContainer.style.maxHeight) {
-            return existingContainer.style.maxHeight;
+        if (existingSection.style.maxHeight) {
+            return existingSection.style.maxHeight;
         }
 
-        const computed = window.getComputedStyle(existingContainer).maxHeight;
-        return computed && computed !== 'none' ? computed : '400px';
+        const computed = window.getComputedStyle(existingSection).maxHeight;
+        return computed && computed !== 'none' ? computed : '';
     })();
 
     let currentMedia = null;
     let currentMediaData = null;
+    let currentMediaVersionToken = null;
     let mediaDisplayTimer = null;
     let countdownTimer = null;
     let currentScreenState = null;
-    const lastKnownVersions = {
+    let currentPosterType = null;
+    let lastAppliedScreenSignature = null;
+    const lastReceivedVersions = {
         announcements: null,
         media: null,
         timetable: null,
         config: null,
+        slidingTexts: null,
         state: null
+    };
+    const lastAppliedSectionSignatures = {
+        timetable: null,
+        announcements: null,
+        slidingTexts: null,
+        config: null
     };
 
     let mediaPollingTimer = null;
     let timetablePollingTimer = null;
     let announcementsPollingTimer = null;
+    let slidingTextsPollingTimer = null;
     let screenConfigPollingTimer = null;
     let isMediaPollInFlight = false;
+    let mediaPollSequence = 0;
+    let pendingMediaPoll = false;
+    let lastAppliedServerTimestampMs = 0;
+    const countdownVerification = {
+        sessionKey: null,
+        instanceCount: 0,
+        duplicateRenderSkips: 0,
+        phase: null,
+        countdownStart: null,
+        countdownEnd: null,
+        serverSecondsAtStart: null,
+        ticks: [],
+        driftAlerts: [],
+        stateTransitions: [],
+        pollSkipsSameSignature: 0,
+    };
+    window.__countdownVerification = countdownVerification;
     let isTimetablePollInFlight = false;
     let isAnnouncementsPollInFlight = false;
+    let isSlidingTextsPollInFlight = false;
     let isScreenConfigPollInFlight = false;
+    let screenConfigSyncQueued = false;
+    let slidingTextsSyncQueued = false;
 
     let announcementRotationInterval = null;
+    let announcementRotationIndex = 0;
+    let lastAnnouncementRotationCount = 0;
     let announcementResizeHandler = null;
+    let announcementLayoutPassId = 0;
+    let uiLayoutVersion = 0;
+    let announcementsDataCache = [];
+    let lastSlidingTextsCache = [];
+    let lastSlidingBoxStyling = @json(($boxSettings['sliding_text_box']['styling_settings'] ?? []));
+    const announcementNodesByKey = new Map();
+    const mediaDom = {
+        adhanScreen: null,
+        image: null,
+        video: null,
+        errorMessage: null
+    };
+    const fullscreenState = {
+        userActivated: false,
+        restoreEnabled: false,
+        manualExitRequested: false,
+        restoreTimer: null,
+        wasActive: false
+    };
+    const dashboardRuntime = {
+        lastUpdateSource: 'initial-render',
+        lastRenderCause: 'initial-render'
+    };
 
     async function fetchJson(url) {
-        const response = await fetch(url, {
+        const separator = url.includes('?') ? '&' : '?';
+        const response = await fetch(`${url}${separator}_=${Date.now()}`, {
             cache: 'no-store',
-            headers: { 'Accept': 'application/json' }
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
         });
 
         if (!response.ok) {
@@ -1455,6 +1689,113 @@
         }
 
         return response.json();
+    }
+
+    const DISPLAY_SYNC_STORAGE_KEY = 'timetable-display-sync';
+    let displaySyncChannel = null;
+
+    function notifyDisplayClientsChanged() {
+        try {
+            localStorage.setItem(DISPLAY_SYNC_STORAGE_KEY, String(Date.now()));
+        } catch (error) {
+            // Ignore storage failures in restricted contexts.
+        }
+
+        try {
+            if (!displaySyncChannel) {
+                displaySyncChannel = new BroadcastChannel('timetable-display');
+            }
+            displaySyncChannel.postMessage({ type: 'sync', at: Date.now() });
+        } catch (error) {
+            // BroadcastChannel may be unavailable in older browsers.
+        }
+    }
+
+    function requestDisplaySyncAll() {
+        requestScreenConfigSync();
+        requestSlidingTextsSync();
+        requestAnnouncementsSync();
+        requestTimetableSync();
+    }
+
+    function initDisplaySyncListeners() {
+        window.addEventListener('storage', (event) => {
+            if (event.key === DISPLAY_SYNC_STORAGE_KEY) {
+                requestDisplaySyncAll();
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                requestDisplaySyncAll();
+            }
+        });
+
+        window.addEventListener('focus', () => {
+            requestDisplaySyncAll();
+        });
+
+        try {
+            if (!displaySyncChannel) {
+                displaySyncChannel = new BroadcastChannel('timetable-display');
+            }
+            displaySyncChannel.onmessage = () => {
+                requestDisplaySyncAll();
+            };
+        } catch (error) {
+            // Ignore unsupported browsers.
+        }
+    }
+
+    function debugLog(scope, message, details = {}) {
+        console.log(`[tv-dashboard][${scope}] ${message}`, details);
+    }
+
+    function logCountdownDebug(event, details = {}) {
+        const entry = {
+            at: new Date().toISOString(),
+            event,
+            ...details,
+        };
+        debugLog('countdown', event, details);
+        if (event === 'tick') {
+            if (countdownVerification.ticks.length > 120) {
+                countdownVerification.ticks.shift();
+            }
+            countdownVerification.ticks.push(entry);
+        } else if (event === 'drift') {
+            countdownVerification.driftAlerts.push(entry);
+        }
+    }
+
+    function getCountdownSessionKey(countdown) {
+        if (!countdown) {
+            return null;
+        }
+        const end = countdown.countdown_end || countdown.prayer_time || null;
+        const phase = countdown.phase || 'iqamah';
+        return end ? `${phase}|${end}` : null;
+    }
+
+    function recordCountdownStateTransition(fromState, toState, details = {}) {
+        const entry = {
+            at: new Date().toISOString(),
+            from: fromState,
+            to: toState,
+            ...details,
+        };
+        countdownVerification.stateTransitions.push(entry);
+        logCountdownDebug('state-transition', entry);
+    }
+
+    function markRenderCause(cause, details = {}) {
+        dashboardRuntime.lastRenderCause = cause;
+        debugLog('render', cause, details);
+    }
+
+    function markUpdateSource(source, details = {}) {
+        dashboardRuntime.lastUpdateSource = source;
+        debugLog('update', source, details);
     }
 
     function toPositiveInteger(value, fallback = 0) {
@@ -1484,7 +1825,37 @@
     }
 
     function isPosterState(state) {
-        return state === 'PRAYER_POSTER' || state === 'FULLTIME_POSTER';
+        return state === 'PRAYER_POSTER' || state === 'FULLTIME_POSTER' || state === 'MEDIA';
+    }
+
+    function normalizeScreenStateValue(state) {
+        if (isPosterState(state)) {
+            return 'MEDIA';
+        }
+
+        return state || 'TIMETABLE';
+    }
+
+    function computeScreenStateSignature(screenStateData) {
+        if (!screenStateData || typeof screenStateData !== 'object') {
+            return 'TIMETABLE|empty';
+        }
+
+        const normalizedState = normalizeScreenStateValue(screenStateData.state);
+        const media = screenStateData.media || {};
+        const countdown = screenStateData.countdown || {};
+
+        return JSON.stringify({
+            state: normalizedState,
+            versions: getPayloadVersionBundle(screenStateData),
+            posterType: screenStateData.state || null,
+            mediaId: media.id || null,
+            mediaUrl: media.file_url || null,
+            mediaDuration: media.display_duration || null,
+            prayerName: countdown.prayer_name || null,
+            countdownPhase: countdown.phase || null,
+            countdownEnd: countdown.countdown_end || countdown.prayer_time || null
+        });
     }
 
     function normalizeMediaPayload(media) {
@@ -1509,6 +1880,7 @@
             title: announcement && announcement.title ? announcement.title : '',
             content: announcement && announcement.content ? announcement.content : '',
             display_duration: toPositiveInteger(announcement && announcement.display_duration ? announcement.display_duration : null, 10),
+            title_font_size: toPositiveInteger(announcement && announcement.title_font_size ? announcement.title_font_size : null, 36),
             font_size: toPositiveInteger(announcement && announcement.font_size ? announcement.font_size : null, 24),
             text_color: announcement && announcement.text_color ? announcement.text_color : '#000000',
             background_color: announcement && announcement.background_color ? announcement.background_color : '#ffffff',
@@ -1516,38 +1888,113 @@
         };
     }
 
-    function syncKnownVersions(payload) {
-        if (!payload || typeof payload !== 'object') {
+    function getPayloadVersionBundle(payload) {
+        return {
+            announcements: payload && payload.announcements_version ? payload.announcements_version : null,
+            media: payload && payload.media_version ? payload.media_version : null,
+            timetable: payload && payload.timetable_version ? payload.timetable_version : null,
+            config: payload && payload.config_version ? payload.config_version : null,
+            slidingTexts: payload && payload.sliding_texts_version ? payload.sliding_texts_version : null,
+            state: payload && payload.state_version ? payload.state_version : null
+        };
+    }
+
+    function updateReceivedVersions(payload) {
+        const bundle = getPayloadVersionBundle(payload);
+        Object.entries(bundle).forEach(([key, value]) => {
+            if (value) {
+                lastReceivedVersions[key] = value;
+            }
+        });
+    }
+
+    function detectVersionChanges(payload) {
+        const bundle = getPayloadVersionBundle(payload);
+        const changed = [];
+
+        Object.entries(bundle).forEach(([key, value]) => {
+            if (!value) {
+                return;
+            }
+
+            if (lastReceivedVersions[key] !== value) {
+                changed.push(key);
+            }
+        });
+
+        return {
+            changed,
+            bundle
+        };
+    }
+
+    function logPayloadReceipt(section, payload) {
+        debugLog('payload', `Received ${section} payload`, {
+            section,
+            versions: getPayloadVersionBundle(payload),
+            payload
+        });
+    }
+
+    function logDetectedChanges(section, changed, details = {}) {
+        if (!changed || changed.length === 0) {
             return;
         }
 
-        if (payload.announcements_version) {
-            lastKnownVersions.announcements = payload.announcements_version;
-        }
-
-        if (payload.media_version) {
-            lastKnownVersions.media = payload.media_version;
-        }
-
-        if (payload.timetable_version) {
-            lastKnownVersions.timetable = payload.timetable_version;
-        }
-
-        if (payload.config_version) {
-            lastKnownVersions.config = payload.config_version;
-        }
-
-        if (payload.state_version) {
-            lastKnownVersions.state = payload.state_version;
-        }
+        debugLog('diff', `Detected changes for ${section}`, {
+            section,
+            changed,
+            ...details
+        });
     }
 
-    function hasVersionChanged(section, nextVersion) {
-        if (!nextVersion) {
-            return true;
+    function computeTimetableSignature(payload) {
+        return JSON.stringify({
+            version: payload && payload.timetable_version ? payload.timetable_version : null,
+            today: payload && payload.today ? payload.today : null,
+            tomorrow: payload && payload.tomorrow ? payload.tomorrow : null,
+            islamic_date: payload && payload.islamic_date ? payload.islamic_date : null,
+            jamaat_offsets: payload && payload.jamaat_offsets ? payload.jamaat_offsets : null
+        });
+    }
+
+    function computeAnnouncementsSignature(payload) {
+        return JSON.stringify({
+            version: payload && payload.announcements_version ? payload.announcements_version : null,
+            announcements: Array.isArray(payload && payload.announcements) ? payload.announcements : []
+        });
+    }
+
+    function computeSlidingTextsSignature(payload) {
+        return payload && payload.sliding_texts_version ? String(payload.sliding_texts_version) : '';
+    }
+
+    function computeConfigSignature(payload) {
+        return payload && payload.config_version ? String(payload.config_version) : '';
+    }
+
+    function buildMediaAssetUrl(fileUrl, versionToken) {
+        if (!fileUrl) {
+            return '';
         }
 
-        return lastKnownVersions[section] !== nextVersion;
+        if (!versionToken) {
+            return fileUrl;
+        }
+
+        try {
+            const url = new URL(fileUrl, window.location.origin);
+            url.searchParams.set('tvv', versionToken);
+
+            if (/^https?:/i.test(fileUrl) || fileUrl.startsWith('//') || fileUrl.startsWith('/')) {
+                return url.toString();
+            }
+
+            return `${url.pathname}${url.search}${url.hash}`;
+        } catch (error) {
+            const separator = fileUrl.includes('?') ? '&' : '?';
+            return `${fileUrl}${separator}tvv=${encodeURIComponent(versionToken)}`;
+        }
     }
 
     function normalizeCssValue(value, fallbackUnit = '') {
@@ -1575,6 +2022,70 @@
         return trimmed;
     }
 
+    function normalizeRemFontSize(value, defaultRem = '1.2rem') {
+        if (value === null || typeof value === 'undefined' || value === '') {
+            return defaultRem;
+        }
+
+        const trimmed = String(value).trim();
+        if (!trimmed) {
+            return defaultRem;
+        }
+
+        if (/rem$/i.test(trimmed)) {
+            return trimmed;
+        }
+
+        if (/px$/i.test(trimmed)) {
+            const numeric = parseFloat(trimmed);
+            if (!Number.isFinite(numeric)) {
+                return defaultRem;
+            }
+
+            const rem = Math.round((numeric / 16) * 1000) / 1000;
+            return `${rem}rem`;
+        }
+
+        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+            const rem = Math.round((parseFloat(trimmed) / 16) * 1000) / 1000;
+            return `${rem}rem`;
+        }
+
+        return trimmed;
+    }
+
+    // Box admin inputs store bare numbers as rem (matches Blade: value + 'rem').
+    function normalizeBladeRemFontSize(value, defaultRem = '1rem') {
+        if (value === null || typeof value === 'undefined' || value === '') {
+            return defaultRem;
+        }
+
+        const trimmed = String(value).trim();
+        if (!trimmed) {
+            return defaultRem;
+        }
+
+        if (/rem$/i.test(trimmed)) {
+            return trimmed;
+        }
+
+        if (/px$/i.test(trimmed)) {
+            const numeric = parseFloat(trimmed);
+            if (!Number.isFinite(numeric)) {
+                return defaultRem;
+            }
+
+            const rem = Math.round((numeric / 16) * 1000) / 1000;
+            return `${rem}rem`;
+        }
+
+        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+            return `${trimmed}rem`;
+        }
+
+        return trimmed;
+    }
+
     function setStyleValue(element, property, value, fallbackUnit = '') {
         if (!element) {
             return;
@@ -1588,10 +2099,32 @@
         element.style.setProperty(property, cssValue);
     }
 
+    const FLEX_BOX_TYPES = ['announcements_box', 'prayer_times_box'];
+
     function toggleBoxVisibility(boxType, isVisible) {
         document.querySelectorAll(`[data-box-root="${boxType}"]`).forEach((element) => {
             if (isVisible) {
-                element.style.display = '';
+                if (FLEX_BOX_TYPES.includes(boxType)) {
+                    element.style.display = 'flex';
+                    element.style.flexDirection = 'column';
+                    element.style.height = '100%';
+                    element.style.minHeight = '0';
+                    element.style.marginTop = '0';
+                    element.style.paddingTop = '0';
+                    element.style.alignSelf = 'flex-start';
+                    if (boxType === 'announcements_box') {
+                        element.style.flex = '0 0 33.334%';
+                        element.style.maxWidth = '33.334%';
+                        element.style.width = '33.334%';
+                    }
+                    if (boxType === 'prayer_times_box') {
+                        element.style.flex = '0 0 66.666%';
+                        element.style.maxWidth = '66.666%';
+                        element.style.width = '66.666%';
+                    }
+                } else {
+                    element.style.display = '';
+                }
                 return;
             }
 
@@ -1619,18 +2152,15 @@
         root.style.setProperty('--display-font-family', displayFontFamily || 'Arial, sans-serif');
         root.style.setProperty('--display-background-color', displayBackgroundColor || '#ffffff');
         root.style.setProperty('--display-text-color', displayTextColor || '#000000');
-        root.style.setProperty('--prayer-time-font-size', normalizeCssValue(themeVariables.prayer_time_font_size, 'px') || '24px');
+        root.style.setProperty('--prayer-time-font-size', normalizeRemFontSize(themeVariables.prayer_time_font_size, '1.5rem'));
         root.style.setProperty('--announcement-scroll-speed', String(themeVariables.announcement_scroll_speed || '3'));
 
         if (displayFontFamily) {
             document.body.style.fontFamily = displayFontFamily;
         }
-        if (displayBackgroundColor) {
-            const board = document.getElementById('timetable-background-box');
-            if (board) {
-                board.style.backgroundColor = displayBackgroundColor;
-            }
-        }
+        const pageBackground = displayBackgroundColor || '#ffffff';
+        document.body.style.backgroundColor = pageBackground;
+        syncBoardHeaderContentGap();
         if (displayTextColor) {
             document.body.style.color = displayTextColor;
         }
@@ -1663,32 +2193,459 @@
         return orderMap;
     }
 
-    function applyBoxOrdering(boxSettings, boxOrder = []) {
-        const orderMap = buildOrderMap(boxSettings, boxOrder);
-        const parents = new Set();
+    const DISPLAY_MODE_KEY = 'announcementDisplayMode';
+    const MAIN_COLUMN_BOX_TYPES = ['prayer_times_box', 'announcements_box'];
+    const BOTTOM_BOX_TYPES = ['special_times_box', 'welcome_box', 'sliding_text_box'];
 
-        document.querySelectorAll('[data-box-root]').forEach((node) => {
-            if (node.parentElement) {
-                parents.add(node.parentElement);
-            }
-        });
+    function getAnnouncementDisplayMode() {
+        const storedMode = localStorage.getItem(DISPLAY_MODE_KEY);
+        if (storedMode === 'show-all' || storedMode === 'rotation') {
+            return storedMode;
+        }
 
-        parents.forEach((parent) => {
-            const children = Array.from(parent.children).filter((child) => child.hasAttribute('data-box-root'));
-            if (children.length < 2) {
+        const contentContainer = document.getElementById('announcements-content');
+        const domMode = contentContainer ? contentContainer.dataset.displayMode : null;
+        return domMode === 'show-all' ? 'show-all' : 'rotation';
+    }
+
+    function clearAnnouncementsLayoutInlineStyles() {
+        const section = document.getElementById('announcements-section');
+        const contentContainer = document.getElementById('announcements-content');
+        const column = document.querySelector('[data-box-root="announcements_box"]');
+
+        [column, section, contentContainer].forEach((node) => {
+            if (!node) {
                 return;
             }
 
-            children
-                .sort((a, b) => {
-                    const aType = a.getAttribute('data-box-root');
-                    const bType = b.getAttribute('data-box-root');
-                    const aOrder = typeof orderMap[aType] !== 'undefined' ? Number(orderMap[aType]) : Number.MAX_SAFE_INTEGER;
-                    const bOrder = typeof orderMap[bType] !== 'undefined' ? Number(orderMap[bType]) : Number.MAX_SAFE_INTEGER;
-                    return aOrder - bOrder;
-                })
-                .forEach((child) => parent.appendChild(child));
+            node.style.removeProperty('display');
+            node.style.removeProperty('flex');
+            node.style.removeProperty('flex-direction');
+            node.style.removeProperty('flex-shrink');
+            node.style.removeProperty('height');
+            node.style.removeProperty('max-height');
+            node.style.removeProperty('min-height');
+            node.style.removeProperty('overflow');
+            node.style.removeProperty('overflow-y');
         });
+
+        if (!contentContainer) {
+            return;
+        }
+
+        contentContainer.querySelectorAll('.announcement-item, .rotating-announcement').forEach((item) => {
+            item.style.removeProperty('display');
+            item.style.removeProperty('flex');
+            item.style.removeProperty('flex-direction');
+            item.style.removeProperty('flex-shrink');
+            item.style.removeProperty('height');
+            item.style.removeProperty('max-height');
+            item.style.removeProperty('min-height');
+            item.style.removeProperty('position');
+        });
+
+        contentContainer.querySelectorAll('.announcement-text-container').forEach((node) => {
+            node.style.removeProperty('flex');
+            node.style.removeProperty('display');
+            node.style.removeProperty('min-height');
+            node.style.removeProperty('height');
+        });
+    }
+
+    function extractAnnouncementsDataFromDom() {
+        const nodes = document.querySelectorAll('#announcements-content .rotating-announcement');
+        if (nodes.length === 0) {
+            return [];
+        }
+
+        return Array.from(nodes).map((node) => {
+            const titleEl = node.querySelector('.announcement-title');
+            const scrollEl = node.querySelector('.announcement-text-scroll');
+            return normalizeAnnouncement({
+                id: node.dataset.announcementId || null,
+                title: titleEl ? titleEl.textContent : '',
+                content: scrollEl ? scrollEl.textContent : '',
+                display_duration: toPositiveInteger(
+                    node.dataset.displayDurationSeconds
+                        ? node.dataset.displayDurationSeconds
+                        : ((parseInt(node.dataset.duration, 10) || 10000) / 1000),
+                    10
+                ),
+                scroll_speed: scrollEl ? Number(scrollEl.getAttribute('data-scroll-speed')) || 3 : 3,
+                background_color: node.style.backgroundColor || undefined,
+                text_color: titleEl ? titleEl.style.color : undefined,
+                font_size: scrollEl ? parseInt(scrollEl.style.fontSize, 10) || undefined : undefined,
+                title_font_size: titleEl ? parseInt(titleEl.style.fontSize, 10) || undefined : undefined
+            });
+        });
+    }
+
+    function shouldRestartAnnouncementRotation(reason = '') {
+        const restartReasons = new Set([
+            'dom-ready-immediate',
+            'dom-ready',
+            'render-announcements',
+            'render-announcements-empty',
+            'display-mode-storage',
+        ]);
+
+        return restartReasons.has(reason);
+    }
+
+    function applyAnnouncementsPresentation(reason = '') {
+        uiLayoutVersion += 1;
+        const contentContainer = document.getElementById('announcements-content');
+        if (contentContainer) {
+            contentContainer.dataset.layoutVersion = String(uiLayoutVersion);
+        }
+
+        const mode = getAnnouncementDisplayMode();
+        const announcementCount = contentContainer
+            ? contentContainer.querySelectorAll('.rotating-announcement').length
+            : 0;
+        const modeChanged = !!contentContainer && contentContainer.dataset.displayMode !== mode;
+        const countChanged = announcementCount !== lastAnnouncementRotationCount;
+        lastAnnouncementRotationCount = announcementCount;
+        const restartRotation = shouldRestartAnnouncementRotation(reason) || modeChanged || countChanged;
+
+        clearAnnouncementsLayoutInlineStyles();
+        setAnnouncementDisplayMode(mode, {
+            force: modeChanged || countChanged,
+            restartRotation,
+        });
+        scheduleAnnouncementLayoutSync(reason);
+    }
+
+    function ensureBoardMainContentLayout() {
+        const mainContent = document.querySelector('.board-main-content');
+        const row = document.querySelector('.board-main-content .row');
+
+        if (mainContent) {
+            mainContent.style.minHeight = '0';
+            mainContent.style.height = '100%';
+            mainContent.style.overflow = 'hidden';
+        }
+
+        if (row) {
+            row.style.display = 'flex';
+            row.style.flexDirection = 'row';
+            row.style.alignItems = 'flex-start';
+            row.style.height = '100%';
+            row.style.minHeight = '0';
+            row.style.width = '100%';
+            row.style.margin = '0';
+            row.style.padding = '0';
+            row.style.gap = '0';
+        }
+
+        if (mainContent) {
+            mainContent.style.display = 'flex';
+            mainContent.style.flexDirection = 'column';
+        }
+    }
+
+    function resolveBoardPageGapColor() {
+        return getComputedStyle(document.body).backgroundColor || '#ffffff';
+    }
+
+    function syncBoardHeaderContentGap() {
+        const container = document.querySelector('.unified-container');
+        const header = document.getElementById('header-box');
+        const mainContent = document.querySelector('.board-main-content');
+        if (!container || !mainContent) {
+            return;
+        }
+
+        let spacer = container.querySelector(':scope > .board-header-content-gap');
+        if (!spacer) {
+            spacer = document.createElement('div');
+            spacer.className = 'board-header-content-gap';
+            spacer.setAttribute('aria-hidden', 'true');
+            if (header && header.parentElement === container) {
+                container.insertBefore(spacer, header.nextElementSibling);
+            } else {
+                container.insertBefore(spacer, mainContent);
+            }
+        }
+
+        spacer.style.backgroundColor = resolveBoardPageGapColor();
+    }
+
+    function syncBoardColumnLayout(boxSettings = null) {
+        const configPadding = boxSettings
+            ? resolveBoardColumnPadding(boxSettings)
+            : getComputedStyle(document.querySelector('.board-main-content') || document.body).getPropertyValue('--board-column-padding').trim();
+
+        applyBoardColumnPadding(configPadding || '15px');
+        ensureBoardMainContentLayout();
+
+        ['prayer-times-box', 'announcements_box'].forEach((key) => {
+            const wrapper = key === 'prayer-times-box'
+                ? document.getElementById('prayer-times-box')
+                : document.querySelector('[data-box-root="announcements_box"]');
+            if (!wrapper) {
+                return;
+            }
+            wrapper.style.marginTop = '0';
+            wrapper.style.paddingTop = '0';
+            wrapper.style.alignSelf = 'flex-start';
+        });
+
+        ['prayer-times-section', 'announcements-section'].forEach((sectionId) => {
+            const section = document.getElementById(sectionId);
+            if (!section) {
+                return;
+            }
+            section.style.marginTop = '0';
+            section.style.paddingTop = '0';
+            section.style.paddingLeft = '';
+            section.style.paddingRight = '';
+            section.style.paddingBottom = '';
+            section.style.borderTopWidth = '0';
+        });
+
+        syncBoardColumnHeaders();
+        syncBoardHeaderContentGap();
+    }
+
+    function resolveBoardColumnPadding(boxSettings) {
+        const prayerPadding = boxSettings?.prayer_times_box?.styling_settings?.padding;
+        const announcementsPadding = boxSettings?.announcements_box?.styling_settings?.padding;
+        const value = prayerPadding ?? announcementsPadding ?? '15';
+        return normalizeCssValue(value, 'px') || '15px';
+    }
+
+    function applyBoardColumnPadding(paddingValue) {
+        const mainContent = document.querySelector('.board-main-content');
+        if (!mainContent) {
+            return;
+        }
+
+        const padding = normalizeCssValue(paddingValue, 'px') || '15px';
+        mainContent.style.setProperty('--board-column-padding', padding);
+
+        ['prayer-times-section', 'announcements-section'].forEach((sectionId) => {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.style.paddingTop = '0';
+                section.style.paddingLeft = '';
+                section.style.paddingRight = '';
+                section.style.paddingBottom = '';
+            }
+        });
+    }
+
+    function syncBoardColumnHeaders() {
+        const prayerHeader = document.querySelector('.prayer-header');
+        const annHeader = document.querySelector('.announcements-header');
+        const boardMain = document.querySelector('.board-main-content');
+
+        if (!prayerHeader || !annHeader) {
+            return;
+        }
+
+        const sharedHeaderStyles = {
+            margin: '0 0 10px 0',
+            padding: '8px',
+            paddingBottom: '10px',
+            boxSizing: 'border-box',
+        };
+
+        Object.assign(prayerHeader.style, sharedHeaderStyles);
+        Object.assign(annHeader.style, sharedHeaderStyles);
+
+        prayerHeader.style.minHeight = '';
+        annHeader.style.minHeight = '';
+        if (boardMain) {
+            boardMain.style.removeProperty('--board-header-row-height');
+        }
+
+        requestAnimationFrame(() => {
+            const maxHeight = Math.max(prayerHeader.offsetHeight, annHeader.offsetHeight);
+            if (!maxHeight) {
+                return;
+            }
+
+            const heightPx = `${maxHeight}px`;
+            prayerHeader.style.minHeight = heightPx;
+            annHeader.style.minHeight = heightPx;
+            if (boardMain) {
+                boardMain.style.setProperty('--board-header-row-height', heightPx);
+            }
+        });
+    }
+
+    function resetAllAnnouncementScrollAnimations() {
+        document.querySelectorAll('#announcements-content .announcement-text-scroll').forEach((scrollDiv) => {
+            resetAnnouncementScrollState(scrollDiv);
+        });
+    }
+
+    function restoreFixedBoardLayout() {
+        const container = document.querySelector('.unified-container');
+        const header = document.getElementById('header-box');
+        const spacer = container ? container.querySelector(':scope > .board-header-content-gap') : null;
+        const mainContent = document.querySelector('.board-main-content');
+
+        if (!container || !mainContent) {
+            return;
+        }
+
+        if (header && header.parentElement === container && container.firstElementChild !== header) {
+            container.insertBefore(header, container.firstElementChild);
+        }
+
+        if (header && spacer && header.parentElement === container && header.nextElementSibling !== spacer) {
+            container.insertBefore(spacer, header.nextElementSibling);
+        }
+
+        if (spacer && spacer.nextElementSibling !== mainContent) {
+            container.insertBefore(mainContent, spacer.nextElementSibling);
+        } else if (!spacer) {
+            const anchor = header && header.parentElement === container ? header : null;
+            if (anchor && anchor.nextElementSibling !== mainContent) {
+                container.insertBefore(mainContent, anchor.nextElementSibling);
+            } else if (!anchor && container.firstElementChild !== mainContent) {
+                container.insertBefore(mainContent, container.firstElementChild);
+            }
+        }
+
+        let insertAfter = mainContent;
+        BOTTOM_BOX_TYPES.forEach((boxType) => {
+            const box = document.querySelector(`[data-box-root="${boxType}"]`);
+            if (!box || box.parentElement !== container) {
+                return;
+            }
+
+            if (insertAfter.nextElementSibling !== box) {
+                container.insertBefore(box, insertAfter.nextElementSibling);
+            }
+
+            insertAfter = box;
+        });
+    }
+
+    function reorderBoxChildren(parent, orderMap, allowedBoxTypes) {
+        if (!parent) {
+            return;
+        }
+
+        const children = Array.from(parent.children).filter((child) => {
+            if (!child.hasAttribute('data-box-root')) {
+                return false;
+            }
+
+            const boxType = child.getAttribute('data-box-root');
+            return !allowedBoxTypes || allowedBoxTypes.includes(boxType);
+        });
+
+        if (children.length < 2) {
+            return;
+        }
+
+        children
+            .sort((a, b) => {
+                const aType = a.getAttribute('data-box-root');
+                const bType = b.getAttribute('data-box-root');
+                const aOrder = typeof orderMap[aType] !== 'undefined' ? Number(orderMap[aType]) : Number.MAX_SAFE_INTEGER;
+                const bOrder = typeof orderMap[bType] !== 'undefined' ? Number(orderMap[bType]) : Number.MAX_SAFE_INTEGER;
+                return aOrder - bOrder;
+            })
+            .forEach((child) => parent.appendChild(child));
+    }
+
+    function applyBoxOrdering(boxSettings, boxOrder = []) {
+        const orderMap = buildOrderMap(boxSettings, boxOrder);
+
+        reorderBoxChildren(
+            document.querySelector('.board-main-content .row'),
+            orderMap,
+            MAIN_COLUMN_BOX_TYPES
+        );
+
+        restoreFixedBoardLayout();
+    }
+
+    function applyNextPrayerCountdownSettings(styling, layout) {
+        const prayerBody = document.querySelector('#prayer-times-section .prayer-times-body');
+        if (!prayerBody) {
+            return;
+        }
+
+        const position = layout && layout.next_prayer_position ? layout.next_prayer_position : 'below_table';
+        const prayerList = prayerBody.querySelector('.prayer-list');
+        let infoBlock = prayerBody.querySelector('.next-prayer-info');
+
+        if (position === 'hidden') {
+            if (infoBlock) {
+                infoBlock.style.display = 'none';
+            }
+            return;
+        }
+
+        if (!infoBlock) {
+            infoBlock = document.createElement('div');
+            infoBlock.className = 'next-prayer-info';
+            infoBlock.innerHTML = `
+                <div class="next-prayer-text">Next prayer in:</div>
+                <div id="next-prayer-countdown" class="next-prayer-countdown">--:--:--</div>
+                <div id="next-prayer-name" class="next-prayer-name">Calculating...</div>
+            `;
+            prayerBody.appendChild(infoBlock);
+        }
+
+        infoBlock.style.display = '';
+        infoBlock.style.textAlign = 'center';
+        infoBlock.style.marginTop = position === 'below_table' ? '15px' : '0';
+        infoBlock.style.marginBottom = position === 'above_table' ? '15px' : '0';
+
+        if (prayerList) {
+            if (position === 'above_table') {
+                prayerBody.insertBefore(infoBlock, prayerList);
+            } else {
+                prayerList.insertAdjacentElement('afterend', infoBlock);
+            }
+        }
+
+        const label = infoBlock.querySelector('.next-prayer-text');
+        const countdown = infoBlock.querySelector('#next-prayer-countdown')
+            || infoBlock.querySelector('.next-prayer-countdown');
+        const prayerName = infoBlock.querySelector('#next-prayer-name')
+            || infoBlock.querySelector('.next-prayer-name');
+
+        if (label) {
+            label.style.setProperty('margin-bottom', '8px', 'important');
+            label.style.setProperty('font-weight', 'bold', 'important');
+            label.style.setProperty(
+                'font-size',
+                normalizeBladeRemFontSize(styling.next_prayer_font_size, '1.4rem'),
+                'important'
+            );
+            label.style.setProperty('color', styling.next_prayer_text_color || '#000000', 'important');
+        }
+
+        if (countdown) {
+            countdown.style.setProperty(
+                'font-size',
+                normalizeBladeRemFontSize(styling.next_prayer_countdown_font_size, '1.4rem'),
+                'important'
+            );
+            countdown.style.setProperty('font-weight', 'bold', 'important');
+            countdown.style.setProperty('color', styling.next_prayer_countdown_color || '#000000', 'important');
+        }
+
+        if (prayerName) {
+            prayerName.style.setProperty(
+                'font-size',
+                normalizeBladeRemFontSize(styling.next_prayer_name_font_size, '0.9rem'),
+                'important'
+            );
+            prayerName.style.setProperty('margin-top', '5px', 'important');
+            prayerName.style.setProperty('opacity', '0.8', 'important');
+            prayerName.style.setProperty('color', styling.next_prayer_name_color || '#666666', 'important');
+        }
+
+        updateNextPrayerCountdown();
     }
 
     function applyBoxConfig(boxSettings) {
@@ -1722,19 +2679,45 @@
                     header.style.border = `${normalizeCssValue(styling.border_width)} solid ${styling.border_color}`;
                 }
                 setStyleValue(header, 'border-radius', styling.border_radius);
-                document.querySelectorAll('#current-time').forEach((node) => setStyleValue(node, 'font-size', styling.time_font_size, 'rem'));
-                document.querySelectorAll('#gregorian-date, #islamic-date').forEach((node) => setStyleValue(node, 'font-size', styling.date_font_size, 'rem'));
+                document.querySelectorAll('#current-time').forEach((node) => {
+                    node.style.fontSize = normalizeBladeRemFontSize(styling.time_font_size, '3rem');
+                });
+                document.querySelectorAll('#gregorian-date, #islamic-date').forEach((node) => {
+                    node.style.fontSize = normalizeBladeRemFontSize(styling.date_font_size, '1.6rem');
+                });
             }
 
             if (boxType === 'prayer_times_box') {
                 const prayerSection = document.getElementById('prayer-times-section');
                 const prayerBox = document.getElementById('prayer-times-box');
+                const prayerHeader = prayerSection ? prayerSection.querySelector('.prayer-header') : null;
                 setStyleValue(prayerSection, 'background-color', styling.background_color);
                 setStyleValue(prayerSection, 'color', styling.text_color);
                 setStyleValue(prayerSection, 'font-family', styling.font_family);
-                setStyleValue(prayerSection, 'padding', styling.padding, 'px');
+                if (prayerSection && styling.font_size) {
+                    prayerSection.style.fontSize = normalizeBladeRemFontSize(styling.font_size, '2rem');
+                }
+                if (prayerSection) {
+                    prayerSection.querySelectorAll('.prayer-name').forEach((node) => {
+                        node.style.fontSize = normalizeBladeRemFontSize(styling.prayer_names_font_size, '3rem');
+                    });
+                    prayerSection.querySelectorAll('[data-time-type="beginning"]').forEach((node) => {
+                        node.style.fontSize = normalizeBladeRemFontSize(styling.beginning_font_size, '2rem');
+                    });
+                    prayerSection.querySelectorAll('[data-time-type="jamaat"]').forEach((node) => {
+                        node.style.fontSize = normalizeBladeRemFontSize(styling.jamaat_font_size, '2rem');
+                    });
+                }
                 if (prayerSection && styling.border_width && styling.border_color) {
                     prayerSection.style.border = `${normalizeCssValue(styling.border_width)} solid ${styling.border_color}`;
+                }
+
+                if (prayerHeader) {
+                    setStyleValue(prayerHeader, 'background-color', styling.header_background_color);
+                    setStyleValue(prayerHeader, 'color', styling.header_text_color);
+                    if (styling.header_font_size) {
+                        prayerHeader.style.fontSize = normalizeBladeRemFontSize(styling.header_font_size, '1rem');
+                    }
                 }
 
                 if (Array.isArray(layout.column_widths) && layout.column_widths.length >= 3) {
@@ -1772,6 +2755,8 @@
                 if (prayerBox && layout.width) {
                     prayerBox.style.width = normalizeCssValue(layout.width);
                 }
+
+                applyNextPrayerCountdownSettings(styling, layout);
             }
 
             if (boxType === 'announcements_box') {
@@ -1784,18 +2769,40 @@
                 if (section && styling.border_width && styling.border_color) {
                     section.style.border = `${normalizeCssValue(styling.border_width)} solid ${styling.border_color}`;
                 }
-                setStyleValue(section, 'padding', styling.padding, 'px');
-                setStyleValue(header, 'color', styling.title_color);
-                setStyleValue(header, 'font-size', styling.title_font_size, 'px');
+                if (section) {
+                    const headerBg = styling.title_background_color || '#1E4D2B';
+                    const headerText = styling.title_color || '#ffffff';
+                    section.style.setProperty('--announcements-header-bg', headerBg);
+                    section.style.setProperty('--announcements-header-text', headerText);
+                }
+                if (header) {
+                    const headerBg = styling.title_background_color || '#1E4D2B';
+                    const headerText = styling.title_color || '#ffffff';
+                    header.style.backgroundColor = headerBg;
+                    header.style.color = headerText;
+                    header.style.fontSize = normalizeBladeRemFontSize(styling.title_font_size, '1.2rem');
+                    header.style.margin = '0 0 10px 0';
+                    header.style.padding = '8px';
+                    header.style.paddingBottom = '10px';
+                    header.style.textAlign = 'center';
+                    header.style.fontWeight = 'bold';
+                    header.style.display = 'flex';
+                    header.style.alignItems = 'center';
+                    header.style.justifyContent = 'center';
+                    header.style.boxSizing = 'border-box';
+                }
                 if (header && content.title) {
                     header.textContent = content.title;
                 }
 
                 if (typeof layout.max_height !== 'undefined') {
-                    announcementTextMaxHeight = normalizeCssValue(layout.max_height, 'px') || announcementTextMaxHeight;
-                    document.querySelectorAll('#announcements-content .announcement-text-container').forEach((element) => {
-                        element.style.maxHeight = announcementTextMaxHeight;
-                    });
+                    announcementSectionMaxHeight = normalizeCssValue(layout.max_height, 'px') || announcementSectionMaxHeight;
+                    setStyleValue(section, 'max-height', announcementSectionMaxHeight);
+                } else {
+                    announcementSectionMaxHeight = '';
+                    if (section) {
+                        section.style.maxHeight = 'none';
+                    }
                 }
             }
 
@@ -1804,6 +2811,17 @@
                 setStyleValue(section, 'background-color', styling.background_color);
                 setStyleValue(section, 'color', styling.text_color);
                 setStyleValue(section, 'font-family', styling.font_family);
+                if (section && styling.font_size) {
+                    section.style.fontSize = normalizeBladeRemFontSize(styling.font_size, '4rem');
+                    section.querySelectorAll('.time-value').forEach((node) => {
+                        node.style.fontSize = normalizeBladeRemFontSize(styling.font_size, '4rem');
+                    });
+                }
+                if (section && styling.header_font_size) {
+                    section.querySelectorAll('.time-label').forEach((node) => {
+                        node.style.fontSize = normalizeBladeRemFontSize(styling.header_font_size, '4rem');
+                    });
+                }
                 if (section && styling.border_width && styling.border_color) {
                     section.style.border = `${normalizeCssValue(styling.border_width)} solid ${styling.border_color}`;
                 }
@@ -1837,12 +2855,16 @@
                 setStyleValue(section, 'background-color', styling.background_color);
                 setStyleValue(section, 'color', styling.text_color);
                 setStyleValue(section, 'font-family', styling.font_family);
-                setStyleValue(section, 'font-size', styling.font_size, 'rem');
+                if (section && styling.font_size) {
+                    section.style.setProperty('font-size', normalizeBladeRemFontSize(styling.font_size, '5rem'), 'important');
+                }
                 setStyleValue(section, 'text-align', layout.text_alignment);
                 if (section && styling.border_width && styling.border_color) {
                     section.style.border = `${normalizeCssValue(styling.border_width)} solid ${styling.border_color}`;
                 }
                 setStyleValue(section, 'padding', styling.padding, 'px');
+                lastSlidingBoxStyling = styling || {};
+                renderSlidingTexts(lastSlidingTextsCache, lastSlidingBoxStyling);
             }
 
             if (boxType === 'welcome_box') {
@@ -1874,6 +2896,8 @@
                 }
             }
         });
+
+        syncBoardColumnLayout(boxSettings);
     }
 
     function applyScreenConfig(configPayload) {
@@ -1881,15 +2905,157 @@
             return;
         }
 
+        markUpdateSource('screen-config-sync', {
+            configVersion: configPayload.config_version || null
+        });
         applyThemeVariables(configPayload.theme_variables || {});
         applyBoxConfig(configPayload.box_settings || {});
         applyBoxOrdering(configPayload.box_settings || {}, configPayload.box_order || []);
+        if (configPayload.box_settings && configPayload.box_settings.sliding_text_box) {
+            lastSlidingBoxStyling = configPayload.box_settings.sliding_text_box.styling_settings || lastSlidingBoxStyling;
+        }
+        applySlidingTextsPayload(configPayload, lastSlidingBoxStyling);
+        restoreFixedBoardLayout();
+        applyAnnouncementsPresentation('applyScreenConfig');
+        syncBoardColumnLayout(configPayload?.box_settings || {});
+    }
+
+    async function seedInitialPollSignatures() {
+        try {
+            const [announcementsRes, slidingTextsRes, configRes, timetableRes] = await Promise.all([
+                fetchJson('/api/announcements'),
+                fetchJson('/api/sliding-texts'),
+                fetchJson('/api/screen-config'),
+                fetchJson('/api/timetable')
+            ]);
+
+            lastAppliedSectionSignatures.announcements = computeAnnouncementsSignature(announcementsRes);
+            lastAppliedSectionSignatures.slidingTexts = computeSlidingTextsSignature(slidingTextsRes);
+            lastAppliedSectionSignatures.config = computeConfigSignature(configRes);
+            lastAppliedSectionSignatures.timetable = computeTimetableSignature(timetableRes);
+            updateReceivedVersions(announcementsRes);
+            updateReceivedVersions(slidingTextsRes);
+            updateReceivedVersions(configRes);
+            updateReceivedVersions(timetableRes);
+
+            if (Array.isArray(announcementsRes && announcementsRes.announcements)) {
+                announcementsDataCache = announcementsRes.announcements.map(normalizeAnnouncement);
+            }
+
+            if (Array.isArray(slidingTextsRes && slidingTextsRes.sliding_texts)) {
+                lastSlidingTextsCache = slidingTextsRes.sliding_texts;
+            }
+        } catch (error) {
+            console.error('Failed to seed initial poll signatures:', error);
+        }
+    }
+
+    function ensureMediaDom() {
+        const mediaContent = document.getElementById('media-content');
+        if (!mediaContent) {
+            return null;
+        }
+
+        if (!mediaDom.adhanScreen) {
+            const adhanScreen = document.createElement('div');
+            adhanScreen.style.display = 'none';
+            adhanScreen.style.flexDirection = 'column';
+            adhanScreen.style.alignItems = 'center';
+            adhanScreen.style.justifyContent = 'center';
+            adhanScreen.style.height = '100vh';
+            adhanScreen.style.background = '#000';
+            adhanScreen.style.color = '#fff';
+
+            const adhanTitle = document.createElement('div');
+            adhanTitle.textContent = 'ADHAN';
+            adhanTitle.style.fontSize = '5rem';
+            adhanTitle.style.fontWeight = 'bold';
+            adhanTitle.style.letterSpacing = '0.2rem';
+
+            const adhanSubtitle = document.createElement('div');
+            adhanSubtitle.textContent = 'Prayer time has started';
+            adhanSubtitle.style.fontSize = '1.6rem';
+            adhanSubtitle.style.marginTop = '1rem';
+
+            adhanScreen.appendChild(adhanTitle);
+            adhanScreen.appendChild(adhanSubtitle);
+            mediaContent.appendChild(adhanScreen);
+            mediaDom.adhanScreen = adhanScreen;
+        }
+
+        if (!mediaDom.image) {
+            const image = document.createElement('img');
+            image.style.cssText = 'display: none; width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 1;';
+            image.alt = '';
+            mediaContent.appendChild(image);
+            mediaDom.image = image;
+        }
+
+        if (!mediaDom.video) {
+            const video = document.createElement('video');
+            video.style.cssText = 'display: none; width: 100%; height: 100%; object-fit: contain;';
+            video.autoplay = true;
+            video.loop = true;
+            video.muted = true;
+            mediaContent.appendChild(video);
+            mediaDom.video = video;
+        }
+
+        if (!mediaDom.errorMessage) {
+            const errorMessage = document.createElement('div');
+            errorMessage.style.display = 'none';
+            errorMessage.style.color = 'white';
+            errorMessage.style.textAlign = 'center';
+            errorMessage.style.padding = '20px';
+            mediaContent.appendChild(errorMessage);
+            mediaDom.errorMessage = errorMessage;
+        }
+
+        return mediaDom;
+    }
+
+    function hideMediaNodes() {
+        ensureMediaDom();
+        if (mediaDom.adhanScreen) {
+            mediaDom.adhanScreen.style.display = 'none';
+        }
+        if (mediaDom.image) {
+            mediaDom.image.style.display = 'none';
+            mediaDom.image.removeAttribute('src');
+            mediaDom.image.alt = '';
+        }
+        if (mediaDom.video) {
+            mediaDom.video.pause();
+            mediaDom.video.style.display = 'none';
+            mediaDom.video.removeAttribute('src');
+            mediaDom.video.load();
+        }
+        if (mediaDom.errorMessage) {
+            mediaDom.errorMessage.style.display = 'none';
+            mediaDom.errorMessage.textContent = '';
+        }
+    }
+
+    function showMediaError(message) {
+        ensureMediaDom();
+        hideMediaNodes();
+        if (mediaDom.errorMessage) {
+            mediaDom.errorMessage.textContent = message;
+            mediaDom.errorMessage.style.display = 'block';
+        }
+    }
+
+    function ensureMediaPollingTimer() {
+        if (mediaPollingTimer) {
+            return;
+        }
+
+        mediaPollingTimer = setInterval(requestMediaSync, POLL_INTERVALS.media);
     }
 
     function clearAllScreenContent() {
         const mediaOverlay = document.getElementById('media-overlay');
         const countdownPopup = document.getElementById('countdown-popup');
-        const mediaContent = document.getElementById('media-content');
         const mediaCountdown = document.getElementById('media-countdown');
 
         if (mediaOverlay) {
@@ -1900,13 +3066,10 @@
             countdownPopup.style.display = 'none';
         }
 
-        if (mediaContent) {
-            mediaContent.innerHTML = '';
-        }
+        hideMediaNodes();
 
         if (mediaCountdown) {
             mediaCountdown.style.display = 'none';
-            mediaCountdown.innerHTML = '';
         }
 
         clearTimeout(mediaDisplayTimer);
@@ -1916,6 +3079,8 @@
         countdownTimer = null;
         currentMedia = null;
         currentMediaData = null;
+        currentMediaVersionToken = null;
+        countdownVerification.sessionKey = null;
     }
 
     function renderCountdownState(data) {
@@ -1924,20 +3089,61 @@
         const popupPrayer = document.getElementById('countdown-popup-prayer');
         const popupTimer = document.getElementById('countdown-popup-timer');
 
-        if (!countdownPopup || !data || !data.countdown || !data.countdown.prayer_time) {
+        const countdown = data && data.countdown ? data.countdown : null;
+        const countdownEnd = countdown
+            ? (countdown.countdown_end || countdown.prayer_time || null)
+            : null;
+
+        if (!countdownPopup || !countdown || !countdownEnd) {
             renderTimetableState();
             return;
         }
 
-        const prayerName = data.countdown.prayer_name || 'Prayer';
+        const sessionKey = getCountdownSessionKey(countdown);
+        if (sessionKey && countdownVerification.sessionKey === sessionKey && countdownTimer) {
+            countdownVerification.duplicateRenderSkips += 1;
+            logCountdownDebug('skip-duplicate-render', {
+                sessionKey,
+                phase: countdown.phase,
+                countdownEnd,
+            });
+            return;
+        }
+
+        const prayerName = countdown.prayer_name || 'Prayer';
+        const phase = countdown.phase || 'iqamah';
+        const message = countdown.message
+            || (phase === 'adhan'
+                ? 'Adhan will start in 30 seconds'
+                : 'Iqamah will start in 30 seconds');
+
+        countdownVerification.sessionKey = sessionKey;
+        countdownVerification.instanceCount += 1;
+        countdownVerification.phase = phase;
+        countdownVerification.countdownStart = countdown.countdown_start || null;
+        countdownVerification.countdownEnd = countdownEnd;
+        countdownVerification.serverSecondsAtStart = toPositiveInteger(countdown.seconds_remaining, 30);
+
+        logCountdownDebug('start', {
+            sessionKey,
+            phase,
+            prayerName,
+            message,
+            countdownStart: countdownVerification.countdownStart,
+            countdownEnd,
+            serverSecondsRemaining: countdownVerification.serverSecondsAtStart,
+            instanceCount: countdownVerification.instanceCount,
+        });
+
         if (popupTitle) {
-            popupTitle.textContent = 'Countdown';
+            popupTitle.textContent = message;
         }
         if (popupPrayer) {
             popupPrayer.textContent = prayerName;
         }
         if (popupTimer) {
-            popupTimer.textContent = '00';
+            const initialSeconds = toPositiveInteger(countdown.seconds_remaining, 30);
+            popupTimer.textContent = String(initialSeconds).padStart(2, '0');
         }
 
         countdownPopup.style.display = 'flex';
@@ -1945,32 +3151,30 @@
         countdownPopup.style.top = '50%';
         countdownPopup.style.left = '50%';
         countdownPopup.style.transform = 'translate(-50%, -50%)';
-        startCountdownTimer(data.countdown.prayer_time);
+        startCountdownTimer(countdownEnd, phase);
     }
 
     function renderAdhanState() {
         const overlay = document.getElementById('media-overlay');
-        const mediaContent = document.getElementById('media-content');
-        if (!overlay || !mediaContent) {
+        ensureMediaDom();
+        if (!overlay) {
             return;
         }
 
-        mediaContent.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #000; color: #fff;">
-                <div style="font-size: 5rem; font-weight: bold; letter-spacing: 0.2rem;">ADHAN</div>
-                <div style="font-size: 1.6rem; margin-top: 1rem;">Prayer time has started</div>
-            </div>
-        `;
-
+        markRenderCause('render-adhan-state', {});
+        hideMediaNodes();
+        if (mediaDom.adhanScreen) {
+            mediaDom.adhanScreen.style.display = 'flex';
+        }
         overlay.style.display = 'flex';
     }
 
-    function renderMediaState(media, posterType) {
+    function renderMediaState(media, posterType, mediaVersionToken = null) {
         const normalizedMedia = normalizeMediaPayload(media);
         const overlay = document.getElementById('media-overlay');
-        const mediaContent = document.getElementById('media-content');
+        ensureMediaDom();
 
-        if (!normalizedMedia || !normalizedMedia.file_url || !overlay || !mediaContent) {
+        if (!normalizedMedia || !normalizedMedia.file_url || !overlay) {
             renderTimetableState();
             return;
         }
@@ -1979,7 +3183,9 @@
             && normalizedMedia
             && currentMediaData.id === normalizedMedia.id
             && currentMediaData.file_url === normalizedMedia.file_url
-            && currentScreenState === posterType;
+            && currentScreenState === 'MEDIA'
+            && currentPosterType === posterType
+            && currentMediaVersionToken === mediaVersionToken;
 
         if (isSameMedia) {
             overlay.style.display = 'flex';
@@ -1991,153 +3197,299 @@
 
         currentMedia = normalizedMedia;
         currentMediaData = normalizedMedia;
+        currentMediaVersionToken = mediaVersionToken;
 
-        let mediaElement = null;
+        hideMediaNodes();
+
         if (normalizedMedia.type === 'image') {
-            mediaElement = document.createElement('img');
-            mediaElement.src = normalizedMedia.file_url;
-            mediaElement.alt = normalizedMedia.title;
-            mediaElement.style.cssText = 'width: 100%; height: 100%; object-fit: contain; display: block; position: relative; z-index: 1;';
-            mediaElement.onerror = function() {
-                mediaContent.innerHTML = `<div style="color: white; text-align: center; padding: 20px;">Failed to load image: ${normalizedMedia.title}</div>`;
+            if (!mediaDom.image) {
+                return;
+            }
+
+            mediaDom.image.onerror = function() {
+                showMediaError(`Failed to load image: ${normalizedMedia.title}`);
             };
+            mediaDom.image.alt = normalizedMedia.title;
+            mediaDom.image.src = buildMediaAssetUrl(normalizedMedia.file_url, mediaVersionToken);
+            mediaDom.image.style.display = 'block';
         } else if (normalizedMedia.type === 'video') {
-            mediaElement = document.createElement('video');
-            mediaElement.src = normalizedMedia.file_url;
-            mediaElement.autoplay = true;
-            mediaElement.loop = true;
-            mediaElement.muted = true;
-            mediaElement.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
+            if (!mediaDom.video) {
+                return;
+            }
+
+            mediaDom.video.src = buildMediaAssetUrl(normalizedMedia.file_url, mediaVersionToken);
+            mediaDom.video.style.display = 'block';
+            mediaDom.video.load();
+            mediaDom.video.play().catch((error) => {
+                debugLog('media', 'Video autoplay failed', {
+                    mediaId: normalizedMedia.id,
+                    error: error && error.message ? error.message : error
+                });
+            });
         }
 
-        if (!mediaElement) {
+        if (normalizedMedia.type !== 'image' && normalizedMedia.type !== 'video') {
             renderTimetableState();
             return;
         }
 
-        mediaContent.innerHTML = '';
-        mediaContent.appendChild(mediaElement);
+        markRenderCause('render-media-state', {
+            posterType,
+            mediaId: normalizedMedia.id,
+            mediaType: normalizedMedia.type
+        });
         overlay.style.display = 'flex';
 
         const refreshDelayMs = Math.max(1000, toPositiveInteger(normalizedMedia.display_duration, 3) * 1000 + 250);
         mediaDisplayTimer = setTimeout(() => {
-            // After display duration ends, poll for next media and RESUME polling
+            markUpdateSource('media-duration-expired', {
+                posterType,
+                mediaId: normalizedMedia.id,
+                refreshDelayMs
+            });
             requestMediaSync();
-            mediaPollingTimer = setInterval(requestMediaSync, POLL_INTERVALS.media);
+            ensureMediaPollingTimer();
         }, refreshDelayMs);
     }
 
     function renderTimetableState() {
         const overlay = document.getElementById('media-overlay');
+        const countdownPopup = document.getElementById('countdown-popup');
+
         if (overlay) {
             overlay.style.display = 'none';
+        }
+
+        if (countdownPopup) {
+            countdownPopup.style.display = 'none';
         }
 
         clearTimeout(mediaDisplayTimer);
         clearInterval(countdownTimer);
         mediaDisplayTimer = null;
         countdownTimer = null;
+        hideMediaNodes();
+        markRenderCause('render-timetable-state', {});
         
-        // RESUME media polling when returning to timetable
-        if (!mediaPollingTimer) {
-            mediaPollingTimer = setInterval(requestMediaSync, POLL_INTERVALS.media);
-        }
+        ensureMediaPollingTimer();
     }
 
-    function startCountdownTimer(prayerTime) {
-        const targetTime = new Date(prayerTime).getTime();
+    function startCountdownTimer(countdownEnd, phase) {
+        const targetTime = new Date(countdownEnd).getTime();
         if (Number.isNaN(targetTime)) {
             return;
         }
 
+        let hasRequestedSync = false;
+        let lastLoggedSecond = null;
+        const startedAtMs = Date.now();
+        const expectedDurationSec = 30;
+
         function tick() {
             const now = Date.now();
             const distance = targetTime - now;
-
-            if (distance <= 0) {
-                clearInterval(countdownTimer);
-                countdownTimer = null;
-                requestMediaSync();
-                return;
-            }
-
-            const hours = Math.floor(distance / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            const timeDisplay = document.getElementById('countdown-time-display');
-            if (timeDisplay) {
-                timeDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            }
+            const secondsRemaining = distance > 0
+                ? Math.ceil(distance / 1000)
+                : 0;
 
             const popupTimer = document.getElementById('countdown-popup-timer');
             if (popupTimer) {
-                const totalSeconds = Math.max(0, Math.floor(distance / 1000));
-                popupTimer.textContent = totalSeconds.toString().padStart(2, '0');
+                popupTimer.textContent = String(secondsRemaining).padStart(2, '0');
+            }
+
+            if (secondsRemaining !== lastLoggedSecond) {
+                const elapsedSec = Math.round((now - startedAtMs) / 1000);
+                const expectedRemaining = Math.max(0, expectedDurationSec - elapsedSec);
+                const driftSec = Math.abs(secondsRemaining - expectedRemaining);
+
+                if (lastLoggedSecond !== null && driftSec > 1) {
+                    logCountdownDebug('drift', {
+                        phase,
+                        secondsRemaining,
+                        expectedRemaining,
+                        driftSec,
+                        countdownEnd,
+                    });
+                }
+
+                logCountdownDebug('tick', {
+                    phase,
+                    secondsRemaining,
+                    countdownEnd,
+                });
+                lastLoggedSecond = secondsRemaining;
+            }
+
+            if (distance <= 0 && !hasRequestedSync) {
+                hasRequestedSync = true;
+                logCountdownDebug('reached-zero', { phase, countdownEnd });
+                setTimeout(() => requestMediaSync(), 150);
             }
         }
 
         clearInterval(countdownTimer);
         tick();
-        countdownTimer = setInterval(tick, 1000);
+        countdownTimer = setInterval(tick, 250);
+    }
+
+    function shouldDeferCountdownClear(screenStateData) {
+        if (!screenStateData || screenStateData.state !== 'TIMETABLE' || currentScreenState !== 'COUNTDOWN') {
+            return false;
+        }
+
+        const popup = document.getElementById('countdown-popup');
+        const popupTimer = document.getElementById('countdown-popup-timer');
+        if (!popup || !popupTimer) {
+            return false;
+        }
+
+        const visible = popup.style.display === 'flex' || getComputedStyle(popup).display === 'flex';
+        if (!visible) {
+            return false;
+        }
+
+        return popupTimer.textContent.trim() !== '00';
     }
 
     function applyScreenState(screenStateData) {
-        const nextState = (screenStateData && screenStateData.state) ? screenStateData.state : 'TIMETABLE';
+        const rawState = (screenStateData && screenStateData.state) ? screenStateData.state : 'TIMETABLE';
+        const nextState = normalizeScreenStateValue(rawState);
         const nextMedia = normalizeMediaPayload(screenStateData && screenStateData.media ? screenStateData.media : null);
+        const nextPosterType = nextState === 'MEDIA' ? rawState : null;
         const stateChanged = nextState !== currentScreenState;
+        const posterTypeChanged = nextPosterType !== currentPosterType;
 
-        if (stateChanged) {
+        if (stateChanged || posterTypeChanged) {
+            recordCountdownStateTransition(currentScreenState || 'null', nextState, {
+                posterTypeChanged,
+                phase: screenStateData?.countdown?.phase || null,
+            });
+            markUpdateSource('screen-state-sync', {
+                previousState: currentScreenState,
+                nextState,
+                previousPosterType: currentPosterType,
+                nextPosterType,
+                stateVersion: screenStateData && screenStateData.state_version ? screenStateData.state_version : null
+            });
             clearAllScreenContent();
         }
 
         currentScreenState = nextState;
+        currentPosterType = nextPosterType;
+        console.log('State updated:', nextState);
+        debugLog('state', 'State updated', {
+            state: nextState,
+            posterType: nextPosterType,
+            signature: lastAppliedScreenSignature
+        });
 
         if (nextState === 'COUNTDOWN') {
+            debugLog('section', 'Updated section: countdown', {
+                state: nextState,
+                phase: screenStateData && screenStateData.countdown
+                    ? screenStateData.countdown.phase
+                    : null
+            });
             renderCountdownState(screenStateData);
             return;
         }
 
-        if (nextState === 'ADHAN') {
-            renderAdhanState();
+        if (countdownVerification.sessionKey) {
+            logCountdownDebug('session-cleared', {
+                previousSessionKey: countdownVerification.sessionKey,
+                nextState,
+            });
+            countdownVerification.sessionKey = null;
+        }
+
+        if (nextState === 'MEDIA') {
+            debugLog('section', 'Updated section: media', {
+                state: nextState,
+                posterType: nextPosterType
+            });
+            renderMediaState(nextMedia, nextPosterType || 'MEDIA', screenStateData && screenStateData.media_version ? screenStateData.media_version : null);
             return;
         }
 
-        if (isPosterState(nextState)) {
-            renderMediaState(nextMedia, nextState);
-            return;
-        }
-
+        debugLog('section', 'Updated section: timetable-screen', {
+            state: nextState
+        });
         renderTimetableState();
     }
 
     async function pollMediaState() {
+        const pollSequence = ++mediaPollSequence;
+
         try {
-            const [screenStateData, currentMediaResponse] = await Promise.all([
-                fetchJson('/api/screen-state'),
-                fetchJson('/api/current-media')
-            ]);
+            const screenStateData = await fetchJson('/api/screen-state');
+
+            if (pollSequence !== mediaPollSequence) {
+                return;
+            }
 
             if (!screenStateData || !screenStateData.state) {
                 return;
             }
 
-            const fallbackMedia = normalizeMediaPayload(currentMediaResponse && currentMediaResponse.media ? currentMediaResponse.media : null);
-            if (isPosterState(screenStateData.state) && !screenStateData.media && fallbackMedia) {
-                screenStateData.media = fallbackMedia;
+            const serverTimestampMs = Date.parse(screenStateData.timestamp || '');
+            if (!Number.isNaN(serverTimestampMs) && serverTimestampMs < lastAppliedServerTimestampMs) {
+                return;
             }
 
-            const nextStateVersion = screenStateData.state_version || null;
-            const shouldApply = nextStateVersion
-                ? hasVersionChanged('state', nextStateVersion)
-                : true;
+            logPayloadReceipt('screen-state', screenStateData);
+            const { changed, bundle } = detectVersionChanges(screenStateData);
+            logDetectedChanges('screen-state', changed, {
+                previousVersions: { ...lastReceivedVersions },
+                nextVersions: bundle
+            });
+
+            const nextScreenSignature = computeScreenStateSignature(screenStateData);
+            const shouldApply = nextScreenSignature !== lastAppliedScreenSignature;
+
+            if (!shouldApply) {
+                if (screenStateData.state === 'COUNTDOWN') {
+                    countdownVerification.pollSkipsSameSignature += 1;
+                }
+            }
 
             if (shouldApply) {
-                applyScreenState(screenStateData);
+                debugLog('poll', 'Applying screen state update', {
+                    stateVersion: screenStateData.state_version || null,
+                    mediaVersion: screenStateData.media_version || null,
+                    state: screenStateData.state,
+                    signature: nextScreenSignature
+                });
+
+                if (shouldDeferCountdownClear(screenStateData)) {
+                    logCountdownDebug('defer-timetable-until-zero', {
+                        timer: document.getElementById('countdown-popup-timer')?.textContent?.trim() || null,
+                    });
+                } else {
+                    if (!Number.isNaN(serverTimestampMs)) {
+                        lastAppliedServerTimestampMs = serverTimestampMs;
+                    }
+                    lastAppliedScreenSignature = nextScreenSignature;
+                    applyScreenState(screenStateData);
+                }
             }
 
-            syncKnownVersions(screenStateData);
-            syncKnownVersions(currentMediaResponse);
+            updateReceivedVersions(screenStateData);
+
+            if (changed.includes('timetable')) {
+                requestTimetableSync();
+            }
+
+            if (changed.includes('announcements')) {
+                requestAnnouncementsSync();
+            }
+
+            if (changed.includes('config')) {
+                requestScreenConfigSync();
+            }
+
+            if (changed.includes('slidingTexts')) {
+                requestSlidingTextsSync();
+            }
         } catch (error) {
             console.error('Error polling media state:', error);
         }
@@ -2145,18 +3497,23 @@
 
     function requestMediaSync() {
         if (isMediaPollInFlight) {
+            pendingMediaPoll = true;
             return;
         }
 
         isMediaPollInFlight = true;
         pollMediaState().finally(() => {
             isMediaPollInFlight = false;
+            if (pendingMediaPoll) {
+                pendingMediaPoll = false;
+                requestMediaSync();
+            }
         });
     }
 
     function initMediaDisplay() {
         requestMediaSync();
-        mediaPollingTimer = setInterval(requestMediaSync, POLL_INTERVALS.media);
+        ensureMediaPollingTimer();
     }
 
     function updateSpecialTimesDisplay(todayData) {
@@ -2185,6 +3542,11 @@
             return;
         }
 
+        markUpdateSource('timetable-sync', {
+            timetableVersion: payload.timetable_version || null,
+            serverDate: payload.server_date || null
+        });
+
         if (payload.jamaat_offsets && typeof payload.jamaat_offsets === 'object') {
             Object.assign(jamaatOffsets, payload.jamaat_offsets);
         }
@@ -2192,9 +3554,6 @@
         const todayData = payload.today || {};
         const tomorrowData = payload.tomorrow || {};
         const prayers = ['fajr', 'zohar', 'asr', 'maghrib', 'isha'];
-
-        updatedPrayers.clear();
-        updatedSpecialTimes.clear();
 
         todaySpecialTimesData = deriveSpecialTimes(todayData);
         tomorrowSpecialTimesData = deriveSpecialTimes(tomorrowData);
@@ -2244,19 +3603,32 @@
         }
 
         updateNextPrayerCountdown();
-        checkAndUpdatePrayerTimes();
     }
 
     async function pollTimetableData() {
         try {
             const data = await fetchJson('/api/timetable');
-            const nextTimetableVersion = data && data.timetable_version ? data.timetable_version : null;
+            logPayloadReceipt('timetable', data);
+            const nextTimetableSignature = computeTimetableSignature(data);
+            const shouldApply = nextTimetableSignature !== lastAppliedSectionSignatures.timetable;
 
-            if (hasVersionChanged('timetable', nextTimetableVersion)) {
+            if (shouldApply) {
+                const { changed, bundle } = detectVersionChanges(data);
+                logDetectedChanges('timetable', changed.length > 0 ? changed : ['timetable'], {
+                    previousVersions: { ...lastReceivedVersions },
+                    nextVersions: bundle
+                });
+                debugLog('poll', 'Applying timetable update', {
+                    timetableVersion: data && data.timetable_version ? data.timetable_version : null
+                });
+                lastAppliedSectionSignatures.timetable = nextTimetableSignature;
                 applyTimetableUpdate(data);
+                debugLog('section', 'Updated section: prayer-times', {
+                    section: 'timetable'
+                });
             }
 
-            syncKnownVersions(data);
+            updateReceivedVersions(data);
         } catch (error) {
             console.error('Error polling timetable:', error);
         }
@@ -2278,61 +3650,143 @@
         return Math.max(5, 50 / speed);
     }
 
-    function createAnnouncementNode(announcement, index) {
-        const item = document.createElement('div');
-        item.className = 'announcement-item rotating-announcement';
+    function announcementKey(announcement, index) {
+        if (announcement && announcement.id !== null && typeof announcement.id !== 'undefined') {
+            return `id:${announcement.id}`;
+        }
+
+        return `fallback:${index}:${announcement.title}:${announcement.content.length}`;
+    }
+
+    function getAnnouncementPlaceholderNode() {
+        let placeholder = document.querySelector('#announcements-content .announcement-placeholder');
+        if (placeholder) {
+            return placeholder;
+        }
+
+        placeholder = document.createElement('div');
+        placeholder.className = 'announcement-placeholder';
+        placeholder.style.textAlign = 'center';
+        placeholder.style.padding = '20px';
+
+        const text = document.createElement('p');
+        text.style.margin = '0';
+        text.style.fontSize = '0.9rem';
+        text.textContent = 'No announcements currently.';
+        placeholder.appendChild(text);
+
+        return placeholder;
+    }
+
+    function hydrateAnnouncementNodeCache() {
+        const contentContainer = document.getElementById('announcements-content');
+        if (!contentContainer) {
+            return;
+        }
+
+        announcementNodesByKey.clear();
+        Array.from(contentContainer.querySelectorAll('.rotating-announcement')).forEach((node, index) => {
+            const announcementId = node.dataset.announcementId;
+            const fallbackTitle = node.querySelector('.announcement-title') ? node.querySelector('.announcement-title').textContent || '' : '';
+            const fallbackContent = node.querySelector('.announcement-text-scroll') ? node.querySelector('.announcement-text-scroll').textContent || '' : '';
+            const key = announcementId
+                ? `id:${announcementId}`
+                : `fallback:${index}:${fallbackTitle}:${fallbackContent.length}`;
+
+            node.dataset.announcementKey = key;
+            announcementNodesByKey.set(key, node);
+        });
+    }
+
+    function updateAnnouncementNode(item, announcement, index) {
+        const normalized = normalizeAnnouncement(announcement);
+        const key = announcementKey(normalized, index);
+        let title = item.querySelector('.announcement-title');
+        let textContainer = item.querySelector('.announcement-text-container');
+        let scrollingText = item.querySelector('.announcement-text-scroll');
+
+        if (!title) {
+            title = document.createElement('div');
+            title.className = 'announcement-title';
+            item.appendChild(title);
+        }
+
+        if (!textContainer) {
+            textContainer = document.createElement('div');
+            textContainer.className = 'announcement-text-container';
+            item.appendChild(textContainer);
+        }
+
+        if (!scrollingText) {
+            scrollingText = document.createElement('div');
+            scrollingText.className = 'announcement-text-scroll';
+            textContainer.appendChild(scrollingText);
+        }
+
+        item.dataset.announcementId = normalized.id !== null ? String(normalized.id) : '';
+        item.dataset.announcementKey = key;
         item.dataset.index = String(index);
-        item.dataset.duration = String((announcement.display_duration ?? 10) * 1000);
-        item.style.display = 'none';
+        item.dataset.displayDurationSeconds = String(normalized.display_duration ?? 10);
+        item.dataset.duration = String((normalized.display_duration ?? 10) * 1000);
         item.style.margin = '0';
-        item.style.padding = '0';
+        item.style.padding = '12px';
+        item.style.boxSizing = 'border-box';
         item.style.wordWrap = 'break-word';
         item.style.wordBreak = 'break-word';
         item.style.overflow = 'hidden';
-        item.style.backgroundColor = announcement.background_color;
-        item.style.height = '100%';
+        item.style.backgroundColor = normalized.background_color;
         item.style.width = '100%';
-        item.style.flexDirection = 'column';
-        item.style.flex = '1';
+        item.style.minHeight = '0';
+        item.style.boxSizing = 'border-box';
 
-        const title = document.createElement('div');
-        title.className = 'announcement-title';
         title.style.fontWeight = 'bold';
         title.style.marginBottom = '8px';
-        title.style.color = announcement.text_color;
-        title.style.fontSize = `${announcement.font_size}px`;
+        title.style.color = normalized.text_color;
+        title.style.fontSize = normalizeRemFontSize(normalized.title_font_size, '2.25rem');
         title.style.lineHeight = '1.3';
-        title.style.overflow = 'hidden';
-        title.style.textOverflow = 'ellipsis';
-        title.textContent = announcement.title;
+        title.style.whiteSpace = 'normal';
+        title.style.overflowWrap = 'break-word';
+        title.style.wordBreak = 'normal';
+        if (title.textContent !== normalized.title) {
+            title.textContent = normalized.title;
+        }
 
-        const textContainer = document.createElement('div');
-        textContainer.className = 'announcement-text-container';
-        textContainer.style.flex = '1';
+        textContainer.style.flex = '1 1 0';
+        textContainer.style.minHeight = '0';
         textContainer.style.overflow = 'hidden';
         textContainer.style.position = 'relative';
-        textContainer.style.display = 'flex';
-        textContainer.style.flexDirection = 'column';
-        textContainer.style.justifyContent = 'flex-start';
+        textContainer.style.padding = '0';
 
-        const scrollingText = document.createElement('div');
-        scrollingText.className = 'announcement-text-scroll';
-        scrollingText.style.fontSize = `${announcement.font_size}px`;
-        scrollingText.style.color = announcement.text_color;
+        title.style.flex = '0 0 auto';
+        title.style.flexShrink = '0';
+
+        scrollingText.style.fontSize = normalizeRemFontSize(normalized.font_size, '1.5rem');
+        scrollingText.style.color = normalized.text_color;
         scrollingText.style.wordWrap = 'break-word';
-        scrollingText.style.lineHeight = '1.4';
+        scrollingText.style.overflowWrap = 'break-word';
+        scrollingText.style.wordBreak = 'normal';
+        scrollingText.style.whiteSpace = 'normal';
+        scrollingText.style.lineHeight = '1.45';
         scrollingText.style.margin = '0';
-        scrollingText.style.minHeight = '100%';
-        scrollingText.style.animation = `scroll-vertical ${announcementAnimationDuration(announcement.scroll_speed)}s linear infinite`;
-        scrollingText.style.animationPlayState = 'running';
-        scrollingText.setAttribute('data-scroll-speed', String(announcement.scroll_speed));
-        scrollingText.textContent = announcement.content;
+        scrollingText.style.minHeight = '0';
+        scrollingText.style.padding = '0.08em 0 0.35em';
+        scrollingText.style.animation = 'none';
+        scrollingText.style.animationPlayState = 'paused';
+        scrollingText.style.transform = 'translate3d(0, 0, 0)';
+        scrollingText.style.removeProperty('--announcement-scroll-distance');
+        scrollingText.setAttribute('data-scroll-speed', String(normalized.scroll_speed));
+        if (scrollingText.textContent !== normalized.content) {
+            scrollingText.textContent = normalized.content;
+        }
 
-        textContainer.appendChild(scrollingText);
-        item.appendChild(title);
-        item.appendChild(textContainer);
-
+        announcementNodesByKey.set(key, item);
         return item;
+    }
+
+    function createAnnouncementNode(announcement, index) {
+        const item = document.createElement('div');
+        item.className = 'announcement-item rotating-announcement';
+        return updateAnnouncementNode(item, announcement, index);
     }
 
     function renderAnnouncements(announcements) {
@@ -2341,57 +3795,303 @@
             return;
         }
 
-        contentContainer.innerHTML = '';
+        announcementsDataCache = (announcements || []).map(normalizeAnnouncement);
 
-        if (announcements.length === 0) {
-            const placeholder = document.createElement('div');
-            placeholder.className = 'announcement-placeholder';
-            placeholder.style.textAlign = 'center';
-            placeholder.style.padding = '20px';
+        if (announcementNodesByKey.size === 0) {
+            hydrateAnnouncementNodeCache();
+        }
 
-            const text = document.createElement('p');
-            text.style.margin = '0';
-            text.style.fontSize = '0.9rem';
-            text.textContent = 'No announcements currently.';
+        const normalizedAnnouncements = announcementsDataCache;
+        const nextKeys = new Set();
 
-            placeholder.appendChild(text);
-            contentContainer.appendChild(placeholder);
+        if (normalizedAnnouncements.length === 0) {
+            Array.from(announcementNodesByKey.entries()).forEach(([key, node]) => {
+                if (node.parentElement === contentContainer) {
+                    contentContainer.removeChild(node);
+                }
+                announcementNodesByKey.delete(key);
+            });
+
+            const placeholder = getAnnouncementPlaceholderNode();
+            if (!placeholder.parentElement) {
+                contentContainer.appendChild(placeholder);
+            }
+
+            markRenderCause('render-announcements-empty', { removed: announcementNodesByKey.size });
+            applyAnnouncementsPresentation('render-announcements-empty');
             return;
         }
 
-        announcements.forEach((announcement, index) => {
-            contentContainer.appendChild(createAnnouncementNode(announcement, index));
-        });
-        
-        // Immediately show the first announcement
-        setTimeout(() => {
-            const firstAnnouncement = contentContainer.querySelector('.rotating-announcement');
-            if (firstAnnouncement) {
-                firstAnnouncement.style.display = 'block';
-                firstAnnouncement.style.opacity = '1';
-                firstAnnouncement.style.transform = 'translateY(0)';
+        const existingPlaceholder = contentContainer.querySelector('.announcement-placeholder');
+        if (existingPlaceholder) {
+            existingPlaceholder.remove();
+        }
+
+        normalizedAnnouncements.forEach((announcement, index) => {
+            const key = announcementKey(announcement, index);
+            nextKeys.add(key);
+
+            let node = announcementNodesByKey.get(key);
+            if (!node) {
+                node = createAnnouncementNode(announcement, index);
+            } else {
+                updateAnnouncementNode(node, announcement, index);
             }
-        }, 10);
+
+            contentContainer.appendChild(node);
+        });
+
+        Array.from(announcementNodesByKey.entries()).forEach(([key, node]) => {
+            if (nextKeys.has(key)) {
+                return;
+            }
+
+            if (node.parentElement === contentContainer) {
+                contentContainer.removeChild(node);
+            }
+            announcementNodesByKey.delete(key);
+        });
+
+        markRenderCause('render-announcements', { count: normalizedAnnouncements.length });
+        applyAnnouncementsPresentation('render-announcements');
+    }
+
+    function normalizeSlidingTextRecord(text) {
+        return {
+            id: text && typeof text.id !== 'undefined' ? text.id : null,
+            text: text && text.text ? text.text : '',
+            font_size: text && text.font_size ? text.font_size : null,
+            font_weight: text && text.font_weight ? text.font_weight : null,
+            text_color: text && text.text_color ? text.text_color : null,
+            animation_speed: text && text.animation_speed ? text.animation_speed : null,
+            display_order: text && text.display_order ? text.display_order : null
+        };
+    }
+
+    function applySlidingTextTypography(node, record, boxStyling) {
+        const boxFontDefault = boxStyling && boxStyling.font_size ? boxStyling.font_size : null;
+        const boxColorDefault = (boxStyling && boxStyling.text_color) || '#000000';
+        const boxWeightDefault = (boxStyling && boxStyling.font_weight) || '700';
+        const fontSize = normalizeBladeRemFontSize(record.font_size || boxFontDefault, '5rem');
+        const fontWeight = String(record.font_weight || boxWeightDefault);
+        const textColor = record.text_color || boxColorDefault;
+
+        node.style.setProperty('font-size', fontSize, 'important');
+        node.style.setProperty('font-weight', fontWeight, 'important');
+        node.style.setProperty('color', textColor, 'important');
+    }
+
+    function buildSlidingTextNode(record, boxStyling) {
+        const span = document.createElement('span');
+        span.className = 'scroll-item';
+
+        if (record.id !== null && typeof record.id !== 'undefined') {
+            span.dataset.slidingTextId = String(record.id);
+        }
+
+        applySlidingTextTypography(span, record, boxStyling);
+        span.textContent = record.text || '';
+        return span;
+    }
+
+    function updateSlidingTextNode(node, record, boxStyling) {
+        applySlidingTextTypography(node, record, boxStyling);
+
+        if (node.textContent !== (record.text || '')) {
+            node.textContent = record.text || '';
+        }
+    }
+
+    function renderSlidingTexts(slidingTexts, boxStyling) {
+        const section = document.querySelector('[data-box-root="sliding_text_box"]');
+        const wrapper = section ? section.querySelector('.scroll-wrapper') : null;
+        if (!wrapper) {
+            return;
+        }
+
+        if (section && boxStyling && boxStyling.font_size) {
+            section.style.setProperty('font-size', normalizeBladeRemFontSize(boxStyling.font_size, '5rem'), 'important');
+        }
+
+        const normalized = (Array.isArray(slidingTexts) ? slidingTexts : []).map(normalizeSlidingTextRecord);
+        const duplicated = normalized.length > 0 ? [...normalized, ...normalized] : [];
+        const placeholder = 'Welcome to the Masjid - No sliding text configured';
+
+        if (duplicated.length === 0) {
+            wrapper.replaceChildren(
+                buildSlidingTextNode({ text: placeholder }, boxStyling),
+                buildSlidingTextNode({ text: placeholder }, boxStyling)
+            );
+            return;
+        }
+
+        const existing = Array.from(wrapper.querySelectorAll('.scroll-item'));
+        const canUpdateInPlace = existing.length === duplicated.length && duplicated.every((record, index) => {
+            const node = existing[index];
+            if (!node) {
+                return false;
+            }
+
+            if (record.id === null || typeof record.id === 'undefined') {
+                return true;
+            }
+
+            return node.dataset.slidingTextId === String(record.id);
+        });
+
+        if (canUpdateInPlace) {
+            duplicated.forEach((record, index) => {
+                updateSlidingTextNode(existing[index], record, boxStyling);
+            });
+            return;
+        }
+
+        wrapper.replaceChildren(...duplicated.map((record) => buildSlidingTextNode(record, boxStyling)));
+    }
+
+    function applySlidingTextsPayload(payload, boxStyling) {
+        if (!payload || typeof payload !== 'object') {
+            return;
+        }
+
+        if (Array.isArray(payload.sliding_texts)) {
+            lastSlidingTextsCache = payload.sliding_texts;
+        }
+
+        renderSlidingTexts(lastSlidingTextsCache, boxStyling || lastSlidingBoxStyling || {});
+    }
+
+    function extractSlidingTextsFromDom() {
+        const wrapper = document.querySelector('[data-box-root="sliding_text_box"] .scroll-wrapper');
+        if (!wrapper) {
+            return [];
+        }
+
+        const seen = new Set();
+        const records = [];
+
+        wrapper.querySelectorAll('.scroll-item[data-sliding-text-id]').forEach((node) => {
+            const id = node.dataset.slidingTextId;
+            if (!id || seen.has(id)) {
+                return;
+            }
+
+            seen.add(id);
+            records.push({
+                id,
+                text: node.textContent || '',
+                font_size: parseFloat(String(node.style.fontSize || '').replace(/rem$/i, '')) || null,
+                font_weight: node.style.fontWeight || null,
+                text_color: node.style.color || null
+            });
+        });
+
+        return records;
+    }
+
+    async function pollSlidingTextsData() {
+        try {
+            const response = await fetchJson('/api/sliding-texts');
+            logPayloadReceipt('sliding-texts', response);
+            const nextSignature = computeSlidingTextsSignature(response);
+            const shouldApply = nextSignature !== lastAppliedSectionSignatures.slidingTexts;
+
+            if (shouldApply) {
+                const { changed, bundle } = detectVersionChanges(response);
+                logDetectedChanges('sliding-texts', changed.length > 0 ? changed : ['slidingTexts'], {
+                    previousVersions: { ...lastReceivedVersions },
+                    nextVersions: bundle
+                });
+                markUpdateSource('sliding-texts-sync', {
+                    slidingTextsVersion: response && response.sliding_texts_version ? response.sliding_texts_version : null
+                });
+                lastAppliedSectionSignatures.slidingTexts = nextSignature;
+                applySlidingTextsPayload(response, lastSlidingBoxStyling);
+                debugLog('section', 'Updated section: sliding-texts', {
+                    section: 'sliding-texts'
+                });
+            }
+
+            updateReceivedVersions(response);
+        } catch (error) {
+            console.error('Error polling sliding texts:', error);
+        }
+    }
+
+    function requestSlidingTextsSync() {
+        if (isSlidingTextsPollInFlight) {
+            slidingTextsSyncQueued = true;
+            return;
+        }
+
+        isSlidingTextsPollInFlight = true;
+        pollSlidingTextsData().finally(() => {
+            isSlidingTextsPollInFlight = false;
+            if (slidingTextsSyncQueued) {
+                slidingTextsSyncQueued = false;
+                requestSlidingTextsSync();
+            }
+        });
     }
 
     async function pollAnnouncementsData() {
-        // Skip polling - use static announcements from HTML template
-        // This ensures announcements are always present and display modes work reliably
-        return;
+        try {
+            const response = await fetchJson('/api/announcements');
+            logPayloadReceipt('announcements', response);
+            const nextAnnouncementsSignature = computeAnnouncementsSignature(response);
+            const shouldApply = nextAnnouncementsSignature !== lastAppliedSectionSignatures.announcements;
+
+            if (shouldApply) {
+                const { changed, bundle } = detectVersionChanges(response);
+                logDetectedChanges('announcements', changed.length > 0 ? changed : ['announcements'], {
+                    previousVersions: { ...lastReceivedVersions },
+                    nextVersions: bundle
+                });
+                markUpdateSource('announcements-sync', {
+                    announcementsVersion: response && response.announcements_version ? response.announcements_version : null
+                });
+                lastAppliedSectionSignatures.announcements = nextAnnouncementsSignature;
+                renderAnnouncements(Array.isArray(response && response.announcements) ? response.announcements : []);
+                debugLog('section', 'Updated section: announcements', {
+                    section: 'announcements'
+                });
+            }
+
+            updateReceivedVersions(response);
+        } catch (error) {
+            console.error('Error polling announcements:', error);
+        }
     }
 
     async function pollScreenConfigData() {
         try {
             const response = await fetchJson('/api/screen-config');
-            const nextConfigVersion = response && response.config_version ? response.config_version : null;
+            logPayloadReceipt('screen-config', response);
+            const nextConfigSignature = computeConfigSignature(response);
+            const versionChanged = !!(response && response.config_version)
+                && lastReceivedVersions.config !== response.config_version;
+            const shouldApply = nextConfigSignature !== lastAppliedSectionSignatures.config || versionChanged;
 
-            if (hasVersionChanged('config', nextConfigVersion)) {
+            if (shouldApply) {
+                const { changed, bundle } = detectVersionChanges(response);
+                logDetectedChanges('screen-config', changed.length > 0 ? changed : ['config'], {
+                    previousVersions: { ...lastReceivedVersions },
+                    nextVersions: bundle
+                });
+                debugLog('poll', 'Applying screen config update without reload', {
+                    configVersion: response && response.config_version ? response.config_version : null
+                });
+                lastAppliedSectionSignatures.config = nextConfigSignature;
                 applyScreenConfig(response);
-                requestTimetableSync();
-                requestAnnouncementsSync();
+                if (response && response.sliding_texts_version) {
+                    lastAppliedSectionSignatures.slidingTexts = computeSlidingTextsSignature(response);
+                }
+                debugLog('section', 'Updated section: config-layout', {
+                    section: 'config'
+                });
             }
 
-            syncKnownVersions(response);
+            updateReceivedVersions(response);
         } catch (error) {
             console.error('Error polling screen config:', error);
         }
@@ -2410,12 +4110,17 @@
 
     function requestScreenConfigSync() {
         if (isScreenConfigPollInFlight) {
+            screenConfigSyncQueued = true;
             return;
         }
 
         isScreenConfigPollInFlight = true;
         pollScreenConfigData().finally(() => {
             isScreenConfigPollInFlight = false;
+            if (screenConfigSyncQueued) {
+                screenConfigSyncQueued = false;
+                requestScreenConfigSync();
+            }
         });
     }
 
@@ -2429,270 +4134,364 @@
                 hadeeths[currentHadeethIndex].style.display = 'block';
             }, 30 * 1000);
         }
-
-        initDynamicAnnouncements();
     }
 
-    function checkAnnouncementScrolling() {
-        const contentContainer = document.getElementById('announcements-content');
-        if (!contentContainer) return;
-
+    function getVisibleAnnouncementElements(contentContainer) {
         const announcements = Array.from(contentContainer.querySelectorAll('.rotating-announcement'));
-        announcements.forEach(el => {
+        const mode = contentContainer.dataset.displayMode || 'rotation';
+
+        if (mode === 'show-all') {
+            return announcements;
+        }
+
+        return announcements.filter((el) => el.classList.contains('is-active'));
+    }
+
+    function performAnnouncementLayoutSync(reason = '') {
+        const contentContainer = document.getElementById('announcements-content');
+        if (!contentContainer) {
+            return;
+        }
+
+        const announcements = getVisibleAnnouncementElements(contentContainer);
+        announcements.forEach((el, index) => {
             const container = el.querySelector('.announcement-text-container');
             const scrollDiv = el.querySelector('.announcement-text-scroll');
 
-            if (!container || !scrollDiv) return;
-
-            const isOverflowing = scrollDiv.scrollHeight > container.clientHeight;
-            if (isOverflowing) {
-                scrollDiv.classList.remove('no-scroll');
-                scrollDiv.style.animationPlayState = 'running';
-            } else {
-                scrollDiv.classList.add('no-scroll');
-                scrollDiv.style.animationPlayState = 'paused';
+            if (!container || !scrollDiv) {
+                return;
             }
+
+            resetAnnouncementScrollState(scrollDiv);
+            container.scrollTop = 0;
+
+            const computedStyles = window.getComputedStyle(scrollDiv);
+            const lineHeight = parseFloat(computedStyles.lineHeight) || 0;
+            const containerHeight = Math.ceil(container.clientHeight);
+            const scrollHeight = Math.ceil(scrollDiv.scrollHeight);
+            const overflowDistance = Math.max(0, scrollHeight - containerHeight);
+            const overflowThreshold = Math.max(2, lineHeight * 0.35);
+            const isOverflowing = containerHeight > 0 && overflowDistance > overflowThreshold;
+
+            debugLog('announcements', 'Measured announcement layout', {
+                reason,
+                index,
+                containerHeight,
+                scrollHeight,
+                overflowDistance,
+                overflowThreshold,
+                lineHeight,
+                isOverflowing
+            });
+
+            syncAnnouncementScrollState(scrollDiv, container, isOverflowing, overflowDistance);
         });
     }
 
-    function setAnnouncementDisplayMode(mode) {
+    function scheduleAnnouncementLayoutSync(reason = '') {
+        requestAnimationFrame(() => {
+            performAnnouncementLayoutSync(reason);
+            requestAnimationFrame(() => {
+                performAnnouncementLayoutSync(`${reason}:second-pass`);
+            });
+        });
+    }
+
+    function checkAnnouncementScrolling() {
+        scheduleAnnouncementLayoutSync('checkAnnouncementScrolling');
+    }
+
+    function resetAnnouncementScrollState(scrollDiv) {
+        if (!scrollDiv) {
+            return;
+        }
+
+        scrollDiv.classList.add('no-scroll');
+        scrollDiv.classList.remove('is-scrolling');
+        scrollDiv.style.animation = 'none';
+        scrollDiv.style.animationPlayState = 'paused';
+        scrollDiv.style.transform = 'translate3d(0, 0, 0)';
+        scrollDiv.style.removeProperty('--announcement-scroll-distance');
+    }
+
+    function syncAnnouncementScrollState(scrollDiv, container, isOverflowing, measuredOverflowDistance = null) {
+        if (!scrollDiv || !container) {
+            return;
+        }
+
+        const scrollSpeed = Number(scrollDiv.getAttribute('data-scroll-speed')) || 3;
+        const overflowDistance = Math.max(0, typeof measuredOverflowDistance === 'number'
+            ? measuredOverflowDistance
+            : Math.ceil(scrollDiv.scrollHeight) - Math.ceil(container.clientHeight));
+        const pixelsPerSecond = Math.max(18, scrollSpeed * 18);
+        const duration = Math.max(announcementAnimationDuration(scrollSpeed), (overflowDistance / pixelsPerSecond) + 2.5);
+        const animationValue = `scroll-vertical-measured ${duration}s linear 1.5s infinite`;
+
+        resetAnnouncementScrollState(scrollDiv);
+        void scrollDiv.offsetHeight;
+
+        if (isOverflowing && overflowDistance > 1) {
+            scrollDiv.classList.remove('no-scroll');
+            scrollDiv.classList.add('is-scrolling');
+            scrollDiv.style.setProperty('--announcement-scroll-distance', `${overflowDistance + 6}px`);
+            scrollDiv.style.animation = animationValue;
+            scrollDiv.style.animationPlayState = 'running';
+            scrollDiv.style.transform = 'translate3d(0, 0, 0)';
+            return;
+        }
+
+        scrollDiv.style.animation = 'none';
+        scrollDiv.style.animationPlayState = 'paused';
+        scrollDiv.style.transform = 'translate3d(0, 0, 0)';
+    }
+
+    function getAnnouncementDisplayDurationMs(announcementEl) {
+        if (!announcementEl) {
+            return 10000;
+        }
+
+        const seconds = parseInt(announcementEl.dataset.displayDurationSeconds, 10);
+        if (Number.isFinite(seconds) && seconds > 0) {
+            return seconds * 1000;
+        }
+
+        const durationMs = parseInt(announcementEl.dataset.duration, 10);
+        if (Number.isFinite(durationMs) && durationMs > 0) {
+            return durationMs;
+        }
+
+        return 10000;
+    }
+
+    function applyAnnouncementItemLayout(el, mode, isVisible) {
+        el.style.removeProperty('position');
+        el.style.removeProperty('top');
+        el.style.removeProperty('right');
+        el.style.removeProperty('bottom');
+        el.style.removeProperty('left');
+        el.style.removeProperty('height');
+        el.style.removeProperty('max-height');
+        el.style.removeProperty('min-height');
+        el.style.removeProperty('opacity');
+        el.style.removeProperty('display');
+        el.style.removeProperty('flex');
+        el.style.removeProperty('flex-direction');
+        el.style.removeProperty('flex-shrink');
+
+        if (mode === 'show-all') {
+            el.classList.remove('is-active');
+            return;
+        }
+
+        el.classList.toggle('is-active', !!isVisible);
+    }
+
+    function getAnnouncementNodes(contentContainer = null) {
+        const container = contentContainer || document.getElementById('announcements-content');
+        if (!container) {
+            return [];
+        }
+
+        return Array.from(container.querySelectorAll('.rotating-announcement'));
+    }
+
+    function normalizeAnnouncementRotationIndex(index, announcementCount) {
+        if (!announcementCount) {
+            return 0;
+        }
+
+        const normalized = Number.isFinite(index) ? index : 0;
+        return ((normalized % announcementCount) + announcementCount) % announcementCount;
+    }
+
+    function applyAnnouncementRotationVisibility(activeIndex, contentContainer = null) {
+        const container = contentContainer || document.getElementById('announcements-content');
+        const announcements = getAnnouncementNodes(container);
+        if (!container || announcements.length === 0) {
+            return 0;
+        }
+
+        const safeIndex = normalizeAnnouncementRotationIndex(activeIndex, announcements.length);
+        announcementRotationIndex = safeIndex;
+
+        announcements.forEach((el, index) => {
+            applyAnnouncementItemLayout(el, 'rotation', index === safeIndex);
+        });
+
+        return safeIndex;
+    }
+
+    function setAnnouncementDisplayMode(mode, options = {}) {
+        const force = options.force === true;
+        const restartRotation = options.restartRotation === true;
         const contentContainer = document.getElementById('announcements-content');
         if (!contentContainer) return;
 
-        const announcements = Array.from(contentContainer.querySelectorAll('.rotating-announcement'));
-        
-        // Clear any existing rotation
-        if (announcementRotationInterval) {
-            clearTimeout(announcementRotationInterval);
-            announcementRotationInterval = null;
+        const announcements = getAnnouncementNodes(contentContainer);
+        const normalizedMode = mode === 'show-all' ? 'show-all' : 'rotation';
+        const modeChanged = contentContainer.dataset.displayMode !== normalizedMode;
+        lastAnnouncementDisplayMode = normalizedMode;
+
+        if (!force && !restartRotation && !modeChanged && contentContainer.dataset.displayMode === normalizedMode) {
+            if (normalizedMode === 'show-all') {
+                return;
+            }
+
+            if (announcementRotationInterval) {
+                applyAnnouncementRotationVisibility(announcementRotationIndex, contentContainer);
+                return;
+            }
         }
 
-        contentContainer.dataset.displayMode = mode;
+        if (normalizedMode === 'show-all' || restartRotation || modeChanged) {
+            if (announcementRotationInterval) {
+                clearTimeout(announcementRotationInterval);
+                announcementRotationInterval = null;
+            }
+        }
 
-        if (mode === 'show-all') {
-            // Show all announcements with equal heights
-            contentContainer.style.cssText = `
-                overflow: auto !important;
-                overflow-y: auto !important;
-                position: relative !important;
-                display: flex !important;
-                flex-direction: column !important;
-            `;
-            
-            // Calculate equal height for each announcement
-            // All boxes share the available height equally
-            announcements.forEach(el => {
-                // Preserve background color from inline style
-                const bgColor = window.getComputedStyle(el).backgroundColor;
-                const textColor = window.getComputedStyle(el).color;
-                
-                el.style.cssText = `
-                    display: flex !important;
-                    flex: 1 1 0 !important;
-                    position: relative !important;
-                    flex-direction: column !important;
-                    margin: 0 !important;
-                    width: 100% !important;
-                    overflow: hidden !important;
-                    background-color: ${bgColor} !important;
-                    color: ${textColor} !important;
-                `;
-            });
+        contentContainer.dataset.displayMode = normalizedMode;
 
-            // Check scrolling after layout is settled
-            setTimeout(checkAnnouncementScrolling, 100);
-        } else {
-            // Rotation mode - show only first, set up rotation
-            contentContainer.style.cssText = `
-                overflow: hidden !important;
-                overflow-y: hidden !important;
-                position: relative !important;
-                display: flex !important;
-                flex-direction: column !important;
-            `;
-            
-            announcements.forEach((el, i) => {
-                // Preserve background color
-                const bgColor = window.getComputedStyle(el).backgroundColor;
-                const textColor = window.getComputedStyle(el).color;
-                
-                el.style.cssText = `
-                    display: ${i === 0 ? 'block' : 'none'} !important;
-                    position: absolute !important;
-                    height: 100% !important;
-                    width: 100% !important;
-                    flex-direction: column !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    margin: 0 !important;
-                    background-color: ${bgColor} !important;
-                    color: ${textColor} !important;
-                `;
+        if (normalizedMode === 'show-all') {
+            announcements.forEach((el) => {
+                applyAnnouncementItemLayout(el, 'show-all', true);
             });
-            // Initialize rotation
-            initDynamicAnnouncements();
+            scheduleAnnouncementLayoutSync('setAnnouncementDisplayMode:show-all');
+            return;
+        }
+
+        if (restartRotation || modeChanged) {
+            const activeIndex = announcements.findIndex((el) => el.classList.contains('is-active'));
+            announcementRotationIndex = activeIndex >= 0 ? activeIndex : announcementRotationIndex;
+        }
+
+        applyAnnouncementRotationVisibility(announcementRotationIndex, contentContainer);
+
+        if (restartRotation || modeChanged || !announcementRotationInterval) {
+            initDynamicAnnouncements(announcementRotationIndex);
         }
     }
 
-    function initDynamicAnnouncements() {
+    function initDynamicAnnouncements(startIndex = 0) {
         const contentContainer = document.getElementById('announcements-content');
         if (!contentContainer) return;
 
-        const announcements = Array.from(contentContainer.querySelectorAll('.rotating-announcement'));
+        const announcements = getAnnouncementNodes(contentContainer);
         if (announcements.length === 0) return;
 
-        // Clear any existing rotation
         if (announcementRotationInterval) {
             clearTimeout(announcementRotationInterval);
             announcementRotationInterval = null;
         }
 
-        let currentIndex = 0;
+        let currentIndex = applyAnnouncementRotationVisibility(startIndex, contentContainer);
 
         function showOnly(index) {
-            announcements.forEach((el, i) => {
-                if (i === index) {
-                    el.style.display = 'flex';  // Use flex to respect flex-direction
-                    el.style.opacity = '1';
-                } else {
-                    el.style.display = 'none';
-                    el.style.opacity = '0';
-                }
-            });
-            
-            // Check if text overflows and enable/disable scrolling accordingly
-            setTimeout(() => {
-                const currentEl = announcements[index];
-                if (!currentEl || currentEl.style.display === 'none') {
-                    console.warn(`Announcement ${index} is not visible`);
-                    return;
-                }
-                
-                const container = currentEl.querySelector('.announcement-text-container');
-                const scrollDiv = currentEl.querySelector('.announcement-text-scroll');
-                
-                if (container && scrollDiv) {
-                    // Force a reflow to ensure dimensions are calculated
-                    const forceReflow = currentEl.offsetHeight;
-                    const containerReflow = container.offsetHeight;
-                    
-                    // Get dimensions from visible element
-                    const containerHeight = container.clientHeight;
-                    const scrollHeight = scrollDiv.scrollHeight;
-                    
-                    const isOverflowing = scrollHeight > containerHeight;
-                    console.log(`Announcement ${index}: scrollHeight=${scrollHeight}, containerHeight=${containerHeight}, overflowing=${isOverflowing}`);
-                    
-                    if (isOverflowing) {
-                        // Text doesn't fit - enable scrolling
-                        scrollDiv.classList.remove('no-scroll');
-                        scrollDiv.style.animationPlayState = 'running';
-                    } else {
-                        // Text fits - disable scrolling
-                        scrollDiv.classList.add('no-scroll');
-                        scrollDiv.style.animationPlayState = 'paused';
-                    }
-                } else {
-                    console.warn(`Announcement ${index}: container or scrollDiv not found`);
-                }
-            }, 150);
+            currentIndex = applyAnnouncementRotationVisibility(index, contentContainer);
+            scheduleAnnouncementLayoutSync(`initDynamicAnnouncements:showOnly:${currentIndex}`);
         }
 
         function rotate() {
-            currentIndex = (currentIndex + 1) % announcements.length;
-            showOnly(currentIndex);
-            
-            const nextDuration = parseInt(announcements[currentIndex].dataset.duration) || 5000;
+            const liveAnnouncements = getAnnouncementNodes(contentContainer);
+            if (liveAnnouncements.length < 2) {
+                announcementRotationInterval = null;
+                return;
+            }
+
+            showOnly(currentIndex + 1);
+
+            const refreshedAnnouncements = getAnnouncementNodes(contentContainer);
+            const activeAnnouncement = refreshedAnnouncements[currentIndex];
+            const nextDuration = getAnnouncementDisplayDurationMs(activeAnnouncement);
             announcementRotationInterval = setTimeout(rotate, nextDuration);
         }
 
-        // Show first announcement
-        showOnly(0);
-        
-        // Schedule next rotation
-        const firstDuration = parseInt(announcements[0].dataset.duration) || 5000;
+        if (announcements.length < 2) {
+            return;
+        }
+
+        const firstDuration = getAnnouncementDisplayDurationMs(announcements[currentIndex]);
         announcementRotationInterval = setTimeout(rotate, firstDuration);
     }
 
+    function initAnnouncementLayoutHandling() {
+        if (!announcementResizeHandler) {
+            announcementResizeHandler = () => {
+                applyAnnouncementsPresentation('window-resize');
+                syncBoardColumnLayout();
+            };
+            window.addEventListener('resize', announcementResizeHandler);
+        }
+
+        if (document.fonts && typeof document.fonts.addEventListener === 'function') {
+            document.fonts.addEventListener('loadingdone', () => {
+                scheduleAnnouncementLayoutSync('fonts-loadingdone');
+                syncBoardColumnLayout();
+            });
+        }
+    }
+
     function resetDailyRuntimeState() {
-        updatedPrayers.clear();
-        updatedSpecialTimes.clear();
         currentScreenState = null;
-        lastKnownVersions.announcements = null;
-        lastKnownVersions.media = null;
-        lastKnownVersions.timetable = null;
-        lastKnownVersions.config = null;
-        lastKnownVersions.state = null;
+        currentPosterType = null;
+        currentMediaVersionToken = null;
+        lastAppliedScreenSignature = null;
+        lastAppliedServerTimestampMs = 0;
+        lastReceivedVersions.announcements = null;
+        lastReceivedVersions.media = null;
+        lastReceivedVersions.timetable = null;
+        lastReceivedVersions.config = null;
+        lastReceivedVersions.state = null;
+        lastAppliedSectionSignatures.timetable = null;
+        lastAppliedSectionSignatures.announcements = null;
+        lastAppliedSectionSignatures.config = null;
         clearAllScreenContent();
     }
 
     let lastAnnouncementDisplayMode = null;
 
-    let lastConfigHash = null;
-
-    function checkForConfigChanges() {
-        fetch('/api/screen-config?v=' + Date.now())
-            .then(response => response.json())
-            .then(data => {
-                const configStr = JSON.stringify(data);
-                const currentHash = hashCode(configStr);
-                
-                if (lastConfigHash !== null && lastConfigHash !== currentHash) {
-                    console.log('Config changed, reloading page...');
-                    window.location.reload(true);
-                }
-                lastConfigHash = currentHash;
-            })
-            .catch(err => console.error('Config check failed:', err));
-    }
-
-    function hashCode(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        return hash;
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        initMediaDisplay();
+    document.addEventListener('DOMContentLoaded', async function() {
+        fullscreenState.wasActive = !!getFullscreenElement();
+        updateFullscreenButton();
         initContentRotation();
+
+        applyAnnouncementsPresentation('dom-ready-immediate');
+
+        // Start screen-state polling immediately so countdown windows are never missed
+        // while slower section polls are still seeding their signatures.
+        initMediaDisplay();
+
+        await seedInitialPollSignatures();
+
+        if (announcementsDataCache.length === 0) {
+            announcementsDataCache = extractAnnouncementsDataFromDom();
+        }
+
+        if (lastSlidingTextsCache.length === 0) {
+            lastSlidingTextsCache = extractSlidingTextsFromDom();
+        }
+
+        applyAnnouncementsPresentation('dom-ready');
+        initAnnouncementLayoutHandling();
+        syncBoardColumnLayout(@json($boxSettings ?? []));
+
+        initDisplaySyncListeners();
+
         requestTimetableSync();
         requestAnnouncementsSync();
+        requestSlidingTextsSync();
         requestScreenConfigSync();
 
         timetablePollingTimer = setInterval(requestTimetableSync, POLL_INTERVALS.timetable);
         announcementsPollingTimer = setInterval(requestAnnouncementsSync, POLL_INTERVALS.announcements);
+        slidingTextsPollingTimer = setInterval(requestSlidingTextsSync, POLL_INTERVALS.slidingTexts);
         screenConfigPollingTimer = setInterval(requestScreenConfigSync, POLL_INTERVALS.screenConfig);
-        
-        // Check for admin config changes every 3 seconds
-        checkForConfigChanges();
-        setInterval(checkForConfigChanges, 3000);
-        
-        // Listen for display mode changes from admin panel
+
         window.addEventListener('storage', function(e) {
-            if (e.key === 'announcementDisplayMode') {
-                const mode = e.newValue || 'rotation';
-                setAnnouncementDisplayMode(mode);
+            if (e.key === DISPLAY_MODE_KEY) {
+                applyAnnouncementsPresentation('display-mode-storage');
             }
         });
-        
-        // Check localStorage for saved mode on page load
-        const savedMode = localStorage.getItem('announcementDisplayMode') || 'rotation';
-        lastAnnouncementDisplayMode = savedMode;
-        // Always initialize the display mode
-        setAnnouncementDisplayMode(savedMode);
-
-        // Poll for display mode changes (fallback for same-window changes)
-        setInterval(function() {
-            const currentMode = localStorage.getItem('announcementDisplayMode') || 'rotation';
-            if (currentMode !== lastAnnouncementDisplayMode) {
-                lastAnnouncementDisplayMode = currentMode;
-                setAnnouncementDisplayMode(currentMode);
-            }
-        }, 500); // Check every 500ms
     });
 
 </script>

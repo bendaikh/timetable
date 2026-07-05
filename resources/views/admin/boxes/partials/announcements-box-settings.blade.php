@@ -9,18 +9,32 @@
             <div class="mb-3">
                 <h6 class="text-muted"><i class="bi bi-pencil"></i> Title Configuration</h6>
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <label for="title" class="form-label">Section Title</label>
                         <input type="text" class="form-control" id="title" name="content_settings[title]"
                                value="{{ old('content_settings.title', $box->content_settings['title'] ?? 'Announcements') }}"
                                placeholder="e.g., Announcements, Community News">
                         <div class="form-text">Text displayed at the top of the announcements section</div>
                     </div>
+                </div>
+            </div>
+
+            <hr>
+            <div class="mb-3">
+                <h6 class="text-muted"><i class="bi bi-palette"></i> Header Colors</h6>
+                <div class="row">
                     <div class="col-md-6">
-                        <label for="title_color" class="form-label">Title Color</label>
-                        <input type="color" class="form-control form-control-color" 
+                        <label for="title_background_color" class="form-label">Header Background Color</label>
+                        <input type="color" class="form-control form-control-color"
+                               id="title_background_color" name="styling_settings[title_background_color]"
+                               value="{{ old('styling_settings.title_background_color', $box->styling_settings['title_background_color'] ?? '#1E4D2B') }}">
+                        <div class="form-text">Default mosque green: #1E4D2B</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="title_color" class="form-label">Header Text Color</label>
+                        <input type="color" class="form-control form-control-color"
                                id="title_color" name="styling_settings[title_color]"
-                               value="{{ old('styling_settings.title_color', $box->styling_settings['title_color'] ?? '#000000') }}">
+                               value="{{ old('styling_settings.title_color', $box->styling_settings['title_color'] ?? '#ffffff') }}">
                     </div>
                 </div>
             </div>
@@ -30,15 +44,11 @@
                 <h6 class="text-muted"><i class="bi bi-type"></i> Title Font Size</h6>
                 <div class="row">
                     <div class="col-md-12">
-                        <div class="d-flex gap-2">
-                            <input type="range" class="form-range flex-grow-1" 
-                                   id="title_font_size_range" min="20" max="60" value="{{ old('styling_settings.title_font_size', intval($box->styling_settings['title_font_size'] ?? '28')) }}">
-                            <input type="number" class="form-control" style="width: 80px;" 
-                                   id="title_font_size" name="styling_settings[title_font_size]" value="{{ old('styling_settings.title_font_size', intval($box->styling_settings['title_font_size'] ?? '28')) }}" 
-                                   min="20" max="60" required>
-                            <span class="input-group-text" id="title-font-size-label">px</span>
-                        </div>
-                        <div class="form-text mt-2">Recommended: 20 - 60 pixels</div>
+                        <label for="title_font_size" class="form-label">Font Size (rem)</label>
+                        <input type="text" class="form-control" id="title_font_size" name="styling_settings[title_font_size]"
+                               value="{{ old('styling_settings.title_font_size', \App\Support\CssUnits::normalizeBoxRem($box->styling_settings['title_font_size'] ?? null, '1.2rem')) }}"
+                               placeholder="e.g., 1.2rem">
+                        <div class="form-text mt-2">Matches the prayer table header scale. Recommended: 1rem - 3.5rem</div>
                     </div>
                 </div>
             </div>

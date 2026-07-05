@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Announcement;
+use App\Models\BoxSetting;
 use App\Models\PrayerTime;
 use App\Models\Setting;
+use App\Models\SlidingText;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -14,6 +16,7 @@ class DisplayStateVersionService
     {
         return [
             'announcements_version' => $this->getAnnouncementsVersion(),
+            'sliding_texts_version' => $this->getSlidingTextsVersion(),
             'media_version' => $this->getMediaVersion($mediaRuntimeSignature),
             'timetable_version' => $this->getTimetableVersion(),
             'config_version' => $this->getConfigVersion(),
@@ -34,6 +37,31 @@ class DisplayStateVersionService
         $maxUpdatedAtTs = $maxUpdatedAt ? Carbon::parse($maxUpdatedAt)->timestamp : 0;
 
         return sha1("announcements|{$maxUpdatedAtTs}|{$activeAnnouncementsFingerprint}");
+    }
+
+    public function getSlidingTextsVersion(): string
+    {
+        $activeTextsFingerprint = SlidingText::getActiveTexts()
+            ->map(function ($text) {
+                $updatedAt = $text->updated_at ? $text->updated_at->timestamp : 0;
+
+                return implode(':', [
+                    $text->id,
+                    $updatedAt,
+                    $text->font_size,
+                    $text->font_weight,
+                    $text->text_color,
+                    $text->animation_speed,
+                    $text->display_order,
+                    md5((string) $text->text),
+                ]);
+            })
+            ->implode('|');
+
+        $maxUpdatedAt = SlidingText::max('updated_at');
+        $maxUpdatedAtTs = $maxUpdatedAt ? Carbon::parse($maxUpdatedAt)->timestamp : 0;
+
+        return sha1("sliding_texts|{$maxUpdatedAtTs}|{$activeTextsFingerprint}");
     }
 
     public function getTimetableVersion(): string
@@ -92,13 +120,28 @@ class DisplayStateVersionService
 
     public function getConfigVersion(): string
     {
-        $boxSettingsMaxUpdated = DB::table('box_settings')->max('updated_at');
+        $boxesFingerprint = BoxSetting::orderBy('box_type')
+            ->get()
+            ->map(function ($box) {
+                $updatedAt = $box->updated_at ? $box->updated_at->timestamp : 0;
+                $payload = json_encode([
+                    $box->styling_settings,
+                    $box->layout_settings,
+                    $box->content_settings,
+                    $box->is_active,
+                    $box->sort_order,
+                    $box->box_name,
+                ]);
+
+                return "{$box->box_type}:{$updatedAt}:" . md5($payload ?: '');
+            })
+            ->implode('|');
+
         $settingsMaxUpdated = Setting::max('updated_at');
-
-        $boxSettingsMaxUpdatedTs = $boxSettingsMaxUpdated ? Carbon::parse($boxSettingsMaxUpdated)->timestamp : 0;
         $settingsMaxUpdatedTs = $settingsMaxUpdated ? Carbon::parse($settingsMaxUpdated)->timestamp : 0;
+        $slidingTextsVersion = $this->getSlidingTextsVersion();
 
-        return sha1("screen_config|{$boxSettingsMaxUpdatedTs}|{$settingsMaxUpdatedTs}");
+        return sha1("screen_config|{$boxesFingerprint}|{$settingsMaxUpdatedTs}|{$slidingTextsVersion}");
     }
 
     /**

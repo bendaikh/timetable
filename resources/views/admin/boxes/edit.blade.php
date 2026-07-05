@@ -182,6 +182,8 @@
                                     @include('admin.boxes.partials.note-prayer-box-settings', ['box' => $box])
                                 @elseif($box->box_type === 'special_times_box')
                                     @include('admin.boxes.partials.special-times-box-settings', ['box' => $box])
+                                @elseif($box->box_type === 'sliding_text_box')
+                                    @include('admin.boxes.partials.sliding-text-box-settings', ['box' => $box])
                                 @elseif($box->box_type === 'announcements_box')
                                     @include('admin.boxes.partials.announcements-box-settings', ['box' => $box])
                                 @elseif($box->box_type === 'welcome_box')
@@ -210,7 +212,7 @@
                             <h5 class="card-title mb-0">Live Preview</h5>
                         </div>
                         <div class="card-body">
-                            <div id="livePreview" class="preview-container">
+                            <div id="livePreview" class="preview-container preview-container-compact">
                                 <!-- Preview will be updated here -->
                             </div>
                             <div class="mt-3">
@@ -281,6 +283,22 @@
 
 @section('scripts')
 <script>
+    function notifyTimetableDisplaySync() {
+        try {
+            localStorage.setItem('timetable-display-sync', String(Date.now()));
+        } catch (error) {
+            // Ignore storage failures.
+        }
+
+        try {
+            const channel = new BroadcastChannel('timetable-display');
+            channel.postMessage({ type: 'sync', at: Date.now() });
+            channel.close();
+        } catch (error) {
+            // Ignore unsupported browsers.
+        }
+    }
+
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
         refreshPreview();
@@ -290,6 +308,13 @@
             element.addEventListener('input', debounce(updatePreview, 500));
             element.addEventListener('change', updatePreview);
         });
+
+        const boxEditForm = document.getElementById('boxEditForm');
+        if (boxEditForm) {
+            boxEditForm.addEventListener('submit', function() {
+                notifyTimetableDisplaySync();
+            });
+        }
 
         ['time_font_size', 'date_font_size'].forEach((fieldId) => {
             const field = document.getElementById(fieldId);
@@ -342,6 +367,35 @@
 
         if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
             return `${trimmed}${fallbackUnit}`;
+        }
+
+        return trimmed;
+    }
+
+    function normalizeRemFontSize(value, defaultRem = '1.2rem') {
+        const trimmed = String(value ?? '').trim();
+
+        if (!trimmed) {
+            return defaultRem;
+        }
+
+        if (/rem$/i.test(trimmed)) {
+            return trimmed;
+        }
+
+        if (/px$/i.test(trimmed)) {
+            const numeric = parseFloat(trimmed);
+            if (!Number.isFinite(numeric)) {
+                return defaultRem;
+            }
+
+            const rem = Math.round((numeric / 16) * 1000) / 1000;
+            return `${rem}rem`;
+        }
+
+        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+            const rem = Math.round((parseFloat(trimmed) / 16) * 1000) / 1000;
+            return `${rem}rem`;
         }
 
         return trimmed;
@@ -449,6 +503,7 @@
         })
         .then(data => {
             if (data.success) {
+                notifyTimetableDisplaySync();
                 refreshPreview();
                 if (options.openModal) {
                     toggleFullPreview();
@@ -507,6 +562,49 @@
             time: `${(safeTimeRem * scale).toFixed(2)}rem`,
             date: `${(safeDateRem * scale).toFixed(2)}rem`,
         };
+    }
+
+    function parseTitleRemValue(value, fallbackRem = 1.2) {
+        const trimmed = String(value ?? '').trim();
+        if (!trimmed) {
+            return fallbackRem;
+        }
+
+        if (/rem$/i.test(trimmed)) {
+            const numeric = Number.parseFloat(trimmed);
+            return Number.isFinite(numeric) ? numeric : fallbackRem;
+        }
+
+        if (/px$/i.test(trimmed)) {
+            const numeric = Number.parseFloat(trimmed);
+            return Number.isFinite(numeric) ? numeric / 16 : fallbackRem;
+        }
+
+        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+            return Number.parseFloat(trimmed);
+        }
+
+        return fallbackRem;
+    }
+
+    function getPreviewAnnouncementsFontSizes(styling) {
+        const titleRem = parseTitleRemValue(styling.title_font_size, 1.2);
+        const titleScale = Math.min(1, 1.25 / titleRem);
+        const previewTitleRem = Math.max(0.85, titleRem * titleScale);
+
+        return {
+            title: `${previewTitleRem.toFixed(2)}rem`,
+            body: '0.8rem',
+            bodyStrong: '0.85rem',
+            bodySmall: '0.72rem',
+        };
+    }
+
+    function getPreviewPadding(value, fallbackPx = '12px', maxPx = 16) {
+        const normalized = normalizeCssValue(value, 'px') || fallbackPx;
+        const numeric = Number.parseInt(normalized, 10);
+        const safeNumeric = Number.isFinite(numeric) ? numeric : Number.parseInt(fallbackPx, 10);
+        return `${Math.min(safeNumeric, maxPx)}px`;
     }
 
     // Generate preview HTML
@@ -639,25 +737,52 @@
                     </div>
                 `;
                 
-            case 'announcements_box':
-                const titleFontSize = normalizeCssValue(styling.title_font_size, 'px') || '28px';
-                const titleColor = styling.title_color || '#000000';
+            case 'announcements_box': {
+                const previewFonts = getPreviewAnnouncementsFontSizes(styling);
+                const previewPadding = getPreviewPadding(styling.padding, '12px', 16);
+                const titleBackground = styling.title_background_color || '#1E4D2B';
+                const titleTextColor = styling.title_color || '#ffffff';
                 const titleText = content.title || 'Announcements';
+
                 return `
-                    <div style="${styleString}">
-                        <div style="font-weight: bold; margin-bottom: 10px; font-size: ${titleFontSize}; color: ${titleColor};">
-                            ${titleText}
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong>Community Iftar</strong><br>
-                            <small>Community Iftar every evening during Ramadan. All families are welcome to join.</small>
-                        </div>
-                        <div>
-                            <strong>Donation Appeal</strong><br>
-                            <small>Help support our masjid expansion project. Donations are greatly appreciated.</small>
+                    <div class="box-preview">
+                        <div style="
+                            background-color: ${styling.background_color || '#fdf7e6'};
+                            color: ${styling.text_color || '#000000'};
+                            font-family: ${styling.font_family || 'Arial, sans-serif'};
+                            font-size: ${previewFonts.body};
+                            border: ${styling.border_width || '1px'} solid ${styling.border_color || '#0066cc'};
+                            border-radius: ${styling.border_radius || '0px'};
+                            padding: ${previewPadding};
+                            width: 100%;
+                            max-width: 100%;
+                            box-sizing: border-box;
+                            overflow: hidden;
+                        ">
+                            <div style="
+                                font-weight: bold;
+                                margin: 0 0 8px 0;
+                                padding: 6px 8px;
+                                text-align: center;
+                                font-size: ${previewFonts.title};
+                                line-height: 1.2;
+                                background-color: ${titleBackground};
+                                color: ${titleTextColor};
+                                word-break: break-word;
+                                overflow: hidden;
+                            ">${titleText}</div>
+                            <div style="margin-bottom: 8px; line-height: 1.35;">
+                                <strong style="font-size: ${previewFonts.bodyStrong};">Community Iftar</strong><br>
+                                <span style="font-size: ${previewFonts.bodySmall};">Community Iftar every evening during Ramadan. All families are welcome to join.</span>
+                            </div>
+                            <div style="line-height: 1.35;">
+                                <strong style="font-size: ${previewFonts.bodyStrong};">Donation Appeal</strong><br>
+                                <span style="font-size: ${previewFonts.bodySmall};">Help support our masjid expansion project. Donations are greatly appreciated.</span>
+                            </div>
                         </div>
                     </div>
                 `;
+            }
                 
             case 'welcome_box':
                 return `
@@ -728,21 +853,6 @@
 
     // Sync font size range and input fields
     document.addEventListener('DOMContentLoaded', function() {
-        // Title font size sync for announcements box
-        const titleFontSizeRange = document.getElementById('title_font_size_range');
-        const titleFontSizeInput = document.getElementById('title_font_size');
-        
-        if (titleFontSizeRange && titleFontSizeInput) {
-            titleFontSizeRange.addEventListener('input', function() {
-                titleFontSizeInput.value = this.value;
-                updatePreview();
-            });
-            titleFontSizeInput.addEventListener('input', function() {
-                titleFontSizeRange.value = this.value;
-                updatePreview();
-            });
-        }
-
         // Announcement text font size sync for announcements box
         const fontSizeRange = document.getElementById('font_size_range');
         const fontSizeInput = document.getElementById('font_size');

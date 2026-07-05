@@ -56,8 +56,8 @@ class Setting extends Model
     {
         return [
             'masjid_name' => 'Al Hidaya Academy',
-            'location' => 'Your City, Your Country',
-            'timezone' => 'UTC',
+            'location' => 'Queensbury, Bradford, United Kingdom',
+            'timezone' => 'Europe/London',
             'display_font_family' => 'Arial, sans-serif',
             'display_background_color' => '#ffffff',
             'display_text_color' => '#000000',
