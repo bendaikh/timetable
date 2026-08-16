@@ -645,9 +645,9 @@
                 `;
                 
             case 'prayer_times_box':
-                const col1Width = boxData.layout_settings?.column_widths?.[0] || '45%';
-                const col2Width = boxData.layout_settings?.column_widths?.[1] || '25%';
-                const col3Width = boxData.layout_settings?.column_widths?.[2] || '25%';
+                const col1Width = boxData.layout_settings?.column_widths?.[0] || '30%';
+                const col2Width = boxData.layout_settings?.column_widths?.[1] || '35%';
+                const col3Width = boxData.layout_settings?.column_widths?.[2] || '35%';
                 const header1 = content.table_headers?.[0] || '';
                 const header2 = content.table_headers?.[1] || 'Beginning';
                 const header3 = content.table_headers?.[2] || 'Jamaat Time';

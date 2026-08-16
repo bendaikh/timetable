@@ -29,7 +29,7 @@ class DisplayStateVersionService
         $activeAnnouncementsFingerprint = Announcement::getActiveAnnouncements()
             ->map(function ($announcement) {
                 $updatedAt = $announcement->updated_at ? $announcement->updated_at->timestamp : 0;
-                return "{$announcement->id}:{$updatedAt}";
+                return "{$announcement->id}:{$updatedAt}:{$announcement->scroll_speed}:{$announcement->display_duration}:{$announcement->display_order}";
             })
             ->implode('|');
 

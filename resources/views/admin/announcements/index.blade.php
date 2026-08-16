@@ -148,11 +148,13 @@
                         <table class="table table-hover" style="min-width: 100%; margin-bottom: 0;">
                             <thead>
                                 <tr>
+                                    <th>Order</th>
                                     <th>Title</th>
                                     <th>Content</th>
                                     <th>Font Size</th>
                                     <th>Status</th>
-                                    <th>Auto Repeat</th>
+                                    <th>Schedule</th>
+                                    <th>Days</th>
                                     <th>Duration</th>
                                     <th>Created</th>
                                     <th>Actions</th>
@@ -162,12 +164,15 @@
                                 @foreach($announcements as $announcement)
                                 <tr>
                                     <td>
-                                        <strong>{{ $announcement->title }}</strong>
+                                        <span class="badge bg-warning text-dark">{{ $announcement->display_order }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ $announcement->title ?: '(No title)' }}</strong>
                                     </td>
                                     <td>
                                         <div style="max-width: 300px;">
                                             {{ Str::limit($announcement->content, 80) }}
-                                            @if(strlen($announcement->content) > 300 && $announcement->font_size > 60)
+                                            @if(strlen($announcement->content) > 300 && (float) $announcement->font_size >= 3.75)
                                                 <div class="alert alert-warning alert-sm py-1 px-2 mt-2 mb-0" style="font-size: 12px;">
                                                     <i class="bi bi-exclamation-triangle"></i> Long text with large font may be hidden
                                                 </div>
@@ -175,8 +180,8 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge bg-secondary">{{ $announcement->font_size }}px</span>
-                                        @if($announcement->font_size > 80)
+                                        <span class="badge bg-secondary">{{ $announcement->formattedFontSize() }}</span>
+                                        @if((float) $announcement->font_size >= 5)
                                             <div style="font-size: 11px; color: #ff6b6b; margin-top: 2px;">
                                                 <i class="bi bi-exclamation-circle"></i> Large font
                                             </div>
@@ -188,13 +193,16 @@
                                         </span>
                                     </td>
                                     <td>
-                                        @if($announcement->auto_repeat)
+                                        <small class="text-muted">{{ $announcement->formattedScheduleWindow() }}</small>
+                                    </td>
+                                    <td>
+                                        @if($announcement->auto_repeat && $announcement->normalizedRepeatDays())
                                             <span class="badge bg-info">
-                                                <i class="bi bi-arrow-repeat me-1"></i>
-                                                {{ implode(', ', $announcement->repeat_days ?? []) }}
+                                                <i class="bi bi-calendar-week me-1"></i>
+                                                {{ implode(', ', $announcement->normalizedRepeatDays()) }}
                                             </span>
                                         @else
-                                            <span class="text-muted">No</span>
+                                            <span class="text-muted">Every day</span>
                                         @endif
                                     </td>
                                     <td>

@@ -47,4 +47,58 @@ class CssUnitsTest extends TestCase
     {
         $this->assertSame('1rem', CssUnits::normalizeBoxRem('16px'));
     }
+
+    public function test_normalize_prayer_column_widths_fills_underfilled_rows(): void
+    {
+        $this->assertSame(
+            ['30%', '35%', '35%'],
+            CssUnits::normalizePrayerColumnWidths(['30%', '25%', '30%'])
+        );
+    }
+
+    public function test_normalize_prayer_column_widths_keeps_balanced_rows(): void
+    {
+        $this->assertSame(
+            ['30%', '35%', '35%'],
+            CssUnits::normalizePrayerColumnWidths(['30%', '35%', '35%'])
+        );
+    }
+
+    public function test_normalize_prayer_column_widths_uses_defaults_when_missing(): void
+    {
+        $this->assertSame(
+            ['30%', '35%', '35%'],
+            CssUnits::normalizePrayerColumnWidths(null)
+        );
+    }
+
+    public function test_normalize_prayer_column_widths_scales_near_full_rows(): void
+    {
+        $this->assertSame(
+            ['47.368%', '26.316%', '26.316%'],
+            CssUnits::normalizePrayerColumnWidths(['45%', '25%', '25%'])
+        );
+    }
+
+    public function test_normalize_prayer_column_widths_keeps_exact_full_rows(): void
+    {
+        $this->assertSame(
+            ['45%', '25%', '30%'],
+            CssUnits::normalizePrayerColumnWidths(['45%', '25%', '30%'])
+        );
+    }
+
+    public function test_normalize_announcement_rem_converts_legacy_px_integers(): void
+    {
+        $this->assertSame('1.5rem', CssUnits::normalizeAnnouncementRem(24));
+        $this->assertSame('2.25rem', CssUnits::normalizeAnnouncementRem(36));
+        $this->assertSame('1.75rem', CssUnits::normalizeAnnouncementRem('28px'));
+    }
+
+    public function test_normalize_announcement_rem_treats_small_numbers_as_rem(): void
+    {
+        $this->assertSame('2.25rem', CssUnits::normalizeAnnouncementRem(2.25));
+        $this->assertSame('1.5rem', CssUnits::normalizeAnnouncementRem('1.5'));
+        $this->assertSame('3rem', CssUnits::normalizeAnnouncementRem('3rem'));
+    }
 }

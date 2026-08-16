@@ -47,10 +47,10 @@
                     <div class="col-md-6">
                         <label for="header_font_size" class="form-label">Font Size (rem)</label>
                         <input type="text" class="form-control" id="header_font_size" name="styling_settings[header_font_size]"
-                               value="{{ old('styling_settings.header_font_size', $box->styling_settings['header_font_size'] ?? '1rem') }}"
-                               placeholder="e.g., 0.8, 1, 1.1"
+                               value="{{ old('styling_settings.header_font_size', $box->styling_settings['header_font_size'] ?? '1.5') }}"
+                               placeholder="e.g., 1.2, 1.5, 1.8"
                                pattern="^[0-9]+(\.[0-9]+)?$">
-                        <div class="form-text">Recommended: 0.8 - 1.2</div>
+                        <div class="form-text">Recommended: 1.2 - 1.8</div>
                     </div>
                 </div>
             </div>
@@ -69,10 +69,10 @@
                 <div class="col-md-6">
                     <label for="prayer_names_font_size" class="form-label">Prayer Names Font Size (rem)</label>
                     <input type="text" class="form-control" id="prayer_names_font_size" name="styling_settings[prayer_names_font_size]"
-                           value="{{ old('styling_settings.prayer_names_font_size', $box->styling_settings['prayer_names_font_size'] ?? '3') }}"
-                           placeholder="e.g., 2, 2.5, 3, 3.5"
+                           value="{{ old('styling_settings.prayer_names_font_size', $box->styling_settings['prayer_names_font_size'] ?? '4') }}"
+                           placeholder="e.g., 3, 3.5, 4, 4.5"
                            pattern="^[0-9]+(\.[0-9]+)?$">
-                    <div class="form-text">Recommended: 2.5 - 3.5. Controls the size of prayer names (Fajr, Zohar, Asr, Maghrib, Isha)</div>
+                    <div class="form-text">Recommended: 3.5 - 4.5. Controls the size of prayer names (Fajr, Zohar, Asr, Maghrib, Isha)</div>
                 </div>
             </div>
         </div>
@@ -172,7 +172,9 @@
                 <div class="col-md-4">
                     <label for="column_width_1" class="form-label">Prayer Name Column</label>
                     <select class="form-select" id="column_width_1" name="layout_settings[column_widths][]">
-                        @php $col1 = $box->layout_settings['column_widths'][0] ?? '45%'; @endphp
+                        @php $col1 = $box->layout_settings['column_widths'][0] ?? '30%'; @endphp
+                        <option value="25%" {{ $col1 == '25%' ? 'selected' : '' }}>25%</option>
+                        <option value="28%" {{ $col1 == '28%' ? 'selected' : '' }}>28%</option>
                         <option value="30%" {{ $col1 == '30%' ? 'selected' : '' }}>30%</option>
                         <option value="35%" {{ $col1 == '35%' ? 'selected' : '' }}>35%</option>
                         <option value="40%" {{ $col1 == '40%' ? 'selected' : '' }}>40%</option>
@@ -183,21 +185,23 @@
                 <div class="col-md-4">
                     <label for="column_width_2" class="form-label">Beginning Time Column</label>
                     <select class="form-select" id="column_width_2" name="layout_settings[column_widths][]">
-                        @php $col2 = $box->layout_settings['column_widths'][1] ?? '25%'; @endphp
+                        @php $col2 = $box->layout_settings['column_widths'][1] ?? '35%'; @endphp
                         <option value="25%" {{ $col2 == '25%' ? 'selected' : '' }}>25%</option>
                         <option value="27.5%" {{ $col2 == '27.5%' ? 'selected' : '' }}>27.5%</option>
                         <option value="30%" {{ $col2 == '30%' ? 'selected' : '' }}>30%</option>
                         <option value="35%" {{ $col2 == '35%' ? 'selected' : '' }}>35%</option>
+                        <option value="37.5%" {{ $col2 == '37.5%' ? 'selected' : '' }}>37.5%</option>
                     </select>
                 </div>
                 <div class="col-md-4">
                     <label for="column_width_3" class="form-label">Jamaat Time Column</label>
                     <select class="form-select" id="column_width_3" name="layout_settings[column_widths][]">
-                        @php $col3 = $box->layout_settings['column_widths'][2] ?? '25%'; @endphp
+                        @php $col3 = $box->layout_settings['column_widths'][2] ?? '35%'; @endphp
                         <option value="25%" {{ $col3 == '25%' ? 'selected' : '' }}>25%</option>
                         <option value="27.5%" {{ $col3 == '27.5%' ? 'selected' : '' }}>27.5%</option>
                         <option value="30%" {{ $col3 == '30%' ? 'selected' : '' }}>30%</option>
                         <option value="35%" {{ $col3 == '35%' ? 'selected' : '' }}>35%</option>
+                        <option value="37.5%" {{ $col3 == '37.5%' ? 'selected' : '' }}>37.5%</option>
                     </select>
                 </div>
             </div>
@@ -215,18 +219,18 @@
                 <div class="col-md-6">
                     <label for="beginning_font_size" class="form-label">Beginning Time Values Font Size</label>
                     <input type="text" class="form-control" id="beginning_font_size" name="styling_settings[beginning_font_size]"
-                           value="{{ old('styling_settings.beginning_font_size', $box->styling_settings['beginning_font_size'] ?? '2') }}"
-                           placeholder="e.g., 1.5, 2, 2.5"
+                           value="{{ old('styling_settings.beginning_font_size', $box->styling_settings['beginning_font_size'] ?? '3.5') }}"
+                           placeholder="e.g., 3, 3.5, 4"
                            pattern="^[0-9]+(\.[0-9]+)?$">
-                    <div class="form-text">This controls the time values like "5:30 AM". Recommended: 1.5 - 3.5</div>
+                    <div class="form-text">This controls the time values like "5:30 AM". Recommended: 3 - 4.5</div>
                 </div>
                 <div class="col-md-6">
                     <label for="jamaat_font_size" class="form-label">Jamaat Time Values Font Size</label>
                     <input type="text" class="form-control" id="jamaat_font_size" name="styling_settings[jamaat_font_size]"
-                           value="{{ old('styling_settings.jamaat_font_size', $box->styling_settings['jamaat_font_size'] ?? '2') }}"
-                           placeholder="e.g., 1.5, 2, 2.5"
+                           value="{{ old('styling_settings.jamaat_font_size', $box->styling_settings['jamaat_font_size'] ?? '3.5') }}"
+                           placeholder="e.g., 3, 3.5, 4"
                            pattern="^[0-9]+(\.[0-9]+)?$">
-                    <div class="form-text">This controls the time values like "6:30 AM". Recommended: 1.5 - 3.5</div>
+                    <div class="form-text">This controls the time values like "6:30 AM". Recommended: 3 - 4.5</div>
                 </div>
             </div>
             <div class="row mt-3">

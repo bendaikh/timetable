@@ -585,7 +585,7 @@
                                 <tbody>
                                     @foreach($recent_announcements as $announcement)
                                         <tr>
-                                            <td><strong>{{ $announcement->title }}</strong></td>
+                                            <td><strong>{{ $announcement->title ?: '(No title)' }}</strong></td>
                                             <td>{{ Str::limit($announcement->content, 80) }}</td>
                                             <td>
                                                 <span class="badge {{ $announcement->is_active ? 'bg-success' : 'bg-secondary' }}">

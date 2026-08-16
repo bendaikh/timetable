@@ -38,7 +38,7 @@ class BoxSetting extends Model
                     'background_color' => 'rgba(253, 247, 230, 0.95)',
                     'text_color' => '#000000',
                     'time_font_size' => '3rem',
-                    'date_font_size' => '1.6rem',
+                    'date_font_size' => '2.75rem',
                     'font_family' => 'Courier New, monospace',
                     'border_color' => '#000000',
                     'border_width' => '3px',
@@ -77,14 +77,14 @@ class BoxSetting extends Model
                     'header_background_color' => 'transparent',
                     'header_text_color' => '#000000',
                     'font_family' => 'Courier New, monospace',
-                    'font_size' => '2rem',
-                    'prayer_names_font_size' => '3rem',
-                    'beginning_font_size' => '2rem',
-                    'jamaat_font_size' => '2rem',
-                    'header_font_size' => '1.2rem',
+                    'font_size' => '3.5rem',
+                    'prayer_names_font_size' => '4rem',
+                    'beginning_font_size' => '3.5rem',
+                    'jamaat_font_size' => '3.5rem',
+                    'header_font_size' => '1.5rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',
-                    'padding' => '20px',
+                    'padding' => '16',
                     'next_prayer_font_size' => '1.4rem',
                     'next_prayer_text_color' => '#000000',
                     'next_prayer_countdown_font_size' => '1.4rem',
@@ -94,7 +94,7 @@ class BoxSetting extends Model
                 ],
                 'layout_settings' => [
                     'position' => 'left_column',
-                    'column_widths' => ['45%', '25%', '25%'],
+                    'column_widths' => ['30%', '35%', '35%'],
                     'next_prayer_position' => 'below_table',
                     'beginning_column_spacing' => '0'
                 ]
@@ -137,11 +137,11 @@ class BoxSetting extends Model
                     'title_background_color' => '#1E4D2B',
                     'title_color' => '#ffffff',
                     'font_family' => 'Courier New, monospace',
-                    'font_size' => '1.5rem',
-                    'title_font_size' => '1.2rem',
+                    'font_size' => '2rem',
+                    'title_font_size' => '1.6rem',
                     'border_color' => '#000000',
                     'border_width' => '2px',
-                    'padding' => '20px'
+                    'padding' => '16'
                 ],
                 'layout_settings' => [
                     'position' => 'right_column',

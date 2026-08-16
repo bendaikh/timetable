@@ -21,12 +21,12 @@
                         <div class="form-group mb-3">
                             <label for="title" class="form-label">
                                 <strong>Title</strong>
-                                <span class="text-danger">*</span>
+                                <span class="text-muted">(optional)</span>
                             </label>
                             <input type="text" class="form-control" id="title" name="title" 
                                    value="{{ old('title', $announcement->title ?? '') }}" 
-                                   required maxlength="100"
-                                   placeholder="Enter announcement title">
+                                   maxlength="255"
+                                   placeholder="Leave blank for body-only announcement">
                             @error('title')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
@@ -53,16 +53,14 @@
                         </div>
 
                         <div class="form-group mb-3">
-                            <label class="form-label">
-                                <strong>Display Priority</strong>
+                            <label for="display_order" class="form-label">
+                                <strong>Display Order</strong>
                             </label>
-                            <select class="form-control" name="priority" value="{{ old('priority', $announcement->priority ?? 1) }}">
-                                <option value="1">{{ isset($announcement) ? 'Rotate with other announcements' : 'Rotate with other announcements' }}</option>
-                                <option value="2">Show as Featured</option>
-                                <option value="3">Urgent - Show First</option>
-                            </select>
+                            <input type="number" class="form-control" id="display_order" name="display_order"
+                                   value="{{ old('display_order', $announcement->display_order ?? 1) }}"
+                                   min="1" max="9999" required>
                             <small class="text-muted d-block mt-1">
-                                Control how this announcement is displayed on the TV screen.
+                                Lower numbers appear first (1, 2, 3…), same as posters.
                             </small>
                         </div>
 

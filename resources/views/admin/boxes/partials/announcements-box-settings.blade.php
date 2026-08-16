@@ -46,7 +46,7 @@
                     <div class="col-md-12">
                         <label for="title_font_size" class="form-label">Font Size (rem)</label>
                         <input type="text" class="form-control" id="title_font_size" name="styling_settings[title_font_size]"
-                               value="{{ old('styling_settings.title_font_size', \App\Support\CssUnits::normalizeBoxRem($box->styling_settings['title_font_size'] ?? null, '1.2rem')) }}"
+                               value="{{ old('styling_settings.title_font_size', \App\Support\CssUnits::normalizeBoxRem($box->styling_settings['title_font_size'] ?? null, '1.6rem')) }}"
                                placeholder="e.g., 1.2rem">
                         <div class="form-text mt-2">Matches the prayer table header scale. Recommended: 1rem - 3.5rem</div>
                     </div>

@@ -26,25 +26,29 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                                    <label for="title" class="form-label">Title <span class="text-muted">(optional)</span></label>
                                     <input type="text" class="form-control @error('title') is-invalid @enderror" 
-                                           id="title" name="title" value="{{ old('title', $announcement->title) }}" required>
+                                           id="title" name="title" value="{{ old('title', $announcement->title) }}" maxlength="255" placeholder="Leave blank for body-only announcement">
                                     @error('title')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="title_font_size" class="form-label">Title Font Size <span class="text-danger">*</span></label>
-                                    <div class="d-flex gap-2">
+                                    <label for="title_font_size" class="form-label">Title Font Size (rem) <span class="text-danger">*</span></label>
+                                    @php
+                                        $titleFontSizeValue = old('title_font_size', $announcement->title_font_size ?? 2.25);
+                                        $titleFontSizeValue = is_numeric($titleFontSizeValue) ? (float) $titleFontSizeValue : 2.25;
+                                    @endphp
+                                    <div class="d-flex gap-2 align-items-center">
                                         <input type="range" class="form-range flex-grow-1" 
-                                               id="title_font_size_range" min="20" max="60" value="{{ old('title_font_size', $announcement->title_font_size ?? 36) }}">
-                                        <input type="number" class="form-control" style="width: 80px;" 
-                                               id="title_font_size" name="title_font_size" value="{{ old('title_font_size', $announcement->title_font_size ?? 36) }}" 
-                                               min="20" max="60" required>
-                                        <span class="input-group-text" id="title-font-size-label">px</span>
+                                               id="title_font_size_range" min="0.75" max="10" step="0.05" value="{{ $titleFontSizeValue }}">
+                                        <input type="number" class="form-control" style="width: 90px;" 
+                                               id="title_font_size" name="title_font_size" value="{{ $titleFontSizeValue }}" 
+                                               min="0.75" max="10" step="0.05" required>
+                                        <span class="input-group-text" id="title-font-size-label">rem</span>
                                     </div>
-                                    <small class="form-text d-block mt-2">Recommended: 20 - 60 pixels</small>
+                                    <small class="form-text d-block mt-2">Recommended: 1.5 - 4 rem (controls announcement title size on the display)</small>
                                     @error('title_font_size')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
@@ -56,6 +60,7 @@
                                               id="content" name="content" rows="6" required>{{ old('content', $announcement->content) }}</textarea>
                                     <div class="form-text d-flex justify-content-between align-items-center mt-2">
                                         <span>
+                                            Press <kbd>Enter</kbd> for a new line on the mosque screen.
                                             Characters: <strong id="char-count">{{ strlen($announcement->content) }}</strong>
                                         </span>
                                     </div>
@@ -69,24 +74,40 @@
                                     <input type="number" class="form-control @error('display_duration') is-invalid @enderror" 
                                            id="display_duration" name="display_duration" value="{{ old('display_duration', $announcement->display_duration) }}" 
                                            min="1" max="120" required>
-                                    <div class="form-text">How long this announcement should be displayed (1-120 seconds)</div>
+                                    <div class="form-text">How long this announcement stays on screen before the next one (1–120 seconds). Long text scrolls to the end within this time.</div>
                                     @error('display_duration')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="font_size" class="form-label">Font Size <span class="text-danger">*</span></label>
-                                    <div class="d-flex gap-2">
+                                    <label for="display_order" class="form-label">Display Order <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control @error('display_order') is-invalid @enderror"
+                                           id="display_order" name="display_order"
+                                           value="{{ old('display_order', $announcement->display_order ?? 1) }}"
+                                           min="1" max="9999" required>
+                                    <div class="form-text">Lower numbers appear first (1, 2, 3…), same as posters</div>
+                                    @error('display_order')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="font_size" class="form-label">Body Font Size (rem) <span class="text-danger">*</span></label>
+                                    @php
+                                        $bodyFontSizeValue = old('font_size', $announcement->font_size ?? 1.5);
+                                        $bodyFontSizeValue = is_numeric($bodyFontSizeValue) ? (float) $bodyFontSizeValue : 1.5;
+                                    @endphp
+                                    <div class="d-flex gap-2 align-items-center">
                                         <input type="range" class="form-range flex-grow-1" 
-                                               id="font_size_range" min="12" max="160" value="{{ old('font_size', $announcement->font_size) }}">
-                                        <input type="number" class="form-control" style="width: 80px;" 
-                                               id="font_size" name="font_size" value="{{ old('font_size', $announcement->font_size) }}" 
-                                               min="12" max="160" required>
-                                        <span class="input-group-text" id="font-size-label">px</span>
+                                               id="font_size_range" min="0.75" max="10" step="0.05" value="{{ $bodyFontSizeValue }}">
+                                        <input type="number" class="form-control" style="width: 90px;" 
+                                               id="font_size" name="font_size" value="{{ $bodyFontSizeValue }}" 
+                                               min="0.75" max="10" step="0.05" required>
+                                        <span class="input-group-text" id="font-size-label">rem</span>
                                     </div>
                                     <small class="form-text d-block mt-2">
-                                        <span id="font-size-info"></span> 
+                                        <span id="font-size-info"></span>
                                         <small id="font-size-warning" style="display: none; color: #ff6b6b;">Large font size - limit text to 150 chars</small>
                                     </small>
                                     @error('font_size')
@@ -129,24 +150,67 @@
                                     @enderror
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="start_date" class="form-label">Start Date</label>
-                                    <input type="datetime-local" class="form-control @error('start_date') is-invalid @enderror" 
-                                           id="start_date" name="start_date" value="{{ old('start_date', $announcement->start_date ? $announcement->start_date->format('Y-m-d\TH:i') : '') }}">
-                                    <div class="form-text">Optional: When this announcement should start showing</div>
-                                    @error('start_date')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                @php
+                                    $mosqueTimezone = \App\Support\PrayerJamaatTime::appTimezone();
+                                    $mosqueNow = \App\Support\PrayerJamaatTime::now();
+                                @endphp
+                                <div class="alert alert-info py-2 mb-3" role="status">
+                                    Schedule times use the <strong>mosque clock</strong>
+                                    ({{ $mosqueTimezone }}), same as the display screen —
+                                    not your laptop timezone.
+                                    Current mosque time:
+                                    <strong>{{ $mosqueNow->format('D j M Y, H:i') }}</strong>.
+                                    Leave dates empty to show with no time limit.
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="end_date" class="form-label">End Date</label>
-                                    <input type="datetime-local" class="form-control @error('end_date') is-invalid @enderror" 
-                                           id="end_date" name="end_date" value="{{ old('end_date', $announcement->end_date ? $announcement->end_date->format('Y-m-d\TH:i') : '') }}">
-                                    <div class="form-text">Optional: When this announcement should stop showing</div>
-                                    @error('end_date')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                    <label class="form-label">Start date &amp; time</label>
+                                    <div class="row g-2">
+                                        <div class="col-7">
+                                            <input type="date" class="form-control @error('start_date') is-invalid @enderror"
+                                                   id="start_date" name="start_date"
+                                                   value="{{ old('start_date', $announcement->scheduleStartDateValue()) }}"
+                                                   aria-label="Start date">
+                                            @error('start_date')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="time" class="form-control @error('start_time') is-invalid @enderror"
+                                                   id="start_time" name="start_time" step="60"
+                                                   value="{{ old('start_time', $announcement->scheduleStartTimeValue() ?: '00:00') }}"
+                                                   aria-label="Start time (hours and minutes)">
+                                            @error('start_time')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="form-text">Optional. Leave date empty for no start limit. Time uses mosque hours:minutes.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">End date &amp; time</label>
+                                    <div class="row g-2">
+                                        <div class="col-7">
+                                            <input type="date" class="form-control @error('end_date') is-invalid @enderror"
+                                                   id="end_date" name="end_date"
+                                                   value="{{ old('end_date', $announcement->scheduleEndDateValue()) }}"
+                                                   aria-label="End date">
+                                            @error('end_date')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="time" class="form-control @error('end_time') is-invalid @enderror"
+                                                   id="end_time" name="end_time" step="60"
+                                                   value="{{ old('end_time', $announcement->scheduleEndTimeValue() ?: '23:59') }}"
+                                                   aria-label="End time (hours and minutes)">
+                                            @error('end_time')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="form-text">Optional. Leave date empty for no end limit. Announcement stays visible through the chosen end minute.</div>
                                 </div>
 
                                 <div class="mb-3">
@@ -162,28 +226,28 @@
 
                                 <div class="mb-3">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="auto_repeat" name="auto_repeat" 
+                                        <input class="form-check-input" type="checkbox" id="auto_repeat" name="auto_repeat"
                                                value="1" {{ old('auto_repeat', $announcement->auto_repeat) ? 'checked' : '' }}>
                                         <label class="form-check-label" for="auto_repeat">
-                                            Auto Repeat
+                                            Only on specific days
                                         </label>
-                                        <div class="form-text">Enable to repeat this announcement on specific days</div>
+                                        <div class="form-text">Turn on to show this announcement only on chosen weekdays (mosque timezone)</div>
                                     </div>
                                 </div>
 
                                 <div class="mb-3" id="repeat-days-section" style="display: none;">
-                                    <label class="form-label">Repeat Days</label>
+                                    <label class="form-label">Show only on</label>
                                     <div class="row">
                                         @php
                                             $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                                            $selectedDays = old('repeat_days', $announcement->repeat_days ?? []);
+                                            $selectedDays = old('repeat_days', $announcement->normalizedRepeatDays());
                                         @endphp
                                         @foreach($days as $day)
                                             <div class="col-6 col-md-4">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" 
-                                                           id="repeat_days_{{ $day }}" name="repeat_days[]" 
-                                                           value="{{ $day }}" {{ in_array($day, $selectedDays) ? 'checked' : '' }}>
+                                                    <input class="form-check-input" type="checkbox"
+                                                           id="repeat_days_{{ $day }}" name="repeat_days[]"
+                                                           value="{{ $day }}" {{ in_array($day, $selectedDays, true) ? 'checked' : '' }}>
                                                     <label class="form-check-label" for="repeat_days_{{ $day }}">
                                                         {{ ucfirst($day) }}
                                                     </label>
@@ -191,6 +255,7 @@
                                             </div>
                                         @endforeach
                                     </div>
+                                    <div class="form-text">Example: check Friday only for Jumah announcements</div>
                                     @error('repeat_days')
                                         <div class="text-danger small">{{ $message }}</div>
                                     @enderror
@@ -210,49 +275,53 @@
                         <!-- Preview Column (Right Side) -->
                         <div class="col-md-6">
                             <div class="card sticky-top" style="top: 20px;">
-                                <div class="card-header bg-info text-white">
-                                    <h5 class="mb-0"><i class="bi bi-eye"></i> 85" TV Display Preview</h5>
+                                <div class="card-header bg-info text-white py-2">
+                                    <h6 class="mb-0"><i class="bi bi-eye"></i> Quick preview</h6>
                                 </div>
-                                <div class="card-body">
-                                    <div id="announcement-preview-box" class="p-4" style="
-                                        background-color: rgba(253, 247, 230, 0.9);
-                                        border: 2px solid #000;
-                                        border-radius: 8px;
-                                        min-height: 300px;
-                                        display: flex;
-                                        flex-direction: column;
-                                        align-items: center;
-                                        justify-content: center;
-                                        text-align: center;
-                                        overflow: hidden;
-                                        font-family: Arial, sans-serif;
-                                    ">
-                                        <div id="preview-title" style="
-                                            font-size: 1.5rem;
-                                            font-weight: bold;
-                                            margin-bottom: 15px;
-                                            width: 100%;
-                                        ">{{ $announcement->title ?: 'Announcement Title' }}</div>
-                                        <div id="preview-text" style="
-                                            font-size: {{ $announcement->font_size }}px;
-                                            word-wrap: break-word;
-                                            width: 100%;
-                                            overflow: hidden;
-                                            display: -webkit-box;
-                                            -webkit-line-clamp: 3;
-                                            -webkit-box-orient: vertical;
-                                        ">{{ $announcement->content ?: 'Announcement text will appear here...' }}</div>
+                                <div class="card-body p-3">
+                                    <div class="announcement-preview-frame">
+                                        <div id="announcement-preview-box" style="
+                                            background-color: {{ old('background_color', $announcement->background_color ?? '#ffffff') }};
+                                            border: 1px solid #adb5bd;
+                                            border-radius: 6px;
+                                            padding: 12px;
+                                            min-height: 120px;
+                                            max-height: 220px;
+                                            overflow: auto;
+                                            display: flex;
+                                            flex-direction: column;
+                                            justify-content: flex-start;
+                                            text-align: left;
+                                            font-family: Arial, sans-serif;
+                                        ">
+                                            <div id="preview-title" style="
+                                                font-size: {{ number_format(max(0.75, ((is_numeric($announcement->title_font_size ?? null) ? (float) $announcement->title_font_size : 2.25) * 0.32)), 2) }}rem;
+                                                font-weight: bold;
+                                                margin-bottom: 8px;
+                                                line-height: 1.25;
+                                                width: 100%;
+                                                color: {{ old('text_color', $announcement->text_color ?? '#000000') }};
+                                            ">{{ $announcement->title ?: '(No title)' }}</div>
+                                            <div id="preview-text" style="
+                                                font-size: {{ number_format(max(0.7, ((is_numeric($announcement->font_size ?? null) ? (float) $announcement->font_size : 1.5) * 0.32)), 2) }}rem;
+                                                line-height: 1.35;
+                                                word-wrap: break-word;
+                                                white-space: pre-line;
+                                                width: 100%;
+                                                text-align: left;
+                                                color: {{ old('text_color', $announcement->text_color ?? '#000000') }};
+                                            ">{{ $announcement->content ?: 'Announcement text will appear here...' }}</div>
+                                        </div>
                                     </div>
+                                    <div class="form-text mt-2 mb-0">Scaled for this form — the TV uses the full rem sizes below.</div>
 
-                                    <div class="alert alert-info mt-4 mb-0">
-                                        <strong>Display Info:</strong>
-                                        <div class="small mt-2">
-                                            <p><strong>Font Size:</strong> <span id="preview-font-size">{{ $announcement->font_size }}px</span></p>
-                                            <p><strong>Character Count:</strong> <span id="preview-char-count">{{ strlen($announcement->content) }}</span></p>
-                                            <p><strong>Estimated Lines:</strong> <span id="preview-lines">1</span></p>
-                                            <p id="preview-fit-warning" style="display: none; color: #ff6b6b; margin-top: 10px;">
-                                                <i class="bi bi-exclamation-triangle"></i> Text may be truncated on TV!
-                                            </p>
+                                    <div class="border rounded bg-light p-2 mt-3 small mb-0">
+                                        <div class="fw-semibold mb-1">Display info</div>
+                                        <div>Body size: <span id="preview-font-size">{{ \App\Support\CssUnits::normalizeAnnouncementRem($announcement->font_size ?? null, '1.5rem') }}</span></div>
+                                        <div>Characters: <span id="preview-char-count">{{ strlen($announcement->content) }}</span></div>
+                                        <div>Est. lines: <span id="preview-lines">1</span></div>
+                                        <div id="preview-fit-warning" class="text-danger mt-1" style="display: none;">
+                                            <i class="bi bi-exclamation-triangle"></i> Text may need scrolling on the TV.
                                         </div>
                                     </div>
                                 </div>
@@ -289,6 +358,13 @@ const previewFontSize = document.getElementById('preview-font-size');
 const previewCharCount = document.getElementById('preview-char-count');
 const previewLines = document.getElementById('preview-lines');
 const previewFitWarning = document.getElementById('preview-fit-warning');
+const PREVIEW_SCALE = 0.32;
+
+function previewRem(remValue, fallback) {
+    const n = parseFloat(remValue);
+    const base = Number.isFinite(n) && n > 0 ? n : fallback;
+    return Math.max(0.7, base * PREVIEW_SCALE) + 'rem';
+}
 
 // Font size info
 const fontSizeInfo = document.getElementById('font-size-info');
@@ -314,7 +390,7 @@ const speedDescriptions = {
  */
 function updateCharCounter() {
     const charCount = contentTextarea.value.length;
-    const fontSize = parseInt(fontSizeInput.value) || 12;
+    const fontSize = parseFloat(fontSizeInput.value) || 1.5;
     
     // Update display
     charCountDisplay.textContent = charCount;
@@ -335,32 +411,32 @@ contentTextarea.addEventListener('input', updateCharCounter);
  * Update font size display and preview
  */
 function updateFontSize() {
-    const fontSize = parseInt(fontSizeInput.value) || 12;
+    const fontSize = parseFloat(fontSizeInput.value) || 1.5;
     
     // Sync range and input
     fontSizeRange.value = fontSize;
     fontSizeInput.value = fontSize;
     
-    // Update info text
-    if (fontSize > 100) {
+    // Update info text (rem scale)
+    if (fontSize >= 6) {
         fontSizeInfo.textContent = '🔤 Extra Large';
-    } else if (fontSize > 60) {
+    } else if (fontSize >= 3.75) {
         fontSizeInfo.textContent = '📢 Large';
-    } else if (fontSize > 40) {
+    } else if (fontSize >= 2.5) {
         fontSizeInfo.textContent = '📝 Medium';
     } else {
         fontSizeInfo.textContent = '📄 Small';
     }
     
     // Update warning
-    if (fontSize > 60) {
+    if (fontSize >= 3.75) {
         fontSizeWarning.style.display = 'inline';
     } else {
         fontSizeWarning.style.display = 'none';
     }
     
-    previewFontSize.textContent = fontSize + 'px';
-    previewText.style.fontSize = fontSize + 'px';
+    previewFontSize.textContent = fontSize + 'rem';
+    previewText.style.fontSize = previewRem(fontSize, 1.5);
     
     updateCharCounter();
 }
@@ -376,7 +452,7 @@ fontSizeRange.addEventListener('input', function() {
  * Update title font size display and preview
  */
 function updateTitleFontSize() {
-    const titleFontSize = parseInt(document.getElementById('title_font_size').value) || 36;
+    const titleFontSize = parseFloat(document.getElementById('title_font_size').value) || 2.25;
     
     // Sync range and input
     const titleFontSizeRange = document.getElementById('title_font_size_range');
@@ -385,7 +461,7 @@ function updateTitleFontSize() {
     }
     document.getElementById('title_font_size').value = titleFontSize;
     
-    previewTitle.style.fontSize = titleFontSize + 'px';
+    previewTitle.style.fontSize = previewRem(titleFontSize, 2.25);
     updatePreview();
 }
 
@@ -425,7 +501,7 @@ scrollSpeedRange.addEventListener('input', function() {
  * Check if text will fit on TV
  */
 function updateTextFitWarning(charCount, fontSize) {
-    const willFit = (fontSize > 60 ? charCount <= 150 : charCount <= 300);
+    const willFit = (fontSize >= 3.75 ? charCount <= 150 : charCount <= 300);
     
     if (!willFit && charCount > 0) {
         previewFitWarning.style.display = 'block';
@@ -434,7 +510,7 @@ function updateTextFitWarning(charCount, fontSize) {
     }
     
     // Update estimated lines
-    const charsPerLine = fontSize > 60 ? 20 : 50;
+    const charsPerLine = fontSize >= 3.75 ? 20 : 50;
     const estimatedLines = Math.ceil(charCount / charsPerLine);
     previewLines.textContent = Math.max(1, estimatedLines);
 }
@@ -444,9 +520,17 @@ function updateTextFitWarning(charCount, fontSize) {
  */
 function updatePreview() {
     if (titleInput) {
-        previewTitle.textContent = titleInput.value || 'Announcement Title';
+        const titleValue = (titleInput.value || '').trim();
+        previewTitle.textContent = titleValue || '(No title)';
+        previewTitle.style.opacity = titleValue ? '1' : '0.45';
+        previewTitle.style.fontStyle = titleValue ? 'normal' : 'italic';
     }
-    previewText.textContent = contentTextarea.value || 'Announcement text will appear here...';
+    const body = contentTextarea.value || 'Announcement text will appear here...';
+    previewText.innerHTML = String(body)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\r\n|\r|\n/g, '<br>');
     
     // Update background and text colors
     const bgColorInput = document.getElementById('background_color');
@@ -487,7 +571,7 @@ if (form) {
 }
 
 /**
- * Show/hide repeat days section
+ * Show/hide weekday restriction; clear day checkboxes when disabled so they are not submitted.
  */
 document.getElementById('auto_repeat').addEventListener('change', function() {
     const repeatDaysSection = document.getElementById('repeat-days-section');
@@ -495,6 +579,9 @@ document.getElementById('auto_repeat').addEventListener('change', function() {
         repeatDaysSection.style.display = 'block';
     } else {
         repeatDaysSection.style.display = 'none';
+        repeatDaysSection.querySelectorAll('input[type="checkbox"]').forEach(function(cb) {
+            cb.checked = false;
+        });
     }
 });
 
@@ -502,7 +589,7 @@ document.getElementById('auto_repeat').addEventListener('change', function() {
  * Initialize on page load
  */
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize repeat days section visibility
+    // Initialize repeat days section visibility (reload saved “Only on specific days”)
     const autoRepeatCheckbox = document.getElementById('auto_repeat');
     const repeatDaysSection = document.getElementById('repeat-days-section');
     if (autoRepeatCheckbox && autoRepeatCheckbox.checked) {
@@ -512,6 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize all displays
     updateCharCounter();
     updateFontSize();
+    updateTitleFontSize();
     updateScrollSpeed();
     updatePreview();
 });

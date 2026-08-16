@@ -15,7 +15,7 @@
         <div class="col-md-6">
             <label for="date_font_size" class="form-label">Date Font Size (rem)</label>
             <input type="text" class="form-control" id="date_font_size" name="styling_settings[date_font_size]"
-                   value="{{ old('styling_settings.date_font_size', $box->styling_settings['date_font_size'] ?? '1.2rem') }}"
+                   value="{{ old('styling_settings.date_font_size', $box->styling_settings['date_font_size'] ?? '2.75rem') }}"
                    placeholder="e.g., 1, 1.2, 1.5 or 1.5rem"
                    inputmode="decimal"
                    pattern="^[0-9]+(\.[0-9]+)?(rem)?$">

@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     
     <!-- Fullscreen Display Styles -->
-    <link href="{{ asset('css/fullscreen-display.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/fullscreen-display.css') }}?v={{ @filemtime(public_path('css/fullscreen-display.css')) ?: time() }}" rel="stylesheet">
     
     <!-- Custom CSS -->
     <style>

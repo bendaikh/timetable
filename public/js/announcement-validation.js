@@ -59,9 +59,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const fontSize = fontSizeInput.value;
             
             // Show warning if font is very large and text is also long
-            if (contentInput && fontSize > 60 && contentInput.value.length > 150) {
+            if (contentInput && fontSize >= 3.75 && contentInput.value.length > 150) {
                 if (charWarning) {
-                    warningText.textContent = `⚠️ Large font (${fontSize}px) with this text length may overflow on 85" TV. Consider reducing font size or text length.`;
+                    warningText.textContent = `⚠️ Large font (${fontSize}rem) with this text length may overflow on 85" TV. Consider reducing font size or text length.`;
                     charWarning.style.display = 'block';
                 }
             }

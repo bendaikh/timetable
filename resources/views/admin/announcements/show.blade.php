@@ -22,18 +22,18 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-megaphone me-2"></i>
-                        {{ $announcement->title }}
+                        {{ $announcement->title ?: '(No title)' }}
                     </h5>
                 </div>
                 <div class="card-body">
-                    @if(strlen($announcement->content) > 300 && $announcement->font_size > 60)
+                    @if(strlen($announcement->content) > 300 && (float) $announcement->font_size >= 3.75)
                         <div class="alert alert-warning alert-dismissible fade show" role="alert">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            <strong>⚠️ Warning:</strong> This announcement has a long text ({{ strlen($announcement->content) }} characters) with a large font size ({{ $announcement->font_size }}px). Some text may be hidden on the display due to the fixed announcement box height. Consider:
+                            <strong>⚠️ Warning:</strong> This announcement has a long text ({{ strlen($announcement->content) }} characters) with a large font size ({{ $announcement->formattedFontSize() }}). Some text may be hidden on the display due to the fixed announcement box height. Consider:
                             <ul class="mb-0 mt-2">
                                 <li>Reducing the font size to fit all text</li>
                                 <li>Shortening the announcement text</li>
-                                <li>Using font size between 12-60px for longer texts</li>
+                                <li>Using body font size between 0.75–3.75rem for longer texts</li>
                             </ul>
                         </div>
                     @endif
@@ -50,17 +50,22 @@
                                 <h6>Preview:</h6>
                                 <div class="p-3 rounded" 
                                      style="background-color: {{ $announcement->background_color }}; color: {{ $announcement->text_color }}; 
-                                            font-size: {{ $announcement->font_size }}px; min-height: 100px; max-height: 300px;
+                                            font-size: {{ $announcement->formattedFontSize() }}; min-height: 100px; max-height: 300px;
                                             display: flex; align-items: center; justify-content: center;
                                             overflow: hidden;">
                                     <div class="text-center" style="width: 100%; overflow: hidden;">
-                                        <div style="font-size: {{ $announcement->font_size }}px; 
+                                        @if(filled($announcement->title))
+                                        <div style="font-size: {{ $announcement->formattedTitleFontSize() }}; font-weight: bold; margin-bottom: 8px;">
+                                            {{ $announcement->title }}
+                                        </div>
+                                        @endif
+                                        <div style="font-size: {{ $announcement->formattedFontSize() }}; 
                                                     color: {{ $announcement->text_color }};
                                                     background-color: {{ $announcement->background_color }};
                                                     padding: 10px; border-radius: 5px;
                                                     word-wrap: break-word; word-break: break-word;
-                                                    overflow: hidden; white-space: normal;">
-                                            {{ $announcement->content }}
+                                                    overflow: hidden; white-space: normal; text-align: left;">
+                                            {!! $announcement->contentHtml() !!}
                                         </div>
                                     </div>
                                 </div>
@@ -87,8 +92,16 @@
                                             <td>{{ $announcement->display_duration }} seconds</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Font Size:</strong></td>
-                                            <td>{{ $announcement->font_size }}px</td>
+                                            <td><strong>Display Order:</strong></td>
+                                            <td><span class="badge bg-warning text-dark">{{ $announcement->display_order }}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Title Font Size:</strong></td>
+                                            <td>{{ $announcement->formattedTitleFontSize() }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Body Font Size:</strong></td>
+                                            <td>{{ $announcement->formattedFontSize() }}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>Scroll Speed:</strong></td>
@@ -110,26 +123,30 @@
                                                 {{ $announcement->background_color }}
                                             </td>
                                         </tr>
-                                        @if($announcement->auto_repeat)
+                                        @if($announcement->auto_repeat && $announcement->normalizedRepeatDays())
                                         <tr>
-                                            <td><strong>Auto Repeat:</strong></td>
+                                            <td><strong>Only on days:</strong></td>
                                             <td>
                                                 <span class="badge bg-info">
-                                                    <i class="bi bi-arrow-repeat me-1"></i>
-                                                    {{ implode(', ', $announcement->repeat_days ?? []) }}
+                                                    <i class="bi bi-calendar-week me-1"></i>
+                                                    {{ implode(', ', $announcement->normalizedRepeatDays()) }}
                                                 </span>
                                             </td>
                                         </tr>
                                         @endif
+                                        <tr>
+                                            <td><strong>Schedule:</strong></td>
+                                            <td>{{ $announcement->formattedScheduleWindow() }}</td>
+                                        </tr>
                                         @if($announcement->start_date)
                                         <tr>
-                                            <td><strong>Start Date:</strong></td>
+                                            <td><strong>Starts:</strong></td>
                                             <td>{{ $announcement->start_date->format('M j, Y g:i A') }}</td>
                                         </tr>
                                         @endif
                                         @if($announcement->end_date)
                                         <tr>
-                                            <td><strong>End Date:</strong></td>
+                                            <td><strong>Ends:</strong></td>
                                             <td>{{ $announcement->end_date->format('M j, Y g:i A') }}</td>
                                         </tr>
                                         @endif
