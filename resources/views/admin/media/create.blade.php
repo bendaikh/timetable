@@ -56,11 +56,11 @@
                                     </div>
                                     <div class="alert alert-info mt-2 mb-0 py-2">
                                         @php $posterSize = \App\Support\AnnouncementBoxGeometry::recommendation(); @endphp
-                                        Recommended poster size (announcement box only, object-fit: {{ $posterSize['object_fit'] }}):
+                                        Recommended poster size (announcement box only):
                                         <strong>{{ $posterSize['uhd_4k']['width'] }} × {{ $posterSize['uhd_4k']['height'] }} px</strong> on 4K (3840×2160),
                                         <strong>{{ $posterSize['full_hd']['width'] }} × {{ $posterSize['full_hd']['height'] }} px</strong> on Full HD (1920×1080),
                                         aspect ≈ <strong>{{ $posterSize['aspect_label'] }}</strong> portrait.
-                                        Keep important content inside a <strong>{{ $posterSize['safe_margin_pct'] }}% safe margin</strong> (cover may crop edges).
+                                        Display uses <strong>object-fit: {{ $posterSize['object_fit'] }}</strong> so the full poster is always visible (thin black bars only if the aspect does not match).
                                     </div>
                                     @if($errors->has('file'))
                                         <div class="alert alert-danger mt-2 mb-0">

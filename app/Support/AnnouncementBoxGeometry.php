@@ -49,9 +49,9 @@ class AnnouncementBoxGeometry
             'height' => $height,
             'ratio' => round($ratio, 4),
             'aspect_label' => self::nearestAspectLabel($ratio),
-            // object-fit: cover crops overflow — keep important content inset.
-            'safe_margin_pct' => 5,
-            'object_fit' => 'cover',
+            // object-fit: contain shows the full poster (letterbox if aspect differs).
+            'safe_margin_pct' => 0,
+            'object_fit' => 'contain',
             'viewport' => [
                 'width' => $viewportWidth,
                 'height' => $viewportHeight,
@@ -97,8 +97,8 @@ class AnnouncementBoxGeometry
                 'Posters cover only the announcements column (45% of screen width), not the full TV.',
                 'Announcement box width is not configurable in admin (CSS --board-announce-width: 45%).',
                 'Height is the main prayer+announcements row (viewport minus header, gap, and special-times strip).',
-                'Hiding header or special times makes the box taller; showing sliding text makes it shorter. Cover will crop extra.',
-                'Admin padding/border does not shrink the poster: overlay is inset:0 on #announcements-section.',
+                'Display uses object-fit: contain so the whole poster stays visible (thin black bars if the box aspect differs, e.g. when sliding text is shown).',
+                'Design near 10:11 portrait (864×929 on Full HD / 1728×1865 on 4K) to minimise letterboxing.',
             ],
         ];
     }

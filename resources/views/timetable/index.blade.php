@@ -3468,7 +3468,7 @@ HTML;
 
         if (!mediaDom.image) {
             const image = document.createElement('img');
-            image.style.cssText = 'display: none; width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1;';
+            image.style.cssText = 'display: none; width: 100%; height: 100%; object-fit: contain; object-position: center; position: relative; z-index: 1;';
             image.alt = '';
             mediaContent.appendChild(image);
             mediaDom.image = image;
@@ -3476,7 +3476,7 @@ HTML;
 
         if (!mediaDom.video) {
             const video = document.createElement('video');
-            video.style.cssText = 'display: none; width: 100%; height: 100%; object-fit: cover;';
+            video.style.cssText = 'display: none; width: 100%; height: 100%; object-fit: contain; object-position: center;';
             video.autoplay = true;
             video.loop = true;
             video.muted = true;

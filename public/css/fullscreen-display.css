@@ -393,7 +393,10 @@ html, body {
     height: 100%;
     max-width: 100%;
     max-height: 100%;
-    object-fit: cover;
+    /* Show the full poster; letterbox rather than crop edges (864×929 still valid). */
+    object-fit: contain;
+    object-position: center;
+    background: #000;
 }
 
 .announcements-content {
@@ -1741,6 +1744,7 @@ html, body {
        TV MODE - MEDIA OVERLAYS (ANNOUNCEMENT BOX ONLY)
        Posters fill the announcements section; prayer/header/special times stay visible.
        Target poster size on 3840×2160: 1728×1865 (≈10:11 portrait). Full HD: 864×929.
+       object-fit: contain — full poster always visible (letterbox if box is shorter, e.g. sliding text).
        ======================================================================== */
     
     .media-overlay {
@@ -1780,7 +1784,9 @@ html, body {
     .media-content video {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
+        object-position: center;
+        background: #000;
     }
 
     .countdown-popup {

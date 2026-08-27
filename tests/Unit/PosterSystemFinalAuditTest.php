@@ -141,10 +141,10 @@ class PosterSystemFinalAuditTest extends TestCase
             '/\.announcements-section\s*\{[\s\S]{0,300}overflow:\s*hidden/',
             $css
         );
-        $this->assertStringContainsString('object-fit: cover', $css);
-        $this->assertStringContainsString('object-fit: cover', $blade);
+        $this->assertStringContainsString('object-fit: contain', $css);
+        $this->assertStringContainsString('object-fit: contain', $blade);
         $this->assertStringNotContainsString(
-            "object-fit: contain; position: relative; z-index: 1;",
+            "object-fit: cover; position: relative; z-index: 1;",
             $blade
         );
 
@@ -401,7 +401,7 @@ class PosterSystemFinalAuditTest extends TestCase
     {
         $css = file_get_contents(public_path('css/fullscreen-display.css'));
         $this->assertStringContainsString('--board-announce-width: 45%', $css);
-        $this->assertStringContainsString('object-fit: cover', $css);
+        $this->assertStringContainsString('object-fit: contain', $css);
 
         $hd = AnnouncementBoxGeometry::forViewport(1920, 1080);
         $uhd = AnnouncementBoxGeometry::forViewport(3840, 2160);
@@ -412,8 +412,8 @@ class PosterSystemFinalAuditTest extends TestCase
         $this->assertSame(1865, $uhd['height']);
         $this->assertSame(45, (int) round(AnnouncementBoxGeometry::ANNOUNCE_WIDTH_RATIO * 100));
         $this->assertSame('10:11', $uhd['aspect_label']);
-        $this->assertSame(5, $uhd['safe_margin_pct']);
-        $this->assertSame('cover', $uhd['object_fit']);
+        $this->assertSame(0, $uhd['safe_margin_pct']);
+        $this->assertSame('contain', $uhd['object_fit']);
 
         $spec = AnnouncementBoxGeometry::recommendation();
         $this->assertSame(1728, $spec['design_width']);
