@@ -26,7 +26,7 @@ class Setting extends Model
 
     public static function set($key, $value, $type = 'string', $description = null)
     {
-        return self::updateOrCreate(
+        $setting = self::updateOrCreate(
             ['key' => $key],
             [
                 'value' => $value,
@@ -34,6 +34,12 @@ class Setting extends Model
                 'description' => $description
             ]
         );
+
+        if ($key === 'timezone' && is_string($value) && $value !== '') {
+            \App\Support\MosqueTimezone::apply($value);
+        }
+
+        return $setting;
     }
 
     private static function castValue($value, $type)

@@ -9,6 +9,7 @@ use App\Models\PrayerTime;
 use App\Models\Setting;
 use App\Support\PrayerJamaatTime;
 use App\Support\ScheduledMediaWindow;
+use App\Support\MediaScheduleDuration;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -51,7 +52,7 @@ class MediaScheduleController extends Controller
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
             'media_durations' => 'required|array',
-            'media_durations.*' => 'required|numeric|min:0.5',
+            'media_durations.*' => 'required|numeric|min:' . MediaScheduleDuration::MIN_SECONDS . '|max:' . MediaScheduleDuration::MAX_SECONDS,
             'media_priorities' => 'required|array',
             'media_priorities.*' => 'required|integer|min:1|max:100',
             // Pivot table display window fields
@@ -98,11 +99,13 @@ class MediaScheduleController extends Controller
 
         $schedule = MediaSchedule::create($data);
 
-        // Attach media items with their duration, priority, and new fields
+        // Attach media items — form and pivot both use integer seconds.
         $pivotData = [];
         foreach ($request->media_ids as $index => $mediaId) {
             $pivotData[$mediaId] = [
-                'duration' => $request->media_durations[$index] ?? 30,
+                'duration' => MediaScheduleDuration::secondsForStorage(
+                    $request->media_durations[$index] ?? MediaScheduleDuration::DEFAULT_SECONDS
+                ),
                 'priority' => $request->media_priorities[$index] ?? ($index + 1),
                 'start_date' => filled($request->media_start_dates[$index] ?? null) ? $request->media_start_dates[$index] : null,
                 'start_time' => filled($request->media_start_times[$index] ?? null) ? $request->media_start_times[$index] : null,
@@ -158,7 +161,7 @@ class MediaScheduleController extends Controller
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
             'media_durations' => 'required|array',
-            'media_durations.*' => 'required|numeric|min:0.5',
+            'media_durations.*' => 'required|numeric|min:' . MediaScheduleDuration::MIN_SECONDS . '|max:' . MediaScheduleDuration::MAX_SECONDS,
             'media_priorities' => 'required|array',
             'media_priorities.*' => 'required|integer|min:1|max:100',
             // Pivot table display window fields
@@ -205,11 +208,13 @@ class MediaScheduleController extends Controller
 
         $mediaSchedule->update($data);
 
-        // Sync media items with their duration, priority, and new fields
+        // Sync media items — form and pivot both use integer seconds.
         $pivotData = [];
         foreach ($request->media_ids as $index => $mediaId) {
             $pivotData[$mediaId] = [
-                'duration' => $request->media_durations[$index] ?? 30,
+                'duration' => MediaScheduleDuration::secondsForStorage(
+                    $request->media_durations[$index] ?? MediaScheduleDuration::DEFAULT_SECONDS
+                ),
                 'priority' => $request->media_priorities[$index] ?? ($index + 1),
                 'start_date' => filled($request->media_start_dates[$index] ?? null) ? $request->media_start_dates[$index] : null,
                 'start_time' => filled($request->media_start_times[$index] ?? null) ? $request->media_start_times[$index] : null,
@@ -293,10 +298,10 @@ class MediaScheduleController extends Controller
         
         if ($scheduleType === 'minutes_before_prayer') {
             $displayStart = $jamaatTime->copy()->subMinutes((int) $minutes);
-            $displayEnd = $jamaatTime->copy()->subMinutes(5); // Stops 5 minutes before Jamaat
+            $displayEnd = $jamaatTime->copy(); // until jamaat (same rule as PrayerJamaatTime)
         } else { // minutes_after_prayer
             $displayStart = $jamaatTime->copy()->addMinutes((int) $minutes);
-            $displayEnd = $jamaatTime->copy()->addMinutes((int) $minutes + 10);
+            $displayEnd = $displayStart->copy()->addMinutes(\App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES);
         }
         
         // Find all active schedules

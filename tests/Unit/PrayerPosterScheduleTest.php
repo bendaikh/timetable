@@ -139,7 +139,30 @@ class PrayerPosterScheduleTest extends TestCase
 
     public function test_before_prayer_poster_inactive_outside_schedule_window(): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-07-05 13:11:00', self::TZ));
+        Carbon::setTestNow(Carbon::parse('2026-07-05 13:15:01', self::TZ));
         $this->assertNull($this->service->getCurrentMedia());
+    }
+
+    public function test_five_minute_before_schedule_is_active_inside_window(): void
+    {
+        MediaSchedule::query()->delete();
+
+        $schedule = MediaSchedule::query()->create([
+            'schedule_type' => 'minutes_before_prayer',
+            'prayer_name' => 'zohar',
+            'minutes_before_prayer' => 5,
+            'is_active' => true,
+        ]);
+
+        $media = Media::query()->first();
+        $schedule->mediaItems()->attach($media->id, [
+            'duration' => 0.5,
+            'priority' => 1,
+            'is_active' => true,
+            'gap_duration' => 0,
+        ]);
+
+        Carbon::setTestNow(Carbon::parse('2026-07-05 13:12:30', self::TZ));
+        $this->assertNotNull($this->service->getCurrentMedia());
     }
 }

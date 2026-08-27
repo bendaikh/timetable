@@ -42,7 +42,7 @@ async function captureCheckpoint(page, id, log, note) {
         })(),
     }));
 
-    const diagnostic = fetchJson(`${BASE_URL}/api/countdown-diagnostic`);
+    const diagnostic = fetchJson(`${BASE_URL}/admin/diagnostics/countdown`);
     const screenState = fetchJson(`${BASE_URL}/api/screen-state`);
 
     const entry = {
@@ -120,7 +120,7 @@ function assertOrExit(check, message, evidence) {
 
     // Wait until 1 min before countdown #1, verify still TIMETABLE
     await waitUntil(async () => {
-        const d = fetchJson(`${BASE_URL}/api/countdown-diagnostic`);
+        const d = fetchJson(`${BASE_URL}/admin/diagnostics/countdown`);
         const t = new Date(d.log.server_time).getTime();
         const start = new Date(setup.countdown_1_start).getTime();
         return t >= start - 60000;

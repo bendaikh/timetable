@@ -84,7 +84,7 @@ function offsetFromJamaat(jamaatIso, offsetSec) {
     await sleep(35000);
 
     const verification = await page.evaluate(() => window.__countdownVerification || null);
-    const diagnostic = fetchJson(`${BASE_URL}/api/countdown-diagnostic`);
+    const diagnostic = fetchJson(`${BASE_URL}/admin/diagnostics/countdown`);
 
     const report = {
         generatedAt: new Date().toISOString(),

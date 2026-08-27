@@ -6,9 +6,12 @@ use App\Models\Media;
 use App\Models\MediaSchedule;
 use App\Models\PrayerTime;
 use App\Models\Setting;
+use App\Support\PrayerAdhanTime;
 use App\Support\PrayerCountdownWindows;
 use App\Support\PrayerJamaatTime;
 use App\Support\ScheduledMediaWindow;
+use App\Support\AnnouncementBoxGeometry;
+use App\Support\MediaScheduleDuration;
 use Carbon\Carbon;
 
 class MediaDisplayService
@@ -26,79 +29,203 @@ class MediaDisplayService
             return null;
         }
 
-        // Get all active schedules ordered by ID (creation order)
-        $schedules = MediaSchedule::with(['mediaItems' => function($query) {
+        $schedules = MediaSchedule::with(['mediaItems' => function ($query) {
                 $query->where('media_schedule_media.is_active', true)
-                      ->orderBy('media_schedule_media.priority', 'asc');
+                    ->orderBy('media_schedule_media.priority', 'asc')
+                    ->orderBy('media_schedule_media.id', 'asc');
             }])
             ->active()
-            ->whereHas('mediaItems', function($query) {
+            ->whereHas('mediaItems', function ($query) {
                 $query->where('media_schedule_media.is_active', true);
             })
-            ->orderBy('id', 'desc')
+            ->orderBy('id', 'asc')
             ->get();
 
-        // Priority 1: Check for Before/After Prayer schedules first (they override Full Time Poster)
-        $prayerBasedMedia = null;
-        $fullTimePosterMedia = null;
-        
+        $prayerSchedules = [];
+        $fullTimeSchedules = [];
+
         foreach ($schedules as $schedule) {
-            // Check if schedule is active for today (schedule level check still applies)
-            if (!$schedule->isActiveForToday()) {
+            if (!$schedule->isActiveForToday($now)) {
                 continue;
             }
 
-            $mediaInfo = $this->shouldDisplayMediaFromSchedule($schedule, $now);
-            
-            if ($mediaInfo) {
-                // Categorize by schedule type
-                if ($schedule->schedule_type === 'full_time_poster') {
-                    // Store Full Time Poster as fallback
-                    if (!$fullTimePosterMedia) {
-                        $fullTimePosterMedia = $mediaInfo;
-                    }
-                } else {
-                    // Before/After Prayer schedules have priority
-                    $prayerBasedMedia = $mediaInfo;
-                    break; // Found a prayer-based schedule, stop looking
-                }
+            if (!$this->isScheduleActive($schedule, $now)) {
+                continue;
+            }
+
+            if ($schedule->schedule_type === 'full_time_poster') {
+                $fullTimeSchedules[] = $schedule;
+            } else {
+                $prayerSchedules[] = $schedule;
             }
         }
 
-        // Return prayer-based media if found, otherwise full-time poster, otherwise null (timetable)
-        return $prayerBasedMedia ?? $fullTimePosterMedia;
+        // Prayer-relative schedules override full-time, but ALL active prayer
+        // schedules in-window contribute posters to one shared rotation.
+        if ($prayerSchedules !== []) {
+            return $this->pickFromMergedSchedules($prayerSchedules, $now, 'prayer');
+        }
+
+        if ($fullTimeSchedules !== []) {
+            return $this->pickFromMergedSchedules($fullTimeSchedules, $now, 'full_time');
+        }
+
+        return null;
+    }
+
+    /**
+     * Merge eligible media from every active schedule in the tier and cycle in priority order.
+     *
+     * @param  list<MediaSchedule>  $schedules
+     */
+    private function pickFromMergedSchedules(array $schedules, Carbon $now, string $tier): ?array
+    {
+        $items = collect();
+
+        foreach ($schedules as $schedule) {
+            foreach ($schedule->mediaItems as $media) {
+                if (!$media->is_active) {
+                    continue;
+                }
+                if (!$this->isPivotMediaEligible($media, $now)) {
+                    continue;
+                }
+                if (!$this->isPivotMediaActiveForToday($media, $now)) {
+                    continue;
+                }
+
+                // Keep schedule reference for payload / diagnostics.
+                $media->setRelation('current_schedule', $schedule);
+                $items->push($media);
+            }
+        }
+
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        // Same media attached to multiple schedules: keep the lowest priority entry.
+        $items = $items
+            ->groupBy(fn ($media) => (string) $media->id)
+            ->map(function ($group) {
+                return $group->sortBy(fn ($media) => sprintf(
+                    '%05d-%05d',
+                    (int) ($media->pivot->priority ?? 999),
+                    (int) ($media->current_schedule->id ?? 0)
+                ))->first();
+            })
+            // Single composite key: sortBy([...callables]) is comparator-style in Laravel.
+            ->sortBy(fn ($media) => sprintf(
+                '%05d-%05d-%05d',
+                (int) ($media->pivot->priority ?? 999),
+                (int) ($media->current_schedule->id ?? 0),
+                (int) $media->id
+            ))
+            ->values();
+
+        $scheduleStart = $tier === 'full_time'
+            ? PrayerJamaatTime::now($now)->copy()->startOfDay()
+            : $this->earliestScheduleStart($schedules, $now);
+
+        if (!$scheduleStart) {
+            return null;
+        }
+
+        return $this->pickMediaFromCycle($items, $now, $scheduleStart);
+    }
+
+    /**
+     * @param  list<MediaSchedule>  $schedules
+     */
+    private function earliestScheduleStart(array $schedules, Carbon $now): ?Carbon
+    {
+        $starts = [];
+        foreach ($schedules as $schedule) {
+            $start = $this->getScheduleStartTime($schedule, $now);
+            if ($start) {
+                $starts[] = $start;
+            }
+        }
+
+        if ($starts === []) {
+            return null;
+        }
+
+        usort($starts, fn (Carbon $a, Carbon $b) => $a->timestamp <=> $b->timestamp);
+
+        return $starts[0];
+    }
+
+    /**
+     * Walk the ordered media list using elapsed seconds since scheduleStart.
+     *
+     * @param  \Illuminate\Support\Collection<int, Media>  $mediaItems
+     */
+    private function pickMediaFromCycle($mediaItems, Carbon $now, Carbon $scheduleStart): ?array
+    {
+        $totalDuration = $mediaItems->sum(function ($media) {
+            return MediaScheduleDuration::secondsFromStored($media->pivot->duration)
+                + (int) ($media->pivot->gap_duration ?? 0);
+        });
+
+        if ($totalDuration <= 0) {
+            return null;
+        }
+
+        $elapsedSeconds = (int) $scheduleStart->diffInSeconds($now, false);
+        if ($elapsedSeconds < 0) {
+            return null;
+        }
+
+        $positionInCycle = $elapsedSeconds % $totalDuration;
+        $accumulatedDuration = 0;
+
+        foreach ($mediaItems as $media) {
+            $mediaDuration = MediaScheduleDuration::secondsFromStored($media->pivot->duration);
+            $gapDuration = (int) ($media->pivot->gap_duration ?? 0);
+            $slotDuration = $mediaDuration + $gapDuration;
+
+            if ($positionInCycle >= $accumulatedDuration && $positionInCycle < ($accumulatedDuration + $mediaDuration)) {
+                $schedule = $media->relationLoaded('current_schedule')
+                    ? $media->getRelation('current_schedule')
+                    : null;
+
+                return [
+                    'media' => $media,
+                    'duration' => $mediaDuration,
+                    'priority' => $media->pivot->priority,
+                    'schedule' => $schedule,
+                ];
+            }
+
+            // Gap after this item: show timetable until the next slot.
+            if (
+                $gapDuration > 0
+                && $positionInCycle >= ($accumulatedDuration + $mediaDuration)
+                && $positionInCycle < ($accumulatedDuration + $slotDuration)
+            ) {
+                return null;
+            }
+
+            $accumulatedDuration += $slotDuration;
+        }
+
+        return null;
     }
 
     /**
      * Check if any media from this schedule should be displayed
      * Returns array with media and display info if should display, null otherwise
+     *
+     * @deprecated Internal path kept for diagnostics; getCurrentMedia merges schedules.
      */
     private function shouldDisplayMediaFromSchedule(MediaSchedule $schedule, Carbon $now): ?array
     {
-        // Check if schedule is active based on type
         if (!$this->isScheduleActive($schedule, $now)) {
             return null;
         }
 
-        // Get the start time of the schedule
-        $scheduleStart = $this->getScheduleStartTime($schedule, $now);
-        if (!$scheduleStart) {
-            return null;
-        }
-
-        // For full_time_poster, cycle through media continuously
-        if ($schedule->schedule_type === 'full_time_poster') {
-            return $this->getFullTimePosterMedia($schedule, $now, $scheduleStart);
-        }
-
-        // For prayer-based schedules, check if we're within the display window
-        $scheduleEnd = $this->getScheduleEndTime($schedule, $now);
-        if (!$scheduleEnd || !$now->between($scheduleStart, $scheduleEnd)) {
-            return null;
-        }
-
-        // Calculate which media should be displayed based on time elapsed
-        return $this->getMediaFromSequence($schedule, $now, $scheduleStart);
+        return $this->pickFromMergedSchedules([$schedule], $now, $schedule->schedule_type === 'full_time_poster' ? 'full_time' : 'prayer');
     }
 
     /**
@@ -127,7 +254,7 @@ class MediaDisplayService
             // Start from beginning of today in app timezone
             return PrayerJamaatTime::now($now)->copy()->startOfDay();
         }
-        
+
         return $schedule->getDisplayStartTime($now);
     }
 
@@ -139,162 +266,8 @@ class MediaDisplayService
         if ($schedule->schedule_type === 'full_time_poster') {
             return PrayerJamaatTime::now($now)->copy()->endOfDay();
         }
-        
+
         return $schedule->getDisplayEndTime($now);
-    }
-
-    /**
-     * Get media for full time poster (cycles continuously)
-     * 
-     * Handles gap durations:
-     * - Each media has a configurable gap duration after it plays
-     * - Gap=0 means back-to-back continuous display (no interruption)
-     * - Gap>0 means pause before next media
-     * - Cycle continues indefinitely with all gaps respected
-     */
-    private function getFullTimePosterMedia(MediaSchedule $schedule, Carbon $now, Carbon $scheduleStart): ?array
-    {
-        $mediaItems = $schedule->mediaItems;
-        if ($mediaItems->isEmpty()) {
-            return null;
-        }
-
-        // Filter out media outside its optional start/end window or day restrictions.
-        $activeMediaItems = $mediaItems->filter(function ($media) use ($now) {
-            if (!$this->isPivotMediaEligible($media, $now)) {
-                return false;
-            }
-
-            return $this->isPivotMediaActiveForToday($media, $now);
-        });
-
-        if ($activeMediaItems->isEmpty()) {
-            return null;
-        }
-
-        // Calculate total cycle duration (media duration + gap duration for each media)
-        // Convert pivot duration from minutes to seconds
-        $totalDuration = $activeMediaItems->sum(function($media) {
-            return ($media->pivot->duration * 60) + ($media->pivot->gap_duration ?? 0);
-        });
-        
-        if ($totalDuration <= 0) {
-            return null;
-        }
-
-        // Calculate seconds elapsed since start of day
-        // Use diffInSeconds with false to get signed difference
-        $elapsedSeconds = (int)$scheduleStart->diffInSeconds($now, false);
-        
-        // For full time poster, ensure we have a positive elapsed time
-        if ($elapsedSeconds < 0) {
-            $elapsedSeconds = 0;
-        }
-        
-        // Find position within current cycle
-        $positionInCycle = $elapsedSeconds % $totalDuration;
-
-        // Find which media should be displayed
-        // Account for gap durations: media plays until (duration), then gap period before next media
-        $accumulatedDuration = 0;
-        foreach ($activeMediaItems as $media) {
-            // Convert pivot duration from minutes to seconds
-            $mediaDuration = $media->pivot->duration * 60;
-            $gapDuration = $media->pivot->gap_duration ?? 0;
-            $totalSlotDuration = $mediaDuration + $gapDuration;
-            
-            // Check if current time falls within this media's display window (not during gap)
-            if ($positionInCycle >= $accumulatedDuration && $positionInCycle < ($accumulatedDuration + $mediaDuration)) {
-                // We're in the media display period
-                return [
-                    'media' => $media,
-                    'duration' => $mediaDuration,
-                    'priority' => $media->pivot->priority,
-                    'schedule' => $schedule
-                ];
-            }
-            
-            // If we're in the gap period (after media, before next media), 
-            // we want to show the next media immediately or return timetable if that's desired
-            // For now, gap periods show nothing (returns null to display timetable)
-            // This can be enhanced in future to show next media or loading state
-            if ($positionInCycle >= ($accumulatedDuration + $mediaDuration) && $positionInCycle < ($accumulatedDuration + $totalSlotDuration)) {
-                // We're in a gap period - return null to show main screen during gap
-                // Admin can set gap=0 for back-to-back continuous display
-                return null;
-            }
-            
-            $accumulatedDuration += $totalSlotDuration;
-        }
-
-        // If we've gone through all media without finding a match, return null
-        // This shouldn't happen if logic is correct, but serve as fallback
-        return null;
-    }
-
-    /**
-     * Get media from sequence based on elapsed time
-     */
-    private function getMediaFromSequence(MediaSchedule $schedule, Carbon $now, Carbon $scheduleStart): ?array
-    {
-        $mediaItems = $schedule->mediaItems;
-        if ($mediaItems->isEmpty()) {
-            return null;
-        }
-
-        // Filter media based on optional start/end window and days_of_week at media level.
-        $activeMediaItems = $mediaItems->filter(function ($media) use ($now) {
-            if (!$this->isPivotMediaEligible($media, $now)) {
-                return false;
-            }
-
-            return $this->isPivotMediaActiveForToday($media, $now);
-        });
-
-        if ($activeMediaItems->isEmpty()) {
-            return null;
-        }
-
-        // Calculate seconds elapsed since schedule start
-        // Use diffInSeconds with false to get signed difference (can be negative if schedule hasn't started)
-        $elapsedSeconds = $scheduleStart->diffInSeconds($now, false);
-        
-        // If schedule hasn't started yet, return null
-        if ($elapsedSeconds < 0) {
-            return null;
-        }
-
-        // Loop media for the entire schedule window (same approach as full-time posters).
-        $totalCycleDuration = $activeMediaItems->sum(function ($media) {
-            return ($media->pivot->duration * 60) + ($media->pivot->gap_duration ?? 0);
-        });
-
-        if ($totalCycleDuration <= 0) {
-            return null;
-        }
-
-        $positionInCycle = $elapsedSeconds % $totalCycleDuration;
-
-        $accumulatedDuration = 0;
-        foreach ($activeMediaItems as $media) {
-            $mediaDuration = $media->pivot->duration * 60;
-            $gapDuration = $media->pivot->gap_duration ?? 0;
-            $slotDuration = $mediaDuration + $gapDuration;
-
-            if ($positionInCycle >= $accumulatedDuration && $positionInCycle < ($accumulatedDuration + $mediaDuration)) {
-                return [
-                    'media' => $media,
-                    'duration' => $mediaDuration,
-                    'priority' => $media->pivot->priority,
-                    'schedule' => $schedule,
-                ];
-            }
-
-            $accumulatedDuration += $slotDuration;
-        }
-
-        // In a configured gap between media items, show the timetable until the next item.
-        return null;
     }
 
     /**
@@ -326,9 +299,9 @@ class MediaDisplayService
     /**
      * Get countdown information when a prayer countdown window is active.
      *
-     * Two windows only, both anchored to iqamah (jamaat) time:
-     * - adhan:  [iqamah - 20m, iqamah - 20m + 30s)
-     * - iqamah: [iqamah - 30s, iqamah)
+     * Green popup windows (30 seconds each):
+     * - adhan:  [resolved adhan - 30s, adhan) — skipped when adhan == jamaat
+     * - iqamah: [resolved jamaat - 30s, jamaat)
      */
     public function getCountdownInfo(?Carbon $now = null): ?array
     {
@@ -348,13 +321,19 @@ class MediaDisplayService
                 continue;
             }
 
-            $phase = PrayerCountdownWindows::resolveActivePhase($now, $iqamahTime);
-            if (!$phase) {
+            $adhanTime = PrayerAdhanTime::resolve($prayerTimes, $name, $now);
+
+            $phase = PrayerCountdownWindows::resolveJamaatPopupPhase($now, $iqamahTime)
+                ?? ($adhanTime
+                    ? PrayerCountdownWindows::resolveAdhanPopupPhase($now, $adhanTime, $iqamahTime)
+                    : null);
+
+            if ($phase === null) {
                 continue;
             }
 
-            $candidate = PrayerCountdownWindows::buildPayload($name, $iqamahTime, $phase, $now);
-            if (!$activeCountdown || $iqamahTime->lt($activeCountdown['iqamah_time'])) {
+            $candidate = PrayerCountdownWindows::buildPayload($name, $phase, $now, $iqamahTime, $adhanTime);
+            if (!$activeCountdown || $candidate['countdown_end']->lt($activeCountdown['countdown_end'])) {
                 $activeCountdown = $candidate;
             }
         }
@@ -379,9 +358,9 @@ class MediaDisplayService
                     continue;
                 }
 
-                $adhanTime = $this->resolveAdhanTime($prayerTimes, $name, $now);
-                $phase = PrayerCountdownWindows::resolveActivePhase($now, $iqamahTime);
-                $schedule = PrayerCountdownWindows::windowSchedule($iqamahTime);
+                $adhanTime = PrayerAdhanTime::resolve($prayerTimes, $name, $now);
+                $phase = PrayerCountdownWindows::resolveActivePhase($now, $iqamahTime, $adhanTime);
+                $schedule = PrayerCountdownWindows::windowSchedule($iqamahTime, $adhanTime);
 
                 $prayers[] = [
                     'prayer' => $name,
@@ -434,6 +413,7 @@ class MediaDisplayService
             'prayer_name' => $countdown['prayer_name'],
             'target_field' => $countdown['target_field'],
             'target_time' => $format($countdown['target_time'] ?? null),
+            'adhan_time' => $format($countdown['adhan_time'] ?? null),
             'iqamah_time' => $format($countdown['iqamah_time'] ?? null),
             'countdown_start' => $format($countdown['countdown_start'] ?? null),
             'countdown_end' => $format($countdown['countdown_end'] ?? null),
@@ -447,7 +427,7 @@ class MediaDisplayService
 
     public function getAppTimezone(): string
     {
-        return (string) (Setting::get('timezone', config('app.timezone')) ?: config('app.timezone'));
+        return PrayerJamaatTime::appTimezone();
     }
 
     private function appTimezone(): string
@@ -460,15 +440,91 @@ class MediaDisplayService
         return PrayerJamaatTime::now($now);
     }
 
-    private function resolveAdhanTime(PrayerTime $prayerTimes, string $prayerName, Carbon $referenceNow): ?Carbon
+    /**
+     * Debug payload: mosque clock, resolved windows, and why a poster is/isn't active.
+     */
+    public function getPosterScheduleDiagnostic(?Carbon $now = null): array
     {
-        $adhanField = $prayerName . '_adhan';
-        $adhanTime = PrayerJamaatTime::normalizeClockValue($prayerTimes->$adhanField ?? null);
-        if ($adhanTime === null) {
-            return null;
+        $now = $this->nowInAppTimezone($now);
+        $timezone = $this->appTimezone();
+        $prayerTimes = PrayerTime::getTodayPrayerTimes();
+        $countdownActive = $this->isAdhanOrCountdownActive($now);
+        $currentMedia = $countdownActive ? null : $this->getCurrentMedia();
+
+        $schedules = MediaSchedule::with(['mediaItems' => function ($query) {
+                $query->where('media_schedule_media.is_active', true)
+                    ->orderBy('media_schedule_media.priority', 'asc');
+            }])
+            ->active()
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $rows = [];
+        foreach ($schedules as $schedule) {
+            $window = null;
+            if ($schedule->schedule_type === 'minutes_before_prayer') {
+                $window = $schedule->resolveBeforePrayerWindow($now);
+            } elseif ($schedule->schedule_type === 'minutes_after_prayer') {
+                $window = $schedule->resolveAfterPrayerWindow($now);
+            }
+
+            $activeForToday = $schedule->isActiveForToday($now);
+            $withinWindow = $window
+                ? PrayerJamaatTime::isWithinWindow($now, $window['start'], $window['end'])
+                : ($schedule->schedule_type === 'full_time_poster' && $activeForToday);
+
+            $reason = 'inactive';
+            if (!$activeForToday) {
+                $reason = 'not_active_today';
+            } elseif ($schedule->schedule_type === 'full_time_poster') {
+                $reason = $countdownActive ? 'blocked_by_countdown' : 'full_time_eligible';
+            } elseif (!$window) {
+                $reason = 'no_prayer_times_or_invalid_schedule';
+            } elseif ($countdownActive && $withinWindow) {
+                $reason = 'in_window_but_blocked_by_countdown';
+            } elseif ($withinWindow) {
+                $reason = 'active_window';
+            } elseif ($now->lt($window['start'])) {
+                $reason = 'before_window_start';
+            } else {
+                $reason = 'after_window_end';
+            }
+
+            $rows[] = [
+                'id' => $schedule->id,
+                'schedule_type' => $schedule->schedule_type,
+                'prayer_name' => $schedule->prayer_name,
+                'minutes_before_prayer' => $schedule->minutes_before_prayer,
+                'minutes_after_prayer' => $schedule->minutes_after_prayer,
+                'is_active' => $schedule->is_active,
+                'active_for_today' => $activeForToday,
+                'jamaat_time' => isset($window['jamaat']) ? $window['jamaat']->toIso8601String() : null,
+                'reference' => $window['reference'] ?? ($schedule->schedule_type === 'full_time_poster' ? null : 'jamaat'),
+                'window_start' => isset($window['start']) ? $window['start']->toIso8601String() : null,
+                'window_end' => isset($window['end']) ? $window['end']->toIso8601String() : null,
+                'within_window_now' => $withinWindow,
+                'status' => $reason,
+                'media_count' => $schedule->mediaItems->count(),
+            ];
         }
 
-        return PrayerJamaatTime::parseClockOnDate($referenceNow->toDateString(), $adhanTime);
+        return [
+            'mosque_timezone' => $timezone,
+            'php_timezone' => date_default_timezone_get(),
+            'app_config_timezone' => (string) config('app.timezone'),
+            'now' => $now->toIso8601String(),
+            'prayer_date' => $now->toDateString(),
+            'prayer_row_id' => $prayerTimes?->id,
+            'countdown_blocking_posters' => $countdownActive,
+            'current_media' => $currentMedia ? [
+                'media_id' => $currentMedia['media']->id ?? null,
+                'title' => $currentMedia['media']->title ?? null,
+                'schedule_id' => $currentMedia['schedule']->id ?? null,
+                'schedule_type' => $currentMedia['schedule']->schedule_type ?? null,
+            ] : null,
+            'schedules' => $rows,
+            'poster_size' => AnnouncementBoxGeometry::recommendation(),
+        ];
     }
 
     /**

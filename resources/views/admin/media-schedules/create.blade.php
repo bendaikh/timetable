@@ -56,7 +56,7 @@
                                     <input type="number" class="form-control @error('minutes_before_prayer') is-invalid @enderror" 
                                            id="minutes_before_prayer" name="minutes_before_prayer" value="{{ old('minutes_before_prayer') }}" 
                                            min="1" max="480">
-                                    <div class="form-text">How many minutes before prayer to start displaying (1-480 minutes / up to 8 hours)</div>
+                                    <div class="form-text">Minutes before <strong>Jamaat</strong> (congregation time) to start — not Adhan. Displays until Jamaat.</div>
                                     @error('minutes_before_prayer')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -68,7 +68,7 @@
                                     <input type="number" class="form-control @error('minutes_after_prayer') is-invalid @enderror" 
                                            id="minutes_after_prayer" name="minutes_after_prayer" value="{{ old('minutes_after_prayer') }}" 
                                            min="1" max="480">
-                                    <div class="form-text">How many minutes after prayer to start displaying (1-480 minutes / up to 8 hours)</div>
+                                    <div class="form-text">Minutes after <strong>Jamaat</strong> to start — then plays for {{ \App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES }} minutes (1-480 offset).</div>
                                     @error('minutes_after_prayer')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -248,10 +248,11 @@ function updateMediaConfig() {
                         <h6 class="mb-3"><i class="bi bi-image"></i> ${media.title}</h6>
                         <div class="row">
                             <div class="col-md-6 mb-2">
-                                <label class="form-label small">Duration (minutes)</label>
-                                <input type="number" class="form-control form-control-sm" step="0.5"
-                                       name="media_durations[]" value="${oldDuration[index] || 0.5}" 
-                                       min="0.5" required>
+                                <label class="form-label small">Duration (seconds)</label>
+                                <input type="number" class="form-control form-control-sm" step="1"
+                                       name="media_durations[]" value="${oldDuration[index] || 10}" 
+                                       min="5" max="28800" required>
+                                <small class="text-muted">Minimum 5 seconds</small>
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label class="form-label small">Priority</label>
@@ -297,6 +298,7 @@ function updateMediaConfig() {
                                 <input type="number" class="form-control form-control-sm" 
                                        name="media_gap_durations[]" value="${oldGapDurations[index] || 0}" 
                                        min="0" max="3600">
+                                <small class="text-muted">Use Gap &gt; 0 if you want the timetable/announcements to show between poster loops. Gap 0 = continuous.</small>
                             </div>
                         </div>
                         ` : `<input type="hidden" name="media_gap_durations[]" value="0">`}
@@ -536,10 +538,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (duration > 0) {
-            const seconds = Math.round(duration * 60);
-            const minutes = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            previewElement.innerHTML = `<small><strong>Preview:</strong> ${duration}m = ${seconds}s (${minutes}m ${secs}s)</small>`;
+            previewElement.innerHTML = `<small><strong>Preview:</strong> ${duration} seconds</small>`;
             previewElement.style.display = 'block';
         } else {
             previewElement.style.display = 'none';

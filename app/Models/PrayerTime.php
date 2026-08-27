@@ -89,8 +89,7 @@ class PrayerTime extends Model
 
     public static function getTodayPrayerTimes()
     {
-        $timezone = (string) (Setting::get('timezone', config('app.timezone')) ?: config('app.timezone'));
-        $today = Carbon::now($timezone)->toDateString();
+        $today = \App\Support\PrayerJamaatTime::now()->toDateString();
 
         $record = self::whereDate('date', $today)->first();
         if ($record) {
@@ -106,8 +105,7 @@ class PrayerTime extends Model
 
     public static function getTomorrowPrayerTimes()
     {
-        $timezone = (string) (Setting::get('timezone', config('app.timezone')) ?: config('app.timezone'));
-        $tomorrow = Carbon::now($timezone)->addDay()->toDateString();
+        $tomorrow = \App\Support\PrayerJamaatTime::now()->addDay()->toDateString();
 
         $record = self::whereDate('date', $tomorrow)->first();
         if ($record) {
@@ -145,31 +143,51 @@ class PrayerTime extends Model
         }
     }
 
+    /**
+     * Next prayer for the product = next JAMAAT (iqamah), not Beginning/Adhan.
+     *
+     * Matches the TV "Next prayer in" countdown which uses PrayerJamaatTime::resolve
+     * (explicit {prayer}_jamaat column, else beginning + settings offset).
+     *
+     * Consumers: /api/next-prayer, TimetableController, admin dashboard.
+     */
     public static function getNextPrayer()
     {
         $today = self::getTodayPrayerTimes();
-        if (!$today) return null;
+        if (!$today) {
+            return null;
+        }
 
-        $timezone = (string) (Setting::get('timezone', config('app.timezone')) ?: config('app.timezone'));
-        $now = Carbon::now($timezone);
-        $prayers = [
-            'fajr' => $today->fajr,
-            'zohar' => $today->zohar,
-            'asr' => $today->asr,
-            'maghrib' => $today->maghrib,
-            'isha' => $today->isha,
-        ];
+        $now = \App\Support\PrayerJamaatTime::now();
+        $prayers = ['fajr', 'zohar', 'asr', 'maghrib', 'isha'];
 
-        foreach ($prayers as $name => $time) {
-            // Parse the time string and set it to today's date
-            $prayerTime = Carbon::createFromFormat('H:i:s', $time)->setDate($now->year, $now->month, $now->day);
-            if ($prayerTime->gt($now)) {
+        foreach ($prayers as $name) {
+            $jamaat = \App\Support\PrayerJamaatTime::resolve($today, $name, $now);
+            if ($jamaat && $jamaat->gt($now)) {
                 return [
                     'name' => $name,
-                    'time' => $time,
-                    'time_until' => $now->diffInSeconds($prayerTime)
+                    'time' => $jamaat->format('H:i:s'),
+                    'time_until' => $now->diffInSeconds($jamaat),
+                    'reference' => 'jamaat',
                 ];
             }
+        }
+
+        // After Isha: next is tomorrow's Fajr jamaat (same as the TV display).
+        $tomorrow = self::getTomorrowPrayerTimes();
+        if ($tomorrow) {
+            $fajr = \App\Support\PrayerJamaatTime::resolve($tomorrow, 'fajr', $now);
+        } else {
+            $fajr = \App\Support\PrayerJamaatTime::resolve($today, 'fajr', $now)?->addDay();
+        }
+
+        if ($fajr && $fajr->gt($now)) {
+            return [
+                'name' => 'fajr',
+                'time' => $fajr->format('H:i:s'),
+                'time_until' => $now->diffInSeconds($fajr),
+                'reference' => 'jamaat',
+            ];
         }
 
         return null;

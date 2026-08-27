@@ -123,7 +123,7 @@ class BoxSetting extends Model
                 ],
                 'layout_settings' => [
                     'position' => 'bottom',
-                    'column_widths' => ['14%', '14%', '14%', '14%', '14%', '15%', '15%']
+                    'column_widths' => ['1fr', '1fr', '1fr', '1fr', '1fr', '1fr', '1fr']
                 ]
             ],
             'announcements_box' => [

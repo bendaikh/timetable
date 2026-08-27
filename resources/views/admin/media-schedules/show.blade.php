@@ -37,7 +37,7 @@
                                                         <h6 class="mb-0">{{ $media->title }}</h6>
                                                         <div>
                                                             <span class="badge bg-primary">Priority: {{ $media->pivot->priority }}</span>
-                                                            <span class="badge bg-info">{{ $media->pivot->duration }}m</span>
+                                                            <span class="badge bg-info">{{ \App\Support\MediaScheduleDuration::secondsFromStored($media->pivot->duration) }}s</span>
                                                         </div>
                                                     </div>
                                                     <div class="text-center">
@@ -128,7 +128,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Total Duration:</strong></td>
-                                    <td>{{ $mediaSchedule->mediaItems->sum('pivot.duration') }} seconds</td>
+                                    <td>{{ $mediaSchedule->mediaItems->sum(fn ($media) => \App\Support\MediaScheduleDuration::secondsFromStored($media->pivot->duration)) }} seconds</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Status:</strong></td>
@@ -186,10 +186,11 @@
                                     <h6>How This Schedule Works:</h6>
                                     <ul class="list-unstyled">
                                         @if($mediaSchedule->schedule_type === 'minutes_before_prayer')
-                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will be displayed {{ $mediaSchedule->minutes_before_prayer }} minutes before {{ $mediaSchedule->getPrayerNameLabel() }} prayer</li>
-                                            <li><i class="bi bi-info-circle text-info me-2"></i>Stops 5 minutes before prayer time</li>
+                                            <li><i class="bi bi-check-circle text-success me-2"></i>Starts {{ $mediaSchedule->minutes_before_prayer }} minutes before <strong>Jamaat</strong> (congregation time), not Adhan</li>
+                                            <li><i class="bi bi-info-circle text-info me-2"></i>Runs until Jamaat (countdown windows briefly override near iqamah)</li>
                                         @elseif($mediaSchedule->schedule_type === 'minutes_after_prayer')
-                                            <li><i class="bi bi-check-circle text-success me-2"></i>Media will be displayed {{ $mediaSchedule->minutes_after_prayer }} minutes after {{ $mediaSchedule->getPrayerNameLabel() }} prayer</li>
+                                            <li><i class="bi bi-check-circle text-success me-2"></i>Starts {{ $mediaSchedule->minutes_after_prayer }} minutes after <strong>Jamaat</strong></li>
+                                            <li><i class="bi bi-info-circle text-info me-2"></i>Stays active for {{ \App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES }} minutes from that start</li>
                                         @elseif($mediaSchedule->schedule_type === 'full_time_poster')
                                             <li><i class="bi bi-check-circle text-success me-2"></i>Media will cycle continuously throughout the day</li>
                                         @endif
@@ -212,12 +213,12 @@
                                             <p class="mb-2"><strong>Media will display in this order:</strong></p>
                                             <ol class="mb-0">
                                                 @foreach($mediaSchedule->mediaItems->sortBy('pivot.priority') as $media)
-                                                    <li>{{ $media->title }} ({{ $media->pivot->duration }}m)</li>
+                                                    <li>{{ $media->title }} ({{ \App\Support\MediaScheduleDuration::secondsFromStored($media->pivot->duration) }}s)</li>
                                                 @endforeach
                                             </ol>
                                             <hr>
                                             <small class="text-muted">
-                                                Total cycle duration: {{ $mediaSchedule->mediaItems->sum('pivot.duration') }} minutes
+                                                Total cycle duration: {{ $mediaSchedule->mediaItems->sum(fn ($media) => \App\Support\MediaScheduleDuration::secondsFromStored($media->pivot->duration)) }} seconds
                                                 @if($mediaSchedule->schedule_type === 'full_time_poster')
                                                     <br>This cycle repeats continuously
                                                 @endif

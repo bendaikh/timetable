@@ -48,7 +48,7 @@ class MediaSchedule extends Model
         return $this->mediaItems();
     }
 
-    public function isActiveForToday(): bool
+    public function isActiveForToday(?Carbon $now = null): bool
     {
         if (!$this->is_active) {
             return false;
@@ -58,7 +58,7 @@ class MediaSchedule extends Model
             return true; // Active every day if no specific days set
         }
 
-        $today = PrayerJamaatTime::now()->dayOfWeekIso; // 1-7 (Monday-Sunday)
+        $today = PrayerJamaatTime::now($now)->dayOfWeekIso; // 1-7 (Monday-Sunday)
         return in_array($today, $this->days_of_week);
     }
 
@@ -157,15 +157,15 @@ class MediaSchedule extends Model
     }
 
     /**
-     * @return array{jamaat: Carbon, start: Carbon, end: Carbon}|null
+     * @return array{jamaat: Carbon, start: Carbon, end: Carbon, reference: string}|null
      */
     public function resolveBeforePrayerWindow(?Carbon $now = null): ?array
     {
-        if (!$this->is_active || !$this->prayer_name || !$this->minutes_before_prayer) {
+        if (!$this->is_active || !$this->prayer_name || $this->minutes_before_prayer === null || (int) $this->minutes_before_prayer < 1) {
             return null;
         }
 
-        $prayerTime = PrayerTime::getTodayPrayerTimes();
+        $prayerTime = $this->prayerTimesFor($now);
         if (!$prayerTime) {
             return null;
         }
@@ -174,20 +174,28 @@ class MediaSchedule extends Model
     }
 
     /**
-     * @return array{jamaat: Carbon, start: Carbon, end: Carbon}|null
+     * @return array{jamaat: Carbon, start: Carbon, end: Carbon, reference: string}|null
      */
     public function resolveAfterPrayerWindow(?Carbon $now = null): ?array
     {
-        if (!$this->is_active || !$this->prayer_name || !$this->minutes_after_prayer) {
+        if (!$this->is_active || !$this->prayer_name || $this->minutes_after_prayer === null || (int) $this->minutes_after_prayer < 1) {
             return null;
         }
 
-        $prayerTime = PrayerTime::getTodayPrayerTimes();
+        $prayerTime = $this->prayerTimesFor($now);
         if (!$prayerTime) {
             return null;
         }
 
         return PrayerJamaatTime::afterPrayerPosterWindow($this, $prayerTime, $now);
+    }
+
+    private function prayerTimesFor(?Carbon $now = null): ?PrayerTime
+    {
+        $date = PrayerJamaatTime::now($now)->toDateString();
+
+        return PrayerTime::whereDate('date', $date)->orderBy('id')->first()
+            ?: PrayerTime::getTodayPrayerTimes();
     }
 
     public function getPrayerNameLabel(): string

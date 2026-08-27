@@ -254,7 +254,8 @@
     <script>
         let previewActive = false;
         let previewTimer = null;
-        const duration = {{ $medium->display_duration * 1000 }}; // Convert to milliseconds (duration is in seconds)
+        {{-- display_duration accessor returns minutes; raw DB value is seconds --}}
+        const duration = {{ (int) ($medium->getAttributes()['display_duration'] ?? 0) * 1000 }}; // milliseconds
         
         document.addEventListener('DOMContentLoaded', function() {
             // Hide loading overlay

@@ -132,7 +132,7 @@
                                                             @endif
                                                             <div>
                                                                 <small><strong>{{ $media->title }}</strong></small>
-                                                                <br><small class="text-muted">Priority: {{ $media->pivot->priority }}, Duration: {{ $media->pivot->duration }}m</small>
+                                                                <br><small class="text-muted">Priority: {{ $media->pivot->priority }}, Duration: {{ \App\Support\MediaScheduleDuration::secondsFromStored($media->pivot->duration) }}s</small>
                                                             </div>
                                                         </div>
                                                     @endforeach

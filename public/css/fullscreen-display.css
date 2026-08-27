@@ -79,6 +79,17 @@ html, body {
     --prayer-col-name: 30%;
     --prayer-col-beginning: 35%;
     --prayer-col-jamaat: 35%;
+
+    /* Shared layout rhythm — one source of truth for spacing */
+    --page-horizontal-padding: max(
+        var(--board-column-padding, 15px),
+        clamp(24px, 1.25vw, 48px)
+    );
+    --section-gap: clamp(8px, 1vh, 14px);
+    --card-gap: clamp(10px, 0.4vw, 16px);
+    --cell-padding-x: clamp(24px, 1.5vw, 48px);
+    --cell-padding-y: clamp(10px, 1vh, 16px);
+    --board-column-padding: 15px;
 }
 
 .unified-container {
@@ -92,6 +103,14 @@ html, body {
     overflow: hidden;
     min-height: 0;
     --board-header-content-gap: clamp(8px, 1vh, 14px);
+    --page-horizontal-padding: max(
+        var(--board-column-padding, 15px),
+        clamp(24px, 1.25vw, 48px)
+    );
+    --section-gap: clamp(8px, 1vh, 14px);
+    --card-gap: clamp(10px, 0.4vw, 16px);
+    --cell-padding-x: clamp(24px, 1.5vw, 48px);
+    --cell-padding-y: clamp(10px, 1vh, 16px);
 }
 
 /* Pin vertical stack regardless of DOM order or display toggles during polling */
@@ -151,7 +170,6 @@ html, body {
     padding: 0;
     margin: 0;
     overflow: hidden;
-    --board-column-padding: clamp(12px, 2vh, 18px);
     --board-header-content-gap: clamp(8px, 1vh, 14px);
     --board-header-padding: 8px;
     --board-header-padding-bottom: 10px;
@@ -201,9 +219,9 @@ html, body {
     border: 2px solid #000;
     border-right: none;
     padding-top: 0;
-    padding-left: var(--board-column-padding, clamp(15px, 2.5vh, 25px));
-    padding-right: var(--board-column-padding, clamp(15px, 2.5vh, 25px));
-    padding-bottom: var(--board-column-padding, clamp(15px, 2.5vh, 25px));
+    padding-left: var(--page-horizontal-padding);
+    padding-right: var(--page-horizontal-padding);
+    padding-bottom: var(--page-horizontal-padding);
     box-sizing: border-box;
     overflow: hidden;
     position: relative;
@@ -257,10 +275,10 @@ html, body {
 .prayer-list {
     flex: 1;
     overflow-y: auto;
-    padding-right: 10px;
+    padding-right: 0;
     display: flex;
     flex-direction: column;
-    gap: clamp(4px, 0.8vh, 10px);
+    gap: var(--section-gap, clamp(8px, 1vh, 14px));
 }
 
 /* Hide scrollbar but keep functionality */
@@ -285,25 +303,34 @@ html, body {
     display: grid;
     grid-template-columns: var(--prayer-col-name, 30%) var(--prayer-col-beginning, 35%) var(--prayer-col-jamaat, 35%);
     gap: 6px;
-    padding: clamp(6px, 1vh, 10px);
+    padding: var(--cell-padding-y, clamp(10px, 1vh, 16px)) var(--cell-padding-x, clamp(24px, 1.5vw, 48px));
     background-color: rgba(255, 255, 255, 0.5);
     border-radius: 5px;
     text-align: center;
     align-items: center;
     flex-shrink: 0;
     font-size: var(--type-prayer-time);
+    box-sizing: border-box;
+    min-height: 0;
 }
 
 .prayer-name {
     text-align: left;
     font-weight: bold;
     font-size: var(--type-prayer-name);
+    padding-left: 0;
+    padding-right: 0.35em;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .prayer-time,
 .prayer-jamaat {
     font-weight: bold;
     font-size: var(--type-prayer-time);
+    text-align: center;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 /* ============================================================================
@@ -318,14 +345,55 @@ html, body {
     background-color: rgba(253, 247, 230, 0.9);
     border: none;
     padding-top: 0;
-    padding-left: var(--board-column-padding, clamp(15px, 2.5vh, 25px));
-    padding-right: var(--board-column-padding, clamp(15px, 2.5vh, 25px));
-    padding-bottom: var(--board-column-padding, clamp(15px, 2.5vh, 25px));
+    padding-left: var(--page-horizontal-padding);
+    padding-right: var(--page-horizontal-padding);
+    padding-bottom: var(--page-horizontal-padding);
     box-sizing: border-box;
     overflow: hidden;
     position: relative;
     z-index: 1;
     min-height: 0;
+}
+
+/* Poster/media overlay — constrained to announcements box (not full viewport) */
+.announcements-section > .media-overlay,
+#announcements-section > .media-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 5;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.media-overlay .media-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.media-overlay .media-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.media-overlay .media-content img,
+.media-overlay .media-content video {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
 }
 
 .announcements-content {
@@ -429,36 +497,65 @@ html, body {
    BOTTOM SECTIONS - SPECIAL TIMES & SLIDING TEXT
    ============================================================================ */
 
+[data-box-root="special_times_box"].board-bottom-times {
+    padding-top: clamp(10px, 1.5vh, 15px) !important;
+    padding-bottom: clamp(10px, 1.5vh, 15px) !important;
+    /* Equal outer margins from screen edges — same token L/R, no first/last card hacks */
+    padding-left: var(--page-horizontal-padding) !important;
+    padding-right: var(--page-horizontal-padding) !important;
+    box-sizing: border-box;
+}
+
 .board-bottom-times {
     background-color: rgba(253, 247, 230, 0.9);
     border: 2px solid #000;
     border-top: none;
-    padding: clamp(10px, 1.5vh, 15px);
+    padding: clamp(10px, 1.5vh, 15px) var(--page-horizontal-padding);
     flex-shrink: 0;
 }
 
 .additional-times {
     display: grid;
-    gap: 10px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--card-gap, clamp(8px, 0.75vw, 12px));
     text-align: center;
+    align-items: stretch;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+[data-box-root="special_times_box"] .additional-times .time-item {
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 .time-item {
-    padding: clamp(8px, 1vh, 10px);
+    padding: var(--cell-padding-y, clamp(10px, 1vh, 16px)) var(--cell-padding-x, clamp(16px, 1vw, 28px));
     background-color: rgba(255, 255, 255, 0.5);
     border-radius: 5px;
+    box-sizing: border-box;
 }
 
 .time-label {
     font-size: var(--type-special-label);
     font-weight: bold;
     margin-bottom: 5px;
+    text-align: center;
+    width: 100%;
 }
 
 .time-value {
     font-size: var(--type-special-value);
     font-weight: bold;
+    text-align: center;
+    width: 100%;
 }
 
 /* Scrolling text area - MUST STAY VISIBLE */
@@ -522,7 +619,7 @@ html, body {
     width: 100%;
     height: 100%;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: clamp(10px, 2vw, 20px);
     align-items: center;
 }
@@ -532,6 +629,25 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 0;
+    width: auto;
+    max-width: none;
+    overflow: hidden;
+}
+
+.board-header .col-md-4:first-child {
+    justify-content: flex-start;
+}
+
+.board-header .col-md-4:last-child {
+    justify-content: flex-end;
+}
+
+.current-time-display,
+.date-display,
+.islamic-date-display {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .current-time-display {
@@ -539,10 +655,11 @@ html, body {
 }
 
 .time-large {
-    font-size: var(--type-header-clock);
+    font-size: var(--header-time-font-size, var(--type-header-clock));
     font-weight: bold;
     line-height: 1;
     margin: 0;
+    max-width: 100%;
 }
 
 .date-display,
@@ -560,10 +677,11 @@ html, body {
 
 .gregorian-date,
 .islamic-date {
-    font-size: var(--type-header-date);
+    font-size: var(--header-date-font-size, var(--type-header-date));
     font-weight: bold;
     line-height: 1;
     margin: 0;
+    max-width: 100%;
 }
 
 #fullscreenBtn {
@@ -591,23 +709,55 @@ html, body {
     border-radius: 5px;
     text-align: center;
     flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.next-prayer-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.35em;
+    max-width: 100%;
+    line-height: 1.2;
 }
 
 .next-prayer-text {
     font-size: var(--type-countdown-label);
     font-weight: bold;
-    margin-bottom: 8px;
+    margin: 0;
+    display: inline;
+    white-space: nowrap;
 }
 
 .next-prayer-countdown {
     font-size: var(--type-countdown-timer);
     font-weight: bold;
-    margin-bottom: 8px;
+    margin: 0;
+    display: inline;
+    white-space: nowrap;
 }
 
 .next-prayer-name {
     font-size: var(--type-countdown-prayer);
     opacity: 0.8;
+    margin: 0;
+    display: inline;
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .next-prayer-line {
+        row-gap: 0.25em;
+    }
+
+    .next-prayer-text,
+    .next-prayer-countdown,
+    .next-prayer-name {
+        white-space: normal;
+    }
 }
 
 /* ============================================================================
@@ -675,7 +825,7 @@ html, body {
 
     .board-header .row {
         gap: clamp(8px, 1.5vw, 15px);
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         grid-auto-rows: auto;
     }
 
@@ -696,9 +846,9 @@ html, body {
     /* Prayer times section - compact but readable */
     .prayer-times-section {
         padding-top: 0;
-        padding-left: clamp(12px, 1.5vh, 18px);
-        padding-right: clamp(12px, 1.5vh, 18px);
-        padding-bottom: clamp(12px, 1.5vh, 18px);
+        padding-left: var(--page-horizontal-padding);
+        padding-right: var(--page-horizontal-padding);
+        padding-bottom: var(--page-horizontal-padding);
         border: 2px solid #000;
     }
 
@@ -718,13 +868,13 @@ html, body {
     }
 
     .prayer-list {
-        gap: clamp(4px, 0.8vh, 8px);
-        padding-right: 8px;
+        gap: var(--section-gap, clamp(4px, 0.8vh, 8px));
+        padding-right: 0;
     }
 
     .prayer-row {
         gap: 6px;
-        padding: clamp(6px, 0.8vh, 10px);
+        padding: var(--cell-padding-y) var(--cell-padding-x);
         min-height: auto;
         grid-template-columns: var(--prayer-col-name, 30%) var(--prayer-col-beginning, 35%) var(--prayer-col-jamaat, 35%) !important;
     }
@@ -741,9 +891,9 @@ html, body {
     /* Announcements section - proportional adjustment */
     .announcements-section {
         padding-top: 0;
-        padding-left: clamp(12px, 1.5vh, 18px);
-        padding-right: clamp(12px, 1.5vh, 18px);
-        padding-bottom: clamp(12px, 1.5vh, 18px);
+        padding-left: var(--page-horizontal-padding);
+        padding-right: var(--page-horizontal-padding);
+        padding-bottom: var(--page-horizontal-padding);
     }
 
     .announcements-content {
@@ -767,17 +917,22 @@ html, body {
 
     /* Bottom section adjustments */
     .board-bottom-times {
-        padding: clamp(10px, 1.2vh, 12px);
+        padding: clamp(10px, 1.2vh, 12px) var(--page-horizontal-padding);
         border: 2px solid #000;
     }
 
+    [data-box-root="special_times_box"].board-bottom-times {
+        padding-left: var(--page-horizontal-padding) !important;
+        padding-right: var(--page-horizontal-padding) !important;
+    }
+
     .additional-times {
-        gap: 8px;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: var(--card-gap, 10px);
+        grid-template-columns: repeat(7, minmax(0, 1fr));
     }
 
     .time-item {
-        padding: clamp(8px, 0.8vh, 10px);
+        padding: var(--cell-padding-y) clamp(12px, 0.8vw, 20px);
     }
 
     .time-label {
@@ -805,17 +960,10 @@ html, body {
         padding: clamp(10px, 1vh, 12px);
     }
 
-    .next-prayer-text {
-        margin-bottom: 6px;
-        line-height: 1.2;
-    }
-
-    .next-prayer-countdown {
-        margin-bottom: 6px;
-        line-height: 1.1;
-    }
-
+    .next-prayer-text,
+    .next-prayer-countdown,
     .next-prayer-name {
+        margin: 0;
         line-height: 1.2;
     }
 
@@ -907,7 +1055,7 @@ html, body {
 }
 
 .prayer-times-section .prayer-list {
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 /* Announcements section - must allow internal scroll only */
@@ -1032,16 +1180,16 @@ html, body {
         border-bottom: 4px solid #000;
         padding: 8px 30px !important;
         flex-shrink: 0;
-        overflow: visible !important;
+        overflow: hidden !important;
         height: auto;
     }
     
     .board-header .row {
         margin: 0 !important;
         width: 100%;
-        display: flex !important;
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         align-items: center !important;
-        justify-content: space-between !important;
         gap: 20px !important;
     }
     
@@ -1050,37 +1198,54 @@ html, body {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        flex: 1;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .board-header .col-md-4:first-child {
+        justify-content: flex-start !important;
+    }
+
+    .board-header .col-md-4:last-child {
+        justify-content: flex-end !important;
     }
     
     .current-time-display {
-        text-align: center !important;
+        text-align: left !important;
+        min-width: 0;
+        max-width: 100%;
     }
     
     .date-display {
         text-align: center !important;
+        min-width: 0;
+        max-width: 100%;
     }
     
     .islamic-date-display {
-        text-align: center !important;
+        text-align: right !important;
+        min-width: 0;
+        max-width: 100%;
     }
     
     /* TV Clock - Dominant, readable from distance */
     .time-large {
-        font-size: var(--type-header-clock);
+        font-size: var(--header-time-font-size, var(--type-header-clock));
         font-weight: bold;
         line-height: 1;
         margin: 0;
         letter-spacing: 0.05em;
+        max-width: 100%;
     }
     
     /* TV Dates - Secondary but clear */
     .gregorian-date,
     .islamic-date {
-        font-size: var(--type-header-date);
+        font-size: var(--header-date-font-size, var(--type-header-date));
         font-weight: bold;
         line-height: 1;
         margin: 0;
+        max-width: 100%;
     }
     
     #fullscreenBtn {
@@ -1159,8 +1324,8 @@ html, body {
         border: 3px solid #000;
         border-right: none;
         padding-top: 0;
-        padding-left: 30px;
-        padding-right: 30px;
+        padding-left: var(--page-horizontal-padding);
+        padding-right: var(--page-horizontal-padding);
         padding-bottom: 20px;
         box-sizing: border-box;
         overflow: hidden;
@@ -1203,10 +1368,10 @@ html, body {
     .prayer-list {
         flex: 1;
         overflow-y: auto;
-        padding-right: 15px;
+        padding-right: 0;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: var(--section-gap, 8px);
         min-height: 0;
     }
     
@@ -1214,13 +1379,14 @@ html, body {
         display: grid;
         grid-template-columns: var(--prayer-col-name, 30%) var(--prayer-col-beginning, 35%) var(--prayer-col-jamaat, 35%);
         gap: 8px;
-        padding: 12px 16px;
+        padding: var(--cell-padding-y) var(--cell-padding-x);
         background-color: rgba(255, 255, 255, 0.6);
         border-radius: 8px;
         text-align: center;
         align-items: center;
         flex-shrink: 0;
         min-height: 80px;
+        box-sizing: border-box;
     }
     
     .prayer-name {
@@ -1233,6 +1399,7 @@ html, body {
     .prayer-jamaat {
         font-weight: bold;
         font-size: var(--type-prayer-time);
+        text-align: center;
     }
     
     /* Scrollbar styling for prayer list - TV mode */
@@ -1266,8 +1433,8 @@ html, body {
         background-color: rgba(253, 247, 230, 0.95);
         border: none;
         padding-top: 0;
-        padding-left: 30px;
-        padding-right: 30px;
+        padding-left: var(--page-horizontal-padding);
+        padding-right: var(--page-horizontal-padding);
         padding-bottom: 20px;
         box-sizing: border-box;
         overflow: hidden;
@@ -1363,23 +1530,15 @@ html, body {
         border-radius: 8px;
         text-align: center;
         flex-shrink: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     
-    .next-prayer-text {
-        font-size: var(--type-countdown-label);
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-    
-    .next-prayer-countdown {
-        font-size: var(--type-countdown-timer);
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-    
+    .next-prayer-text,
+    .next-prayer-countdown,
     .next-prayer-name {
-        font-size: var(--type-countdown-prayer);
-        opacity: 0.85;
+        margin: 0;
     }
     
     /* ========================================================================
@@ -1388,26 +1547,44 @@ html, body {
        Consistent with header design principles
        ======================================================================== */
     
+    .unified-container {
+        --page-horizontal-padding: max(
+            var(--board-column-padding, 30px),
+            clamp(32px, 1.25vw, 64px)
+        );
+        --card-gap: clamp(12px, 0.5vw, 20px);
+        --cell-padding-x: clamp(28px, 1.5vw, 56px);
+        --cell-padding-y: clamp(12px, 1vh, 20px);
+        --section-gap: clamp(8px, 0.8vh, 14px);
+    }
+
     .board-bottom-times {
         background-color: rgba(253, 247, 230, 0.95);
         border: 3px solid #000;
         border-top: none;
-        padding: 15px 30px;
+        padding: 15px var(--page-horizontal-padding);
         flex-shrink: 0;
         overflow: hidden;
         height: auto;
     }
+
+    [data-box-root="special_times_box"].board-bottom-times {
+        padding-top: 15px !important;
+        padding-bottom: 15px !important;
+        padding-left: var(--page-horizontal-padding) !important;
+        padding-right: var(--page-horizontal-padding) !important;
+    }
     
     .additional-times {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 15px;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: var(--card-gap, 15px);
         text-align: center;
-        align-items: center;
+        align-items: stretch;
     }
     
     .time-item {
-        padding: 15px 18px;
+        padding: var(--cell-padding-y) clamp(16px, 0.8vw, 24px);
         background-color: rgba(255, 255, 255, 0.6);
         border-radius: 8px;
     }
@@ -1416,11 +1593,13 @@ html, body {
         font-size: var(--type-special-label);
         font-weight: bold;
         margin-bottom: 8px;
+        text-align: center;
     }
     
     .time-value {
         font-size: var(--type-special-value);
         font-weight: bold;
+        text-align: center;
     }
     
     /* ========================================================================
@@ -1515,7 +1694,7 @@ html, body {
     }
     
     .prayer-times-section .prayer-list {
-        overflow-y: scroll;
+        overflow-y: auto;
     }
     
     .announcements-section {
@@ -1559,24 +1738,26 @@ html, body {
     }
     
     /* ========================================================================
-       TV MODE - MEDIA OVERLAYS (FULLSCREEN VIDEO/IMAGES)
-       Ensure media displays properly on 4K resolution
+       TV MODE - MEDIA OVERLAYS (ANNOUNCEMENT BOX ONLY)
+       Posters fill the announcements section; prayer/header/special times stay visible.
+       Target poster size on 3840×2160: 1728×1865 (≈10:11 portrait). Full HD: 864×929.
        ======================================================================== */
     
     .media-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
         background: #000;
-        z-index: 9998;
+        z-index: 5;
         display: none;
         align-items: center;
         justify-content: center;
+        overflow: hidden;
+        border-radius: inherit;
     }
 
-    /* Countdown must always render above poster/media overlay */
+    /* Countdown popup stays viewport-fixed (z-index 10001) above board content */
     
     .media-container {
         width: 100%;
@@ -1590,7 +1771,16 @@ html, body {
     .media-content {
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .media-content img,
+    .media-content video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
     .countdown-popup {

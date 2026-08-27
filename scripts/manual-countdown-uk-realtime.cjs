@@ -36,7 +36,7 @@ async function readPopup(page) {
 async function screenshot(page, name, log, extra = {}) {
     const filePath = path.join(OUTPUT_DIR, `${name}.png`);
     await page.screenshot({ path: filePath, fullPage: true });
-    const diagnostic = fetchJson(`${BASE_URL}/api/countdown-diagnostic`);
+    const diagnostic = fetchJson(`${BASE_URL}/admin/diagnostics/countdown`);
     const screenState = fetchJson(`${BASE_URL}/api/screen-state`);
 
     const entry = {

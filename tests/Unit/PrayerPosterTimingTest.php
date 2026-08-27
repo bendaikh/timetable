@@ -148,8 +148,9 @@ class PrayerPosterTimingTest extends TestCase
 
         $this->assertNotNull($window);
         $this->assertSame('12:55:00', $window['start']->format('H:i:s'));
-        $this->assertSame('13:10:00', $window['end']->format('H:i:s'));
+        $this->assertSame('13:15:00', $window['end']->format('H:i:s'));
         $this->assertSame('13:15:00', $window['jamaat']->format('H:i:s'));
+        $this->assertSame('jamaat', $window['reference']);
     }
 
     public function test_poster_window_falls_back_to_beginning_plus_offset_when_jamaat_missing(): void
@@ -170,7 +171,7 @@ class PrayerPosterTimingTest extends TestCase
 
         $this->assertNotNull($window);
         $this->assertSame('12:25:00', $window['start']->format('H:i:s'));
-        $this->assertSame('12:40:00', $window['end']->format('H:i:s'));
+        $this->assertSame('12:45:00', $window['end']->format('H:i:s'));
         $this->assertSame('12:45:00', $window['jamaat']->format('H:i:s'));
     }
 
@@ -179,10 +180,10 @@ class PrayerPosterTimingTest extends TestCase
         $this->seedPosterSchedule(minutesBefore: 20, jamaat: '13:15:00');
 
         $prayerTime = PrayerTime::query()->first();
-        $atAdhanCountdown = Carbon::parse('2026-07-05 12:55:00', self::TZ);
+        $atJamaatCountdown = Carbon::parse('2026-07-05 13:14:30', self::TZ);
 
-        $resolvedJamaat = PrayerJamaatTime::resolve($prayerTime, 'zohar', $atAdhanCountdown);
-        $countdown = $this->service->getCountdownInfo($atAdhanCountdown);
+        $resolvedJamaat = PrayerJamaatTime::resolve($prayerTime, 'zohar', $atJamaatCountdown);
+        $countdown = $this->service->getCountdownInfo($atJamaatCountdown);
 
         $this->assertNotNull($resolvedJamaat);
         $this->assertNotNull($countdown);
@@ -190,6 +191,74 @@ class PrayerPosterTimingTest extends TestCase
             $resolvedJamaat->toIso8601String(),
             $countdown['iqamah_time']->toIso8601String()
         );
+    }
+
+    public function test_five_minutes_before_poster_has_non_zero_window_until_jamaat(): void
+    {
+        $this->seedPosterSchedule(minutesBefore: 5, jamaat: '13:15:00');
+
+        $schedule = MediaSchedule::query()->first();
+        $prayerTime = PrayerTime::query()->first();
+        $reference = Carbon::parse('2026-07-05 12:00:00', self::TZ);
+        $window = PrayerJamaatTime::beforePrayerPosterWindow($schedule, $prayerTime, $reference);
+
+        $this->assertNotNull($window);
+        $this->assertSame('13:10:00', $window['start']->format('H:i:s'));
+        $this->assertSame('13:15:00', $window['end']->format('H:i:s'));
+
+        Carbon::setTestNow(Carbon::parse('2026-07-05 13:10:00', self::TZ));
+        $this->assertNotNull($this->service->getCurrentMedia(), 'Poster must start at jamaat - 5 minutes');
+
+        Carbon::setTestNow(Carbon::parse('2026-07-05 13:12:00', self::TZ));
+        $this->assertNotNull($this->service->getCurrentMedia(), 'Poster must stay active inside the 5-minute window');
+
+        Carbon::setTestNow(Carbon::parse('2026-07-05 13:15:01', self::TZ));
+        $this->assertNull($this->service->getCurrentMedia(), 'Poster must stop after jamaat');
+    }
+
+    public function test_after_prayer_poster_window_uses_mosque_timezone_even_if_app_timezone_is_utc(): void
+    {
+        config(['app.timezone' => 'UTC']);
+        date_default_timezone_set('UTC');
+        Setting::set('timezone', self::TZ);
+
+        $schedule = MediaSchedule::query()->create([
+            'schedule_type' => 'minutes_after_prayer',
+            'prayer_name' => 'zohar',
+            'minutes_after_prayer' => 5,
+            'is_active' => true,
+        ]);
+
+        PrayerTime::query()->create([
+            'date' => $this->date,
+            'zohar' => '12:30:00',
+            'zohar_jamaat' => '13:15:00',
+        ]);
+
+        $media = Media::query()->create([
+            'title' => 'After Poster',
+            'file_path' => 'media/after.png',
+            'type' => 'image',
+            'is_active' => true,
+            'display_duration' => 1,
+        ]);
+
+        $schedule->mediaItems()->attach($media->id, [
+            'duration' => 1,
+            'priority' => 1,
+            'is_active' => true,
+            'gap_duration' => 0,
+        ]);
+
+        // 13:20 London == 12:20 UTC in July (BST)
+        Carbon::setTestNow(Carbon::parse('2026-07-05 12:20:00', 'UTC'));
+        $this->assertNotNull(
+            $this->service->getCurrentMedia(),
+            '5 minutes after jamaat must resolve using Europe/London, not server UTC'
+        );
+
+        Carbon::setTestNow(Carbon::parse('2026-07-05 12:19:00', 'UTC'));
+        $this->assertNull($this->service->getCurrentMedia(), 'Too early in mosque time');
     }
 
     private function seedPosterSchedule(

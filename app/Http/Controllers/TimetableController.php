@@ -21,8 +21,8 @@ class TimetableController extends Controller
 
     private function getTimetableData()
     {
-        $now = Carbon::now();
-        $today = $now->format('Y-m-d');
+        $now = \App\Support\PrayerJamaatTime::now();
+        $today = $now->toDateString();
         
         // Get today's prayer times
         $prayerTimes = PrayerTime::getTodayPrayerTimes();

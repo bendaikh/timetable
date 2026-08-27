@@ -53,8 +53,15 @@
             }
 
             #tv-display-wrapper .board-header .row {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
                 flex-wrap: nowrap;
                 align-items: center;
+            }
+
+            #tv-display-wrapper .board-header .col-md-4 {
+                min-width: 0;
+                overflow: hidden;
             }
 
             #tv-display-wrapper .header-right {
@@ -68,8 +75,9 @@
                 line-height: 1.05;
             }
 
-            /* Laptop preview media overlay should cover the scaled TV canvas */
-            #tv-display-wrapper .media-overlay {
+            /* Laptop preview: posters stay inside the announcements box (not the full TV canvas) */
+            #tv-display-wrapper .announcements-section > .media-overlay,
+            #tv-display-wrapper #announcements-section > .media-overlay {
                 position: absolute;
                 inset: 0;
                 width: 100%;
@@ -337,6 +345,8 @@
             flex-direction: column;
             min-height: 0;
             overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
         
         .announcements-content {
@@ -435,7 +445,7 @@
         .board-bottom-times {
             background: rgba(255, 255, 255, 0.95);
             border-top: clamp(1px, 0.2vw, 3px) solid #000;
-            padding: clamp(12px, 2.5vh, 20px) 0;
+            padding: clamp(12px, 2.5vh, 20px) clamp(28px, 3.5vw, 72px);
             flex-shrink: 0;
             width: 100%;
             box-sizing: border-box;
@@ -599,7 +609,10 @@
                 padding-bottom: clamp(12px, 2.5vh, 25px);
             }
             
-            .board-bottom-times,
+            .board-bottom-times {
+                padding: clamp(10px, 2vh, 18px) clamp(28px, 3.5vw, 72px);
+            }
+
             .scrolling-text-area {
                 padding: clamp(10px, 2vh, 18px) 0;
             }
@@ -625,7 +638,10 @@
                 padding-bottom: 30px;
             }
             
-            .board-bottom-times,
+            .board-bottom-times {
+                padding: 25px clamp(48px, 4vw, 96px);
+            }
+
             .scrolling-text-area {
                 padding: 25px 0;
             }
@@ -681,7 +697,10 @@
                 gap: clamp(8px, 1.5vh, 15px);
             }
             
-            .board-bottom-times,
+            .board-bottom-times {
+                padding: clamp(8px, 1.5vh, 15px) clamp(28px, 3.5vw, 72px);
+            }
+
             .scrolling-text-area {
                 padding: clamp(8px, 1.5vh, 15px) 0;
             }
@@ -704,18 +723,18 @@
             animation-play-state: paused !important;
         }
         
-        /* Media Display Overlay Styles */
+        /* Media Display Overlay — announcement box only (not fullscreen) */
         .media-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             background: #000;
-            z-index: 9999;
-            display: flex;
+            z-index: 5;
+            display: none;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
 
         .media-container {
@@ -737,9 +756,11 @@
 
         .media-content img,
         .media-content video {
+            width: 100%;
+            height: 100%;
             max-width: 100%;
             max-height: 100%;
-            object-fit: contain;
+            object-fit: cover;
             animation: slideInFromRight 1s ease-out;
         }
 
@@ -995,56 +1016,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <script>
-        // Auto-refresh functionality
-        const autoRefreshInterval = {{ $settings['auto_refresh_interval'] ?? 60 }} * 1000;
-        
-        function refreshData() {
-            // Refresh prayer times
-            fetch('/api/prayer-times')
-                .then(response => response.json())
-                .then(data => {
-                    // Update prayer times display
-                    console.log('Prayer times updated', data);
-                });
-                
-            // Refresh announcements
-            fetch('/api/announcements')
-                .then(response => response.json())
-                .then(data => {
-                    // Update announcements display
-                    console.log('Announcements updated', data);
-                });
-                
-            // Refresh next prayer
-            fetch('/api/next-prayer')
-                .then(response => response.json())
-                .then(data => {
-                    // Update next prayer countdown
-                    console.log('Next prayer updated', data);
-                });
-        }
-        
-        // Set up auto-refresh
-        setInterval(refreshData, autoRefreshInterval);
-        
-        // Update current time every second
-        function updateCurrentTime() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('en-US', {
-                hour12: true,
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            
-            const timeElement = document.getElementById('current-time');
-            if (timeElement) {
-                timeElement.textContent = timeString;
-            }
-        }
-        
-        setInterval(updateCurrentTime, 1000);
-        updateCurrentTime(); // Initial call
+        // Live timetable polling and mosque-timezone clock live in timetable/index.blade.php.
+        // Do not fetch /api/* here for side-effect-only console logging.
     </script>
 
     <script>

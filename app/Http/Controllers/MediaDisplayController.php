@@ -7,7 +7,6 @@ use App\Services\DisplayStateVersionService;
 use App\Support\PrayerCountdownWindows;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 
 class MediaDisplayController extends Controller
 {
@@ -77,25 +76,27 @@ class MediaDisplayController extends Controller
     public function debugPriority(): JsonResponse
     {
         $now = $this->mediaDisplayService->currentTime();
-        $today = $now->format('Y-m-d');
-        
-        // Check prayer times
+        $timezone = $this->mediaDisplayService->getAppTimezone();
+        $today = $now->toDateString();
+
         $prayerTimes = \App\Models\PrayerTime::whereDate('date', $today)->first();
         $countdownDuration = PrayerCountdownWindows::DURATION_SECONDS;
-        $adhanLeadSeconds = PrayerCountdownWindows::ADHAN_LEAD_SECONDS;
         $iqamahLeadSeconds = PrayerCountdownWindows::IQAMAH_LEAD_SECONDS;
-        
+
         $debugInfo = [
-            'current_time' => $now->format('H:i:s'),
+            'mosque_timezone' => $timezone,
+            'php_timezone' => date_default_timezone_get(),
+            'current_time' => $now->toIso8601String(),
             'countdown_duration' => $countdownDuration . ' seconds',
-            'adhan_countdown_lead' => ($adhanLeadSeconds / 60) . ' minutes before jamaat (iqamah)',
-            'iqamah_countdown_lead' => $iqamahLeadSeconds . ' seconds before iqamah',
+            'adhan_countdown_lead' => $countdownDuration . ' seconds before resolved adhan time',
+            'iqamah_countdown_lead' => $iqamahLeadSeconds . ' seconds before jamaat',
             'adhan_countdown_active' => $this->mediaDisplayService->isAdhanOrCountdownActive($now),
             'current_media' => $this->mediaDisplayService->getCurrentMedia(),
+            'poster_diagnostic' => $this->mediaDisplayService->getPosterScheduleDiagnostic($now),
             'prayer_times' => null,
-            'countdown_windows' => []
+            'countdown_windows' => [],
         ];
-        
+
         if ($prayerTimes) {
             $prayers = [
                 'fajr' => $prayerTimes->fajr,
@@ -104,67 +105,67 @@ class MediaDisplayController extends Controller
                 'maghrib' => $prayerTimes->maghrib,
                 'isha' => $prayerTimes->isha,
             ];
-            
+
             $debugInfo['prayer_times'] = $prayers;
-            
-            foreach ($prayers as $name => $time) {
-                $jamaatField = $name . '_jamaat';
-                $adhanField = $name . '_adhan';
-                $iqamahTime = \Carbon\Carbon::parse($time);
-                if (!empty($prayerTimes->$jamaatField)) {
-                    $iqamahTime = \Carbon\Carbon::parse($prayerTimes->$jamaatField);
-                } else {
-                    $offset = (int) \App\Models\Setting::get($name . '_jamaat_offset', 0);
-                    $iqamahTime = \Carbon\Carbon::parse($time)->addMinutes($offset);
+
+            foreach (array_keys($prayers) as $name) {
+                $iqamahTime = \App\Support\PrayerJamaatTime::resolve($prayerTimes, $name, $now);
+                if (!$iqamahTime) {
+                    continue;
                 }
 
-                $schedule = PrayerCountdownWindows::windowSchedule($iqamahTime);
+                $adhanTime = \App\Support\PrayerAdhanTime::resolve($prayerTimes, $name, $now);
+                $schedule = PrayerCountdownWindows::windowSchedule($iqamahTime, $adhanTime);
+                $jamaatField = $name . '_jamaat';
+                $adhanField = $name . '_adhan';
+                $adhanWindow = $schedule['adhan_countdown'];
 
                 $debugInfo['countdown_windows'][] = [
                     'prayer' => $name,
-                    'beginning_time' => $time,
+                    'beginning_time' => $prayerTimes->$name,
                     'adhan_time' => $prayerTimes->$adhanField ?? null,
                     'jamaat_time' => $prayerTimes->$jamaatField ?? null,
-                    'countdown_target' => 'jamaat',
-                    'resolved_jamaat_time' => $iqamahTime->format('H:i:s'),
-                    'adhan_countdown_start' => \Carbon\Carbon::parse($schedule['adhan_countdown']['start'])->format('H:i:s'),
-                    'adhan_countdown_end' => \Carbon\Carbon::parse($schedule['adhan_countdown']['end'])->format('H:i:s'),
-                    'iqamah_countdown_start' => \Carbon\Carbon::parse($schedule['iqamah_countdown']['start'])->format('H:i:s'),
-                    'iqamah_countdown_end' => \Carbon\Carbon::parse($schedule['iqamah_countdown']['end'])->format('H:i:s'),
-                    'adhan_countdown_active' => $now->between(
-                        \Carbon\Carbon::parse($schedule['adhan_countdown']['start']),
-                        \Carbon\Carbon::parse($schedule['adhan_countdown']['end']),
-                        false
-                    ),
+                    'resolved_adhan_time' => $adhanTime?->toIso8601String(),
+                    'resolved_jamaat_time' => $iqamahTime->toIso8601String(),
+                    'adhan_countdown_start' => $adhanWindow['start'] ?? null,
+                    'adhan_countdown_end' => $adhanWindow['end'] ?? null,
+                    'iqamah_countdown_start' => $schedule['iqamah_countdown']['start'],
+                    'iqamah_countdown_end' => $schedule['iqamah_countdown']['end'],
+                    'adhan_countdown_active' => $adhanWindow
+                        ? $now->gte(\Carbon\Carbon::parse($adhanWindow['start']))
+                            && $now->lt(\Carbon\Carbon::parse($adhanWindow['end']))
+                        : false,
                     'iqamah_countdown_active' => $now->gte(\Carbon\Carbon::parse($schedule['iqamah_countdown']['start']))
                         && $now->lt(\Carbon\Carbon::parse($schedule['iqamah_countdown']['end'])),
                 ];
             }
         }
-        
+
         return response()->json($debugInfo);
     }
 
     /**
-     * Debug endpoint to see active schedules
+     * Debug endpoint to see active schedules and resolved poster windows
      */
     public function debugSchedules(): JsonResponse
     {
+        $diagnostic = $this->mediaDisplayService->getPosterScheduleDiagnostic();
+
         return response()->json([
+            'diagnostic' => $diagnostic,
             'active_schedules' => $this->mediaDisplayService->getActiveSchedules(),
-            'current_media_info' => $this->mediaDisplayService->getCurrentMedia()
+            'current_media_info' => $this->mediaDisplayService->getCurrentMedia(),
         ]);
+    }
+
+    public function getPosterDiagnostic(): JsonResponse
+    {
+        return response()->json($this->mediaDisplayService->getPosterScheduleDiagnostic());
     }
 
     public function getCountdownDiagnostic(): JsonResponse
     {
-        $diagnostic = $this->mediaDisplayService->getCountdownDiagnostic();
-
-        if ($diagnostic['log']['countdown_active'] ?? false) {
-            Log::info('prayer.countdown.active', $diagnostic['log']);
-        }
-
-        return response()->json($diagnostic);
+        return response()->json($this->mediaDisplayService->getCountdownDiagnostic());
     }
 
     /**
@@ -187,18 +188,6 @@ class MediaDisplayController extends Controller
                 'timestamp' => $now->toIso8601String(),
                 'app_timezone' => $this->mediaDisplayService->getAppTimezone(),
             ];
-
-            Log::info('prayer.countdown.active', [
-                'server_time' => $now->toIso8601String(),
-                'target_prayer' => $formattedCountdown['prayer_name'] ?? null,
-                'countdown_phase' => $formattedCountdown['phase'] ?? null,
-                'target_field' => $formattedCountdown['target_field'] ?? null,
-                'target_time' => $formattedCountdown['target_time'] ?? null,
-                'countdown_start' => $formattedCountdown['countdown_start'] ?? null,
-                'countdown_end' => $formattedCountdown['countdown_end'] ?? null,
-                'seconds_remaining' => $formattedCountdown['seconds_remaining'] ?? null,
-                'message' => $formattedCountdown['message'] ?? null,
-            ]);
 
             $stateSignature = $this->buildMediaSignatureForScreenState([
                 'state' => 'COUNTDOWN',

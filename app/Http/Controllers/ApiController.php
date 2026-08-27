@@ -122,6 +122,13 @@ class ApiController extends Controller
         ]);
     }
 
+    /**
+     * Next prayer countdown payload.
+     *
+     * Canonical definition: next JAMAAT (iqamah) via PrayerTime::getNextPrayer()
+     * / PrayerJamaatTime::resolve — same as the TV "Next prayer in" label.
+     * Field used: {prayer}_jamaat when set, else beginning + {prayer}_jamaat_offset.
+     */
     public function nextPrayer()
     {
         $nextPrayer = PrayerTime::getNextPrayer();

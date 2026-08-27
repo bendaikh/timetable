@@ -89,25 +89,31 @@ class PrayerCountdownServiceTest extends TestCase
         return $this->service->getCountdownInfo($now);
     }
 
-    public function test_service_countdown_one_at_twenty_minutes_before_jamaat(): void
+    public function test_service_adhan_countdown_at_uploaded_adhan_time(): void
     {
-        $info = $this->at('14:40:00');
+        $info = $this->at('12:36:30');
 
         $this->assertNotNull($info);
         $this->assertSame('adhan', $info['phase']);
         $this->assertSame('Adhan will start in 30 seconds', $info['message']);
         $this->assertSame(30, $info['seconds_remaining']);
-        $this->assertSame('jamaat', $info['target_field']);
+        $this->assertSame('adhan', $info['target_field']);
+        $this->assertTrue($info['target_time']->equalTo(Carbon::parse("{$this->date} 12:37:00", self::TZ)));
     }
 
-    public function test_service_inactive_one_second_before_countdown_one(): void
+    public function test_service_no_adhan_popup_twenty_minutes_before_jamaat(): void
     {
-        $this->assertNull($this->at('14:39:59'));
+        $this->assertNull($this->at('14:40:00'));
     }
 
-    public function test_service_gap_between_countdowns(): void
+    public function test_service_inactive_one_second_before_adhan_countdown(): void
     {
-        $this->assertNull($this->at('14:41:00'));
+        $this->assertNull($this->at('12:36:29'));
+    }
+
+    public function test_service_gap_between_adhan_and_jamaat_countdowns(): void
+    {
+        $this->assertNull($this->at('12:38:00'));
         $this->assertNull($this->at('14:59:29'));
     }
 
@@ -141,9 +147,10 @@ class PrayerCountdownServiceTest extends TestCase
             'zohar_adhan' => '11:30:00',
         ]);
 
-        $info = $this->at('14:40:00');
+        $info = $this->at('14:59:30');
 
-        $this->assertSame('adhan', $info['phase']);
+        $this->assertSame('iqamah', $info['phase']);
+        $this->assertSame(30, $info['seconds_remaining']);
         $this->assertTrue($info['iqamah_time']->equalTo(Carbon::parse("{$this->date} 15:00:00", self::TZ)));
     }
 
@@ -151,29 +158,83 @@ class PrayerCountdownServiceTest extends TestCase
     {
         $this->assertSame(self::TZ, $this->service->getAppTimezone());
 
-        $now = Carbon::parse("{$this->date} 14:40:00", self::TZ);
+        $now = Carbon::parse("{$this->date} 14:59:30", self::TZ);
         $info = $this->service->getCountdownInfo($now);
 
         $this->assertNotNull($info);
-        $this->assertSame('adhan', $info['phase']);
+        $this->assertSame('iqamah', $info['phase']);
     }
 
     public function test_diagnostic_reports_active_countdown(): void
     {
-        $now = Carbon::parse("{$this->date} 14:40:00", self::TZ);
+        $now = Carbon::parse("{$this->date} 14:59:30", self::TZ);
         $diagnostic = $this->service->getCountdownDiagnostic($now);
 
         $this->assertTrue($diagnostic['log']['countdown_active']);
-        $this->assertSame('adhan', $diagnostic['log']['countdown_phase']);
+        $this->assertSame('iqamah', $diagnostic['log']['countdown_phase']);
         $this->assertSame(self::TZ, $diagnostic['log']['server_timezone']);
     }
 
     public function test_get_current_media_returns_null_during_countdown(): void
     {
-        $now = Carbon::parse("{$this->date} 14:40:00", self::TZ);
+        $now = Carbon::parse("{$this->date} 14:59:30", self::TZ);
         Carbon::setTestNow($now);
 
         $this->assertTrue($this->service->isAdhanOrCountdownActive($now));
         $this->assertNull($this->service->getCurrentMedia());
+    }
+
+    public function test_fajr_maghrib_isha_popup_is_thirty_seconds_before_jamaat_only(): void
+    {
+        Setting::set('adhan_countdown_duration', '75');
+
+        $cases = [
+            ['prayer' => 'fajr', 'at' => '05:09:30', 'jamaat' => '05:10:00'],
+            ['prayer' => 'maghrib', 'at' => '19:09:30', 'jamaat' => '19:10:00'],
+            ['prayer' => 'isha', 'at' => '20:44:30', 'jamaat' => '20:45:00'],
+        ];
+
+        foreach ($cases as $case) {
+            $info = $this->at($case['at']);
+
+            $this->assertNotNull($info, "Expected popup for {$case['prayer']}");
+            $this->assertSame('iqamah', $info['phase']);
+            $this->assertSame(ucfirst($case['prayer']), $info['prayer_name']);
+            $this->assertSame(30, $info['seconds_remaining']);
+            $this->assertSame(30, $info['countdown_duration']);
+            $this->assertTrue(
+                $info['iqamah_time']->equalTo(Carbon::parse("{$this->date} {$case['jamaat']}", self::TZ))
+            );
+        }
+    }
+
+    public function test_maghrib_with_same_adhan_and_jamaat_shows_only_jamaat_popup(): void
+    {
+        PrayerTime::query()->whereDate('date', $this->date)->update([
+            'maghrib' => '19:00:00',
+            'maghrib_adhan' => '19:00:00',
+            'maghrib_jamaat' => '19:00:00',
+        ]);
+
+        $this->assertNull($this->at('18:59:00'));
+        $info = $this->at('18:59:30');
+        $this->assertNotNull($info);
+        $this->assertSame('iqamah', $info['phase']);
+        $this->assertSame('Maghrib', $info['prayer_name']);
+    }
+
+    public function test_isha_with_same_adhan_and_jamaat_shows_only_jamaat_popup(): void
+    {
+        PrayerTime::query()->whereDate('date', $this->date)->update([
+            'isha' => '20:30:00',
+            'isha_adhan' => '20:30:00',
+            'isha_jamaat' => '20:30:00',
+        ]);
+
+        $this->assertNull($this->at('20:28:30'));
+        $info = $this->at('20:29:30');
+        $this->assertNotNull($info);
+        $this->assertSame('iqamah', $info['phase']);
+        $this->assertSame('Isha', $info['prayer_name']);
     }
 }

@@ -60,7 +60,7 @@
                                            id="minutes_before_prayer" name="minutes_before_prayer" 
                                            value="{{ old('minutes_before_prayer', $mediaSchedule->minutes_before_prayer) }}" 
                                            min="1" max="480">
-                                    <div class="form-text">How many minutes before prayer to start displaying (1-480 minutes / up to 8 hours)</div>
+                                    <div class="form-text">Minutes before <strong>Jamaat</strong> (congregation time) to start — not Adhan. Displays until Jamaat.</div>
                                     @error('minutes_before_prayer')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -73,7 +73,7 @@
                                            id="minutes_after_prayer" name="minutes_after_prayer" 
                                            value="{{ old('minutes_after_prayer', $mediaSchedule->minutes_after_prayer) }}" 
                                            min="1" max="480">
-                                    <div class="form-text">How many minutes after prayer to start displaying (1-480 minutes / up to 8 hours)</div>
+                                    <div class="form-text">Minutes after <strong>Jamaat</strong> to start — then plays for {{ \App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES }} minutes (1-480 offset).</div>
                                     @error('minutes_after_prayer')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -184,7 +184,7 @@ let checkOverlapTimeout = null;
 $existingMediaData = $mediaSchedule->mediaItems->mapWithKeys(function($media) {
     return [
         $media->id => [
-            'duration' => $media->pivot->duration,
+            'duration' => \App\Support\MediaScheduleDuration::secondsFromStored($media->pivot->duration),
             'priority' => $media->pivot->priority,
             'start_date' => $media->pivot->start_date,
             'start_time' => $media->pivot->start_time
@@ -194,8 +194,6 @@ $existingMediaData = $mediaSchedule->mediaItems->mapWithKeys(function($media) {
             'expiry_time' => $media->pivot->expiry_time
                 ? \Carbon\Carbon::parse($media->pivot->expiry_time)->format('H:i')
                 : null,
-            'start_date' => $media->pivot->start_date,
-            'start_time' => $media->pivot->start_time,
             'gap_duration' => $media->pivot->gap_duration ?? 0,
             'days_of_week' => $media->pivot->days_of_week,
         ],
@@ -270,7 +268,7 @@ function updateMediaConfig() {
         
         selectedMedia.forEach((media, index) => {
             // Use old values if available, otherwise use existing data from database
-            const duration = oldDuration[index] || existingMediaData[media.id]?.duration || 30;
+            const duration = oldDuration[index] || existingMediaData[media.id]?.duration || 10;
             const priority = oldPriority[index] || existingMediaData[media.id]?.priority || (index + 1);
             const expiryDate = oldExpiryDates[index] || existingMediaData[media.id]?.expiry_date || '';
             const expiryTime = oldExpiryTimes[index] || existingMediaData[media.id]?.expiry_time || '';
@@ -293,10 +291,11 @@ function updateMediaConfig() {
                         <h6 class="mb-3"><i class="bi bi-image"></i> ${media.title}</h6>
                         <div class="row">
                             <div class="col-md-6 mb-2">
-                                <label class="form-label small">Duration (minutes)</label>
-                                <input type="number" class="form-control form-control-sm" step="0.5"
+                                <label class="form-label small">Duration (seconds)</label>
+                                <input type="number" class="form-control form-control-sm" step="1"
                                        name="media_durations[]" value="${duration}" 
-                                       min="0.5" required>
+                                       min="5" max="28800" required>
+                                <small class="text-muted">Minimum 5 seconds</small>
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label class="form-label small">Priority</label>
@@ -342,6 +341,7 @@ function updateMediaConfig() {
                                 <input type="number" class="form-control form-control-sm" 
                                        name="media_gap_durations[]" value="${gapDuration}" 
                                        min="0" max="3600">
+                                <small class="text-muted">Use Gap &gt; 0 if you want the timetable/announcements to show between poster loops. Gap 0 = continuous.</small>
                             </div>
                         </div>
                         ` : `<input type="hidden" name="media_gap_durations[]" value="0">`}
@@ -583,10 +583,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (duration > 0) {
-            const seconds = Math.round(duration * 60);
-            const minutes = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            previewElement.innerHTML = `<small><strong>Preview:</strong> ${duration}m = ${seconds}s (${minutes}m ${secs}s)</small>`;
+            previewElement.innerHTML = `<small><strong>Preview:</strong> ${duration} seconds</small>`;
             previewElement.style.display = 'block';
         } else {
             previewElement.style.display = 'none';

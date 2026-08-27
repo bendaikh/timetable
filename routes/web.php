@@ -32,14 +32,11 @@ Route::prefix('api')->middleware('no-cache-dashboard')->group(function () {
     Route::get('/next-prayer', [ApiController::class, 'nextPrayer']);
     Route::get('/settings', [ApiController::class, 'settings']);
     
-    // Media display API routes
+    // Media display API routes (public — used by the mosque TV)
     Route::get('/current-media', [MediaDisplayController::class, 'getCurrentMedia']);
     Route::get('/countdown-info', [MediaDisplayController::class, 'getCountdownInfo']);
     Route::get('/media-status', [MediaDisplayController::class, 'getStatus']);
-    Route::get('/debug-schedules', [MediaDisplayController::class, 'debugSchedules']);
-    Route::get('/debug-priority', [MediaDisplayController::class, 'debugPriority']);
-    Route::get('/countdown-diagnostic', [MediaDisplayController::class, 'getCountdownDiagnostic']);
-    Route::get('/screen-state', [MediaDisplayController::class, 'getScreenState']); // NEW: Unified state endpoint
+    Route::get('/screen-state', [MediaDisplayController::class, 'getScreenState']);
 });
 
 // Auth Routes
@@ -77,6 +74,16 @@ Route::post('/logout', function (Illuminate\Http\Request $request) {
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard')->middleware('no-cache-dashboard');
+
+    // Internal diagnostics (admin-only — never public)
+    Route::get('/diagnostics/schedules', [MediaDisplayController::class, 'debugSchedules'])
+        ->name('admin.diagnostics.schedules');
+    Route::get('/diagnostics/priority', [MediaDisplayController::class, 'debugPriority'])
+        ->name('admin.diagnostics.priority');
+    Route::get('/diagnostics/countdown', [MediaDisplayController::class, 'getCountdownDiagnostic'])
+        ->name('admin.diagnostics.countdown');
+    Route::get('/diagnostics/posters', [MediaDisplayController::class, 'getPosterDiagnostic'])
+        ->name('admin.diagnostics.posters');
     
     // Profile management routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile.edit');

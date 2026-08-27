@@ -48,7 +48,7 @@
     <div class="links card">
         <strong>Open these tabs:</strong><br>
         <a href="/" target="_blank">Main timetable display</a>
-        <a href="/api/countdown-diagnostic" target="_blank">Raw JSON: countdown diagnostic</a>
+        <a href="/admin/diagnostics/countdown" target="_blank">Raw JSON: countdown diagnostic (admin)</a>
         <a href="/api/screen-state" target="_blank">Raw JSON: current screen state</a>
     </div>
 
@@ -90,7 +90,7 @@
             const status = document.getElementById('status');
             try {
                 const [diag, screen] = await Promise.all([
-                    fetch('/api/countdown-diagnostic').then(r => r.json()),
+                    fetch('/admin/diagnostics/countdown').then(r => r.json()),
                     fetch('/api/screen-state').then(r => r.json()),
                 ]);
 

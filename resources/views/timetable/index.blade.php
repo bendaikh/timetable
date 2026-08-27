@@ -4,23 +4,7 @@
 
 @section('content')
 
-<!-- Media Display Overlay (Fullscreen) -->
-<div id="media-overlay" class="media-overlay" style="display: none;">
-    <div class="media-container">
-        <div id="media-content" class="media-content">
-            <!-- Media content will be loaded here -->
-        </div>
-        <div id="media-countdown" class="media-countdown" style="display: none;">
-            <div class="countdown-timer">
-                <div class="countdown-label">Next Prayer</div>
-                <div id="countdown-prayer-name" class="countdown-prayer"></div>
-                <div id="countdown-time" class="countdown-time"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Countdown Popup (Transparent Overlay) -->
+<!-- Countdown Popup (Transparent Overlay) — remains viewport-centered; posters live in the announcements box -->
 <div id="countdown-popup" class="countdown-popup" style="display: none;">
     <div class="countdown-popup-content">
         <div class="countdown-popup-header">
@@ -36,6 +20,25 @@
     </div>
 </div>
 
+@php
+    $mediaOverlayMarkup = <<<'HTML'
+<div id="media-overlay" class="media-overlay" style="display: none;" aria-hidden="true">
+    <div class="media-container">
+        <div id="media-content" class="media-content">
+            <!-- Media content will be loaded here -->
+        </div>
+        <div id="media-countdown" class="media-countdown" style="display: none;">
+            <div class="countdown-timer">
+                <div class="countdown-label">Next Prayer</div>
+                <div id="countdown-prayer-name" class="countdown-prayer"></div>
+                <div id="countdown-time" class="countdown-time"></div>
+            </div>
+        </div>
+    </div>
+</div>
+HTML;
+@endphp
+
 <!-- Digital Information Board Layout -->
 @php
     $timetableBgBox = $boxSettings['timetable_background_box'] ?? null;
@@ -44,10 +47,15 @@
         ?? ($settings['display_background_color'] ?? '#ffffff');
     $pageGapColor = $settings['display_background_color'] ?? '#ffffff';
     $backgroundStyle = "background-color: {$bgColor};";
+    $prayerBoxForPadding = $useBoxesStyling && isset($boxSettings['prayer_times_box']) ? $boxSettings['prayer_times_box'] : null;
+    $announcementsBoxForPadding = $useBoxesStyling && isset($boxSettings['announcements_box']) ? $boxSettings['announcements_box'] : null;
+    $boardColumnPadding = $prayerBoxForPadding['styling_settings']['padding']
+        ?? $announcementsBoxForPadding['styling_settings']['padding']
+        ?? '15';
 @endphp
 <div id="timetable-background-box" data-box-root="timetable_background_box" class="container-fluid digital-board" style="{{ $backgroundStyle }} padding: 0; margin: 0;">
     <!-- Unified Container for Consistent Width -->
-    <div class="unified-container" style="padding: 0; margin: 0; --board-header-content-gap: clamp(8px, 1vh, 14px);">
+    <div class="unified-container" style="padding: 0; margin: 0; --board-header-content-gap: clamp(8px, 1vh, 14px); --board-column-padding: {{ $boardColumnPadding }}px; --card-gap: 10px; --cell-padding-x: clamp(24px, 1.5vw, 48px); --cell-padding-y: clamp(10px, 1vh, 16px); --section-gap: clamp(8px, 1vh, 14px);">
         <!-- Top Header Row -->
         @if($useBoxesStyling && isset($boxSettings['header_box']))
             @php
@@ -58,6 +66,8 @@
             @endphp
             <div id="header-box" data-box-root="header_box" class="board-header" style="
                 {{ ($useBoxesStyling && !($boxSettings['header_box']['is_active'] ?? true)) ? 'display:none;' : '' }}
+                --header-time-font-size: {{ $timeFontSize }};
+                --header-date-font-size: {{ $dateFontSize }};
                 background-color: {{ $headerStyling['background_color'] ?? '#1e4d2b' }};
                 color: {{ $headerStyling['text_color'] ?? '#000000' }};
                 font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
@@ -75,7 +85,6 @@
                     <div class="col-md-4 p-0">
                         <div class="current-time-display">
                             <div class="time-large" id="current-time" style="
-                                font-size: {{ $timeFontSize }};
                                 font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
                                 color: {{ $headerStyling['text_color'] ?? '#000000' }};
                                 margin: 0;
@@ -87,7 +96,6 @@
                     <div class="col-md-4 text-center p-0">
                         <div class="date-display">
                             <div class="gregorian-date" id="gregorian-date" style="
-                                font-size: {{ $dateFontSize }};
                                 font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
                                 color: {{ $headerStyling['text_color'] ?? '#000000' }};
                                 margin: 0;
@@ -99,7 +107,6 @@
                     <div class="col-md-4 p-0">
                         <div class="islamic-date-display text-center">
                             <div class="islamic-date" id="islamic-date" style="
-                                font-size: {{ $dateFontSize }};
                                 font-family: {{ $headerStyling['font_family'] ?? 'Arial, sans-serif' }};
                                 color: {{ $headerStyling['text_color'] ?? '#000000' }};
                                 margin: 0;
@@ -148,13 +155,6 @@
         <div class="board-header-content-gap" aria-hidden="true" style="background-color: {{ $pageGapColor }};"></div>
 
         <!-- Main Content Area -->
-        @php
-            $prayerBoxForPadding = $useBoxesStyling && isset($boxSettings['prayer_times_box']) ? $boxSettings['prayer_times_box'] : null;
-            $announcementsBoxForPadding = $useBoxesStyling && isset($boxSettings['announcements_box']) ? $boxSettings['announcements_box'] : null;
-            $boardColumnPadding = $prayerBoxForPadding['styling_settings']['padding']
-                ?? $announcementsBoxForPadding['styling_settings']['padding']
-                ?? '15';
-        @endphp
         <div class="board-main-content" style="margin: 0; --board-column-padding: {{ $boardColumnPadding }}px;">
             <div class="row h-100 m-0" style="display: flex; flex-direction: row; align-items: stretch;">
             <!-- Left Column - Prayer Times -->
@@ -219,6 +219,17 @@
 
                     <div class="prayer-times-body">
                     @if($prayerTimes)
+                        @php
+                            $displayedPrayerRows = \App\Support\PrayerTimeDisplayRollover::resolveAllPrayerRows($prayerTimes, $tomorrowPrayerTimes ?? null, $now ?? null);
+                            $displayedSpecialTimes = \App\Support\PrayerTimeDisplayRollover::resolveSpecialTimes($prayerTimes, $tomorrowPrayerTimes ?? null, $now ?? null);
+                            $prayerRowLabels = [
+                                'fajr' => 'Fajr',
+                                'zohar' => 'Zohar',
+                                'asr' => 'Asr',
+                                'maghrib' => 'Maghrib',
+                                'isha' => 'Isha',
+                            ];
+                        @endphp
                         @if($useBoxesStyling && isset($boxSettings['prayer_times_box']))
                             @php
                                 $nextPrayerPosition = $prayerLayout['next_prayer_position'] ?? 'below_table';
@@ -228,52 +239,35 @@
                                     margin-bottom: 15px;
                                     text-align: center;
                                 ">
-                                    <div class="next-prayer-text" style="
-                                        margin-bottom: 8px; 
-                                        font-weight: bold;
-                                        font-size: {{ $next_prayer_font_size }} !important;
-                                        color: {{ $prayerStyling['next_prayer_text_color'] ?? '#000000' }} !important;
-                                    ">Next prayer in:</div>
-                                    <div id="next-prayer-countdown" class="next-prayer-countdown" style="
-                                        font-size: {{ $next_prayer_countdown_font_size }} !important; 
-                                        font-weight: bold;
-                                        color: {{ $prayerStyling['next_prayer_countdown_color'] ?? '#000000' }} !important;
-                                    ">--:--:--</div>
-                                    <div id="next-prayer-name" class="next-prayer-name" style="
-                                        font-size: {{ $next_prayer_name_font_size }} !important; 
-                                        margin-top: 5px; 
-                                        opacity: 0.8;
-                                        color: {{ $prayerStyling['next_prayer_name_color'] ?? '#666666' }} !important;
-                                    ">Calculating...</div>
+                                    <div class="next-prayer-line">
+                                        <span class="next-prayer-text" style="
+                                            font-weight: bold;
+                                            font-size: {{ $next_prayer_font_size }} !important;
+                                            color: {{ $prayerStyling['next_prayer_text_color'] ?? '#000000' }} !important;
+                                        ">Next prayer in:</span>
+                                        <span id="next-prayer-countdown" class="next-prayer-countdown" style="
+                                            font-size: {{ $next_prayer_countdown_font_size }} !important;
+                                            font-weight: bold;
+                                            color: {{ $prayerStyling['next_prayer_countdown_color'] ?? '#000000' }} !important;
+                                        ">--:--:--</span>
+                                        <span id="next-prayer-name" class="next-prayer-name" style="
+                                            font-size: {{ $next_prayer_name_font_size }} !important;
+                                            opacity: 0.8;
+                                            color: {{ $prayerStyling['next_prayer_name_color'] ?? '#666666' }} !important;
+                                        "></span>
+                                    </div>
                                 </div>
                             @endif
                         @endif
                         <div class="prayer-list">
-                            <div class="prayer-row" data-prayer-name="fajr" style="display: grid; grid-template-columns: {{ $prayerColumnWidths[0] }} {{ $prayerColumnWidths[1] }} {{ $prayerColumnWidths[2] }}; gap: 6px; margin-bottom: 4px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size }}; font-weight: bold;">Fajr</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size }};">{{ $prayerTimes->fajr_jamaat ? \Carbon\Carbon::parse($prayerTimes->fajr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->fajr)->addMinutes((int)$settings['fajr_jamaat_offset'])->format('h:i') }}</div>
-                            </div>
-                            <div class="prayer-row" data-prayer-name="zohar" style="display: grid; grid-template-columns: {{ $prayerColumnWidths[0] }} {{ $prayerColumnWidths[1] }} {{ $prayerColumnWidths[2] }}; gap: 6px; margin-bottom: 4px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size }}; font-weight: bold;">Zohar</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size }};">{{ $prayerTimes->zohar_jamaat ? \Carbon\Carbon::parse($prayerTimes->zohar_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->zohar)->addMinutes((int)$settings['zohar_jamaat_offset'])->format('h:i') }}</div>
-                            </div>
-                            <div class="prayer-row" data-prayer-name="asr" style="display: grid; grid-template-columns: {{ $prayerColumnWidths[0] }} {{ $prayerColumnWidths[1] }} {{ $prayerColumnWidths[2] }}; gap: 6px; margin-bottom: 4px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size }}; font-weight: bold;">Asr</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->asr)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size }};">{{ $prayerTimes->asr_jamaat ? \Carbon\Carbon::parse($prayerTimes->asr_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->asr)->addMinutes((int)$settings['asr_jamaat_offset'])->format('h:i') }}</div>
-                            </div>
-                            <div class="prayer-row" data-prayer-name="maghrib" style="display: grid; grid-template-columns: {{ $prayerColumnWidths[0] }} {{ $prayerColumnWidths[1] }} {{ $prayerColumnWidths[2] }}; gap: 6px; margin-bottom: 4px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size }}; font-weight: bold;">Maghrib</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->maghrib)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size }};">{{ $prayerTimes->maghrib_jamaat ? \Carbon\Carbon::parse($prayerTimes->maghrib_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->maghrib)->addMinutes((int)$settings['maghrib_jamaat_offset'])->format('h:i') }}</div>
-                            </div>
-                            <div class="prayer-row" data-prayer-name="isha" style="display: grid; grid-template-columns: {{ $prayerColumnWidths[0] }} {{ $prayerColumnWidths[1] }} {{ $prayerColumnWidths[2] }}; gap: 6px; margin-bottom: 4px; text-align: center; align-items: center;">
-                                <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size }}; font-weight: bold;">Isha</div>
-                                <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size }}; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \Carbon\Carbon::parse($prayerTimes->isha)->format('h:i') }}</div>
-                                <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size }};">{{ $prayerTimes->isha_jamaat ? \Carbon\Carbon::parse($prayerTimes->isha_jamaat)->format('h:i') : \Carbon\Carbon::parse($prayerTimes->isha)->addMinutes((int)$settings['isha_jamaat_offset'])->format('h:i') }}</div>
-                            </div>
+                            @foreach($prayerRowLabels as $prayerKey => $prayerLabel)
+                                @php $displayedRow = $displayedPrayerRows[$prayerKey] ?? ['beginning' => null, 'jamaat' => null, 'adhan' => null]; @endphp
+                                <div class="prayer-row" data-prayer-name="{{ $prayerKey }}" style="display: grid; grid-template-columns: {{ $prayerColumnWidths[0] }} {{ $prayerColumnWidths[1] }} {{ $prayerColumnWidths[2] }}; gap: 6px; margin-bottom: 0; text-align: center; align-items: center; padding: var(--cell-padding-y, 12px) var(--cell-padding-x, 32px); box-sizing: border-box;">
+                                    <div class="prayer-name" style="text-align: left; font-size: {{ $prayer_names_font_size }}; font-weight: bold;">{{ $prayerLabel }}</div>
+                                    <div class="prayer-time" data-time-type="beginning" style="font-size: {{ $beginning_font_size }}; text-align: center; margin-left: -{{ $prayerLayout['beginning_column_spacing'] ?? '0' }}px;">{{ \App\Support\PrayerTimeDisplayRollover::formatDisplayTime($displayedRow['beginning']) }}</div>
+                                    <div class="prayer-jamaat" data-time-type="jamaat" style="font-size: {{ $jamaat_font_size }}; text-align: center;">{{ \App\Support\PrayerTimeDisplayRollover::formatDisplayTime($displayedRow['jamaat']) }}</div>
+                                </div>
+                            @endforeach
                         </div>
                         
                         @if($useBoxesStyling && isset($boxSettings['prayer_times_box']))
@@ -285,23 +279,23 @@
                                     margin-top: 15px;
                                     text-align: center;
                                 ">
-                                    <div class="next-prayer-text" style="
-                                        margin-bottom: 8px; 
-                                        font-weight: bold;
-                                        font-size: {{ $next_prayer_font_size }} !important;
-                                        color: {{ $prayerStyling['next_prayer_text_color'] ?? '#000000' }} !important;
-                                    ">Next prayer in:</div>
-                                    <div id="next-prayer-countdown" class="next-prayer-countdown" style="
-                                        font-size: {{ $next_prayer_countdown_font_size }} !important; 
-                                        font-weight: bold;
-                                        color: {{ $prayerStyling['next_prayer_countdown_color'] ?? '#000000' }} !important;
-                                    ">--:--:--</div>
-                                    <div id="next-prayer-name" class="next-prayer-name" style="
-                                        font-size: {{ $next_prayer_name_font_size }} !important; 
-                                        margin-top: 5px; 
-                                        opacity: 0.8;
-                                        color: {{ $prayerStyling['next_prayer_name_color'] ?? '#666666' }} !important;
-                                    ">Calculating...</div>
+                                    <div class="next-prayer-line">
+                                        <span class="next-prayer-text" style="
+                                            font-weight: bold;
+                                            font-size: {{ $next_prayer_font_size }} !important;
+                                            color: {{ $prayerStyling['next_prayer_text_color'] ?? '#000000' }} !important;
+                                        ">Next prayer in:</span>
+                                        <span id="next-prayer-countdown" class="next-prayer-countdown" style="
+                                            font-size: {{ $next_prayer_countdown_font_size }} !important;
+                                            font-weight: bold;
+                                            color: {{ $prayerStyling['next_prayer_countdown_color'] ?? '#000000' }} !important;
+                                        ">--:--:--</span>
+                                        <span id="next-prayer-name" class="next-prayer-name" style="
+                                            font-size: {{ $next_prayer_name_font_size }} !important;
+                                            opacity: 0.8;
+                                            color: {{ $prayerStyling['next_prayer_name_color'] ?? '#666666' }} !important;
+                                        "></span>
+                                    </div>
                                 </div>
                             @endif
                         @elseif($useBoxesStyling && isset($boxSettings['note_prayer_box']))
@@ -320,15 +314,19 @@
                                 padding: {{ $noteStyling['padding'] ?? '10px' }};
                                 margin-top: 15px;
                             ">
-                                <div class="next-prayer-text" style="margin-bottom: 8px; font-weight: bold;">{{ $noteContent['text'] ?? 'Next prayer in:' }}</div>
-                                <div id="next-prayer-countdown" class="next-prayer-countdown" style="font-size: 1.4rem; font-weight: bold;">--:--:--</div>
-                                <div id="next-prayer-name" class="next-prayer-name" style="font-size: 0.9rem; margin-top: 5px; opacity: 0.8;">Calculating...</div>
+                                <div class="next-prayer-line">
+                                    <span class="next-prayer-text" style="font-weight: bold;">{{ $noteContent['text'] ?? 'Next prayer in:' }}</span>
+                                    <span id="next-prayer-countdown" class="next-prayer-countdown" style="font-size: 1.4rem; font-weight: bold;">--:--:--</span>
+                                    <span id="next-prayer-name" class="next-prayer-name" style="font-size: 0.9rem; opacity: 0.8;"></span>
+                                </div>
                             </div>
                         @else
                             <div class="next-prayer-info" style="margin-top: 15px; text-align: center;">
-                                <div class="next-prayer-text" style="margin-bottom: 8px; font-weight: bold;">Next prayer in:</div>
-                                <div id="next-prayer-countdown" class="next-prayer-countdown" style="font-size: 1.4rem; font-weight: bold;">--:--:--</div>
-                                <div id="next-prayer-name" class="next-prayer-name" style="font-size: 0.9rem; margin-top: 5px; opacity: 0.8;">Calculating...</div>
+                                <div class="next-prayer-line">
+                                    <span class="next-prayer-text" style="font-weight: bold;">Next prayer in:</span>
+                                    <span id="next-prayer-countdown" class="next-prayer-countdown" style="font-size: 1.4rem; font-weight: bold;">--:--:--</span>
+                                    <span id="next-prayer-name" class="next-prayer-name" style="font-size: 0.9rem; opacity: 0.8;"></span>
+                                </div>
                             </div>
                         @endif
                     @else
@@ -455,8 +453,15 @@
                             </div>
                         @endif
                     </div>
+                    {{-- Posters/media only cover this announcements box — not prayer times, header, or special times --}}
+                    {!! $mediaOverlayMarkup !!}
                 </div>
             </div>
+            @else
+                {{-- Announcements box hidden: keep overlay host in DOM for media JS (still not fullscreen) --}}
+                <div class="media-overlay-host" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden;">
+                    {!! $mediaOverlayMarkup !!}
+                </div>
             @endif
             </div>
         </div>
@@ -464,6 +469,24 @@
         <!-- Bottom Additional Times -->
     @php $__showSpecialTimes = (!$useBoxesStyling) ? (!isset($activeBoxTypes) || in_array('special_times_box', $activeBoxTypes)) : isset($boxSettings['special_times_box']); @endphp
     @if($__showSpecialTimes)
+        @php
+            if (!isset($displayedSpecialTimes)) {
+                $displayedSpecialTimes = \App\Support\PrayerTimeDisplayRollover::resolveSpecialTimes(
+                    $prayerTimes ?? null,
+                    $tomorrowPrayerTimes ?? null,
+                    $now ?? null
+                );
+            }
+            $displayedSpecialTimeValues = [
+                'sehri_ends' => \App\Support\PrayerTimeDisplayRollover::formatDisplayTime($displayedSpecialTimes['sehri_ends'] ?? null),
+                'sun_rise' => \App\Support\PrayerTimeDisplayRollover::formatDisplayTime($displayedSpecialTimes['sun_rise'] ?? null),
+                'noon' => \App\Support\PrayerTimeDisplayRollover::formatDisplayTime($displayedSpecialTimes['noon'] ?? null),
+                'jumah_1' => \App\Support\PrayerTimeDisplayRollover::formatDisplayTime($displayedSpecialTimes['jumah_1'] ?? null),
+                'jumah_2' => \App\Support\PrayerTimeDisplayRollover::formatDisplayTime($displayedSpecialTimes['jumah_2'] ?? null),
+                'eid_prayer_1' => \App\Support\PrayerTimeDisplayRollover::formatDisplayTime($displayedSpecialTimes['eid_prayer_1'] ?? null),
+                'eid_prayer_2' => \App\Support\PrayerTimeDisplayRollover::formatDisplayTime($displayedSpecialTimes['eid_prayer_2'] ?? null),
+            ];
+        @endphp
         @if($useBoxesStyling && isset($boxSettings['special_times_box']))
             @php
                 $specialBox = $boxSettings['special_times_box'] ?? null;
@@ -480,7 +503,8 @@
                 font-size: {{ $specialFontSize }};
                 border: {{ $specialStyling['border_width'] ?? '2px' }} solid {{ $specialStyling['border_color'] ?? '#000000' }};
                 border-radius: 0px;
-                padding: 10px 15px;
+                padding-top: 10px;
+                padding-bottom: 10px;
                 text-align: center;
                 margin: 0;
             ">
@@ -488,9 +512,11 @@
                     <div class="col p-0">
                         <div class="additional-times" style="
                             display: grid;
-                            grid-template-columns: {{ implode(' ', $specialLayout['column_widths'] ?? ['14%', '14%', '14%', '14%', '14%', '15%', '15%']) }};
-                            gap: 10px;
-                            align-items: center;
+                            grid-template-columns: repeat(7, minmax(0, 1fr));
+                            gap: var(--card-gap, 10px);
+                            align-items: stretch;
+                            width: 100%;
+                            box-sizing: border-box;
                             font-size: {{ $specialFontSize }};
                         ">
                             @php
@@ -503,15 +529,14 @@
                                     $specialTimesContent['eid_prayer_1_title'] ?? 'Eid Prayer 1',
                                     $specialTimesContent['eid_prayer_2_title'] ?? 'Eid Prayer 2'
                                 ];
-                                $timeFormat = 'h:i';
                                 $times = [
-                                    $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr)->format($timeFormat) : '--:--',
-                                    $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->sun_rise)->format($timeFormat) : '--:--',
-                                    $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar)->format($timeFormat) : '--:--',
-                                    $prayerTimes && $prayerTimes->jumah_1 ? \Carbon\Carbon::parse($prayerTimes->jumah_1)->format($timeFormat) : '--:--',
-                                    $prayerTimes && $prayerTimes->jumah_2 ? \Carbon\Carbon::parse($prayerTimes->jumah_2)->format($timeFormat) : '--:--',
-                                    $prayerTimes && $prayerTimes->eid_prayer_1 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_1)->format($timeFormat) : '--:--',
-                                    $prayerTimes && $prayerTimes->eid_prayer_2 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_2)->format($timeFormat) : '--:--'
+                                    $displayedSpecialTimeValues['sehri_ends'],
+                                    $displayedSpecialTimeValues['sun_rise'],
+                                    $displayedSpecialTimeValues['noon'],
+                                    $displayedSpecialTimeValues['jumah_1'],
+                                    $displayedSpecialTimeValues['jumah_2'],
+                                    $displayedSpecialTimeValues['eid_prayer_1'],
+                                    $displayedSpecialTimeValues['eid_prayer_2'],
                                 ];
                             @endphp
                             <div class="time-item">
@@ -548,36 +573,36 @@
             </div>
         @elseif(!$useBoxesStyling)
             <div class="board-bottom-times" data-box-root="special_times_box">
-                <div class="row">
-                    <div class="col">
+                <div class="row m-0">
+                    <div class="col p-0">
                         <div class="additional-times">
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['sehri_ends_title'] ?? 'Sehri Ends' }}</div>
-                                <div class="time-value" data-special-time="sehri_ends">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="sehri_ends">{{ $displayedSpecialTimeValues['sehri_ends'] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['sun_rise_title'] ?? 'Sun Rise' }}</div>
-                                <div class="time-value" data-special-time="sun_rise">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->sun_rise)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="sun_rise">{{ $displayedSpecialTimeValues['sun_rise'] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['noon_title'] ?? 'Noon' }}</div>
-                                <div class="time-value" data-special-time="noon">{{ $prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="noon">{{ $displayedSpecialTimeValues['noon'] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['jumah_1_title'] ?? 'Jumu\'ah 1' }}</div>
-                                <div class="time-value" data-special-time="jumah_1">{{ $prayerTimes && $prayerTimes->jumah_1 ? \Carbon\Carbon::parse($prayerTimes->jumah_1)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="jumah_1">{{ $displayedSpecialTimeValues['jumah_1'] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['jumah_2_title'] ?? 'Jumu\'ah 2' }}</div>
-                                <div class="time-value" data-special-time="jumah_2">{{ $prayerTimes && $prayerTimes->jumah_2 ? \Carbon\Carbon::parse($prayerTimes->jumah_2)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="jumah_2">{{ $displayedSpecialTimeValues['jumah_2'] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['eid_prayer_1_title'] ?? 'Eid Prayer 1' }}</div>
-                                <div class="time-value" data-special-time="eid_prayer_1">{{ $prayerTimes && $prayerTimes->eid_prayer_1 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_1)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="eid_prayer_1">{{ $displayedSpecialTimeValues['eid_prayer_1'] }}</div>
                             </div>
                             <div class="time-item">
                                 <div class="time-label">{{ $specialTimesContent['eid_prayer_2_title'] ?? 'Eid Prayer 2' }}</div>
-                                <div class="time-value" data-special-time="eid_prayer_2">{{ $prayerTimes && $prayerTimes->eid_prayer_2 ? \Carbon\Carbon::parse($prayerTimes->eid_prayer_2)->format('h:i') : '--:--' }}</div>
+                                <div class="time-value" data-special-time="eid_prayer_2">{{ $displayedSpecialTimeValues['eid_prayer_2'] }}</div>
                             </div>
                         </div>
                     </div>
@@ -711,11 +736,50 @@
 
 <style>
     /* Header layout fixes: keep time/dates on one line and prevent fullscreen button from squeezing Hijri date */
+    #header-box .row {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        align-items: center !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    #header-box .col-md-4 {
+        min-width: 0 !important;
+        width: auto !important;
+        max-width: none !important;
+        overflow: hidden !important;
+    }
+
+    #header-box .col-md-4:first-child {
+        justify-content: flex-start !important;
+    }
+
+    #header-box .col-md-4:last-child {
+        justify-content: flex-end !important;
+    }
+
+    #header-box .current-time-display,
+    #header-box .date-display,
+    #header-box .islamic-date-display {
+        min-width: 0;
+        max-width: 100%;
+    }
+
     #header-box .current-time-display,
     #header-box .time-large,
     #header-box .gregorian-date,
     #header-box .islamic-date {
         white-space: nowrap;
+    }
+
+    #header-box .time-large {
+        font-size: var(--header-time-font-size, 3rem) !important;
+    }
+
+    #header-box .gregorian-date,
+    #header-box .islamic-date {
+        font-size: var(--header-date-font-size, 2.75rem) !important;
     }
 
     #header-box .header-right {
@@ -767,6 +831,37 @@
     [data-box-root="special_times_box"] {
         order: 40 !important;
         flex: 0 0 auto !important;
+        padding-left: var(--page-horizontal-padding) !important;
+        padding-right: var(--page-horizontal-padding) !important;
+        box-sizing: border-box !important;
+    }
+
+    [data-box-root="special_times_box"] .additional-times {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        display: grid !important;
+        grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+        gap: var(--card-gap, 10px) !important;
+        align-items: stretch !important;
+    }
+
+    [data-box-root="special_times_box"] .additional-times .time-item {
+        min-width: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+        padding: var(--cell-padding-y, 10px) var(--cell-padding-x, 12px) !important;
+    }
+
+    [data-box-root="special_times_box"] .time-label,
+    [data-box-root="special_times_box"] .time-value {
+        text-align: center !important;
+        width: 100% !important;
     }
 
     [data-box-root="welcome_box"] {
@@ -853,9 +948,9 @@
         margin: 0 !important;
         overflow: hidden !important;
         padding-top: 0 !important;
-        padding-left: var(--board-column-padding, clamp(15px, 2.5vh, 25px)) !important;
-        padding-right: var(--board-column-padding, clamp(15px, 2.5vh, 25px)) !important;
-        padding-bottom: var(--board-column-padding, clamp(15px, 2.5vh, 25px)) !important;
+        padding-left: var(--page-horizontal-padding) !important;
+        padding-right: var(--page-horizontal-padding) !important;
+        padding-bottom: var(--page-horizontal-padding) !important;
         border-top-width: 0 !important;
     }
 
@@ -869,14 +964,31 @@
     }
 
     .prayer-list {
-        gap: clamp(4px, 0.8vh, 10px) !important;
+        gap: var(--section-gap, clamp(8px, 1vh, 14px)) !important;
+        padding-right: 0 !important;
     }
 
     .prayer-row {
         gap: 6px !important;
-        margin-bottom: 4px !important;
-        padding-top: clamp(4px, 0.8vh, 8px) !important;
-        padding-bottom: clamp(4px, 0.8vh, 8px) !important;
+        margin-bottom: 0 !important;
+        padding-top: var(--cell-padding-y, clamp(10px, 1vh, 16px)) !important;
+        padding-bottom: var(--cell-padding-y, clamp(10px, 1vh, 16px)) !important;
+        padding-left: var(--cell-padding-x, clamp(24px, 1.5vw, 48px)) !important;
+        padding-right: var(--cell-padding-x, clamp(24px, 1.5vw, 48px)) !important;
+        box-sizing: border-box !important;
+        align-items: center !important;
+    }
+
+    .prayer-name {
+        text-align: left !important;
+        padding-left: 0 !important;
+        padding-right: 0.35em !important;
+        box-sizing: border-box !important;
+    }
+
+    .prayer-time,
+    .prayer-jamaat {
+        text-align: center !important;
     }
 
     .announcements-content,
@@ -896,42 +1008,43 @@
         min-height: var(--board-header-row-height, auto);
     }
 
-    /* Next Prayer Info Container - Prevent overflow and ensure proper spacing */
+    /* Next Prayer Info — single-line layout */
     .next-prayer-info {
-        max-height: 350px !important;
-        overflow: hidden !important;
-        word-wrap: break-word !important;
-        word-break: break-word !important;
-        line-height: 1.3 !important;
-    }
-
-    /* Next Prayer Text - Prevent font size from pushing content */
-    .next-prayer-text {
-        display: block !important;
-        white-space: normal !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        max-width: 100% !important;
-    }
-
-    /* Countdown Timer - Handle large font sizes */
-    .next-prayer-countdown {
-        display: block !important;
-        word-break: break-all !important;
-        max-width: 100% !important;
-        overflow: hidden !important;
+        max-height: none !important;
+        overflow: visible !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
         line-height: 1.2 !important;
-        padding: 0 5px !important;
     }
 
-    /* Prayer Name - Ensure it fits */
+    .next-prayer-line {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: baseline !important;
+        justify-content: center !important;
+        gap: 0.35em !important;
+        max-width: 100% !important;
+    }
+
+    .next-prayer-text,
+    .next-prayer-countdown,
     .next-prayer-name {
-        display: block !important;
-        white-space: normal !important;
+        display: inline !important;
+        margin: 0 !important;
+        white-space: nowrap !important;
+        max-width: 100% !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
-        max-width: 100% !important;
-        margin-top: 5px !important;
+        line-height: 1.2 !important;
+    }
+
+    @media (max-width: 480px) {
+        .next-prayer-text,
+        .next-prayer-countdown,
+        .next-prayer-name {
+            white-space: normal !important;
+        }
     }
 
     /* Announcements Section - full height flex chain */
@@ -1123,7 +1236,9 @@
 @section('scripts')
 <script src="{{ asset('js/announcement-scroll.js') }}?v={{ filemtime(public_path('js/announcement-scroll.js')) }}"></script>
 @php
+    use App\Support\PrayerAdhanTime;
     use App\Support\PrayerJamaatTime;
+    use App\Support\PrayerTimeDisplayRollover;
 
     // Today's prayer times (resolved jamaat / iqamah values)
     $prayerTimesJson = [
@@ -1172,16 +1287,45 @@
     
     // Adhan times
     $adhanTimesJson = [
-        'fajr_adhan' => $prayerTimes && $prayerTimes->fajr_adhan ? \Carbon\Carbon::parse($prayerTimes->fajr_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->fajr)->format('H:i') : null),
-        'zohar_adhan' => $prayerTimes && $prayerTimes->zohar_adhan ? \Carbon\Carbon::parse($prayerTimes->zohar_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->zohar)->format('H:i') : null),
-        'asr_adhan' => $prayerTimes && $prayerTimes->asr_adhan ? \Carbon\Carbon::parse($prayerTimes->asr_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->asr)->format('H:i') : null),
-        'maghrib_adhan' => $prayerTimes && $prayerTimes->maghrib_adhan ? \Carbon\Carbon::parse($prayerTimes->maghrib_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->maghrib)->format('H:i') : null),
-        'isha_adhan' => $prayerTimes && $prayerTimes->isha_adhan ? \Carbon\Carbon::parse($prayerTimes->isha_adhan)->format('H:i') : ($prayerTimes ? \Carbon\Carbon::parse($prayerTimes->isha)->format('H:i') : null),
+        'fajr_adhan' => $prayerTimes ? PrayerAdhanTime::resolve($prayerTimes, 'fajr')?->format('H:i') : null,
+        'zohar_adhan' => $prayerTimes ? PrayerAdhanTime::resolve($prayerTimes, 'zohar')?->format('H:i') : null,
+        'asr_adhan' => $prayerTimes ? PrayerAdhanTime::resolve($prayerTimes, 'asr')?->format('H:i') : null,
+        'maghrib_adhan' => $prayerTimes ? PrayerAdhanTime::resolve($prayerTimes, 'maghrib')?->format('H:i') : null,
+        'isha_adhan' => $prayerTimes ? PrayerAdhanTime::resolve($prayerTimes, 'isha')?->format('H:i') : null,
     ];
-    $displayTimezone = $settings['timezone'] ?? config('app.timezone', 'Europe/London');
+
+    $tomorrowAdhanTimesJson = [
+        'fajr_adhan' => $tomorrowPrayerTimes ? PrayerAdhanTime::resolve($tomorrowPrayerTimes, 'fajr')?->format('H:i') : null,
+        'zohar_adhan' => $tomorrowPrayerTimes ? PrayerAdhanTime::resolve($tomorrowPrayerTimes, 'zohar')?->format('H:i') : null,
+        'asr_adhan' => $tomorrowPrayerTimes ? PrayerAdhanTime::resolve($tomorrowPrayerTimes, 'asr')?->format('H:i') : null,
+        'maghrib_adhan' => $tomorrowPrayerTimes ? PrayerAdhanTime::resolve($tomorrowPrayerTimes, 'maghrib')?->format('H:i') : null,
+        'isha_adhan' => $tomorrowPrayerTimes ? PrayerAdhanTime::resolve($tomorrowPrayerTimes, 'isha')?->format('H:i') : null,
+    ];
+
+    $todaySpecialTimesJson = [
+        'sehri_ends' => $prayerTimes ? PrayerTimeDisplayRollover::formatClockHms($prayerTimes->fajr ?? null) : null,
+        'sun_rise' => $prayerTimes ? PrayerTimeDisplayRollover::formatClockHms($prayerTimes->sun_rise ?? null) : null,
+        'noon' => $prayerTimes ? PrayerTimeDisplayRollover::formatClockHms($prayerTimes->zohar ?? null) : null,
+        'jumah_1' => $prayerTimes ? PrayerTimeDisplayRollover::formatClockHms($prayerTimes->jumah_1 ?? null) : null,
+        'jumah_2' => $prayerTimes ? PrayerTimeDisplayRollover::formatClockHms($prayerTimes->jumah_2 ?? null) : null,
+        'eid_prayer_1' => $prayerTimes ? PrayerTimeDisplayRollover::formatClockHms($prayerTimes->eid_prayer_1 ?? null) : null,
+        'eid_prayer_2' => $prayerTimes ? PrayerTimeDisplayRollover::formatClockHms($prayerTimes->eid_prayer_2 ?? null) : null,
+    ];
+
+    $tomorrowSpecialTimesJson = [
+        'sehri_ends' => $tomorrowPrayerTimes ? PrayerTimeDisplayRollover::formatClockHms($tomorrowPrayerTimes->fajr ?? null) : null,
+        'sun_rise' => $tomorrowPrayerTimes ? PrayerTimeDisplayRollover::formatClockHms($tomorrowPrayerTimes->sun_rise ?? null) : null,
+        'noon' => $tomorrowPrayerTimes ? PrayerTimeDisplayRollover::formatClockHms($tomorrowPrayerTimes->zohar ?? null) : null,
+        'jumah_1' => $tomorrowPrayerTimes ? PrayerTimeDisplayRollover::formatClockHms($tomorrowPrayerTimes->jumah_1 ?? null) : null,
+        'jumah_2' => $tomorrowPrayerTimes ? PrayerTimeDisplayRollover::formatClockHms($tomorrowPrayerTimes->jumah_2 ?? null) : null,
+        'eid_prayer_1' => $tomorrowPrayerTimes ? PrayerTimeDisplayRollover::formatClockHms($tomorrowPrayerTimes->eid_prayer_1 ?? null) : null,
+        'eid_prayer_2' => $tomorrowPrayerTimes ? PrayerTimeDisplayRollover::formatClockHms($tomorrowPrayerTimes->eid_prayer_2 ?? null) : null,
+    ];
+    $displayTimezone = \App\Support\MosqueTimezone::resolve(config('app.timezone', 'Europe/London'));
 @endphp
 <script>
     const APP_DISPLAY_TIMEZONE = @json($displayTimezone);
+    const COUNTDOWN_POPUP_MAX_SECONDS = {{ \App\Support\PrayerCountdownWindows::DURATION_SECONDS }};
     // Prayer times data from PHP
     const prayerTimesData = @json($prayerTimesJson);
     const todayBeginningTimes = @json($todayBeginningTimesJson);
@@ -1189,10 +1333,11 @@
     const tomorrowBeginningTimes = @json($tomorrowBeginningTimesJson);
     const jamaatOffsets = @json($jamaatOffsetsJson);
     const adhanTimesData = @json($adhanTimesJson);
+    const tomorrowAdhanTimesData = @json($tomorrowAdhanTimesJson);
     
     // Store special times for today/tomorrow
-    let todaySpecialTimesData = {};
-    let tomorrowSpecialTimesData = {};
+    let todaySpecialTimesData = @json($todaySpecialTimesJson);
+    let tomorrowSpecialTimesData = @json($tomorrowSpecialTimesJson);
     let originalTodaySpecialTimesData = {};
     
     // Store original today's times
@@ -1237,6 +1382,28 @@
         };
     }
 
+    function clockToSecondsSinceMidnight(clock) {
+        return (clock.hours * 3600) + (clock.minutes * 60) + clock.seconds;
+    }
+
+    function timeStringToSecondsSinceMidnight(time24) {
+        if (!time24) {
+            return null;
+        }
+
+        const [hours, minutes, seconds = 0] = time24.split(':').map(Number);
+        return (hours * 3600) + (minutes * 60) + seconds;
+    }
+
+    function formatCountdownSeconds(totalSeconds) {
+        const remaining = Math.max(0, totalSeconds);
+        const hours = Math.floor(remaining / 3600);
+        const minutes = Math.floor((remaining % 3600) / 60);
+        const seconds = remaining % 60;
+
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
     // Update next prayer countdown (uses mosque timezone + jamaat times)
     function updateNextPrayerCountdown() {
         const countdownElement = document.getElementById('next-prayer-countdown');
@@ -1245,13 +1412,11 @@
         if (!countdownElement || !prayerNameElement) return;
         
         const clock = getAppClockParts();
-        const currentTime = clock.hours * 60 + clock.minutes;
+        const nowSeconds = clockToSecondsSinceMidnight(clock);
         
         let nextPrayer = null;
-        let nextPrayerTime = null;
-        let nextPrayerMinutes = null;
+        let targetSeconds = null;
         
-        // Convert prayer times to minutes since midnight
         const prayers = [
             { name: 'Fajr', key: 'fajr', time: prayerTimesData.fajr },
             { name: 'Zohar', key: 'zohar', time: prayerTimesData.zohar },
@@ -1262,35 +1427,33 @@
         
         for (const prayer of prayers) {
             if (!prayer.time) continue;
-            
-            const [hours, minutes] = prayer.time.split(':').map(Number);
-            const prayerMinutes = hours * 60 + minutes;
-            
-            if (prayerMinutes > currentTime) {
+
+            const prayerSeconds = timeStringToSecondsSinceMidnight(prayer.time);
+            if (prayerSeconds === null) continue;
+
+            if (prayerSeconds > nowSeconds) {
                 nextPrayer = prayer.name;
-                nextPrayerMinutes = prayerMinutes;
+                targetSeconds = prayerSeconds;
                 break;
             }
         }
         
         // If no prayer found today, next prayer is tomorrow's Fajr
-        if (!nextPrayer && prayerTimesData.fajr) {
-            nextPrayer = 'Fajr';
-            const [hours, minutes] = prayerTimesData.fajr.split(':').map(Number);
-            nextPrayerMinutes = (24 * 60) + (hours * 60 + minutes);
+        if (!nextPrayer) {
+            const tomorrowFajr = tomorrowPrayerTimesData?.fajr || prayerTimesData.fajr;
+            const tomorrowFajrSeconds = timeStringToSecondsSinceMidnight(tomorrowFajr);
+            if (tomorrowFajrSeconds !== null) {
+                nextPrayer = 'Fajr';
+                targetSeconds = tomorrowFajrSeconds + (24 * 3600);
+            }
         }
         
-        if (nextPrayer && nextPrayerMinutes !== null) {
-            const minutesUntilPrayer = nextPrayerMinutes - currentTime;
-            const hoursUntil = Math.floor(minutesUntilPrayer / 60);
-            const minutesUntil = Math.floor(minutesUntilPrayer % 60);
-            const secondsUntil = 60 - clock.seconds;
-            
-            countdownElement.textContent = `${hoursUntil.toString().padStart(2, '0')}:${minutesUntil.toString().padStart(2, '0')}:${secondsUntil.toString().padStart(2, '0')}`;
-            prayerNameElement.textContent = nextPrayer;
+        if (nextPrayer && targetSeconds !== null) {
+            countdownElement.textContent = formatCountdownSeconds(targetSeconds - nowSeconds);
+            prayerNameElement.textContent = `(${nextPrayer})`;
         } else {
             countdownElement.textContent = '--:--:--';
-            prayerNameElement.textContent = 'No prayer times available';
+            prayerNameElement.textContent = '';
         }
     }
     
@@ -1323,9 +1486,103 @@
         };
     }
 
+    const PRAYER_NAMES = ['fajr', 'zohar', 'asr', 'maghrib', 'isha'];
+    const SPECIAL_TIME_ROLLOVER_PRAYERS = {
+        sehri_ends: 'fajr',
+        noon: 'zohar',
+    };
+
+    function hasJamaatPassed(prayerName, nowSeconds) {
+        const todayJamaat = prayerTimesData[prayerName];
+        const jamaatSeconds = timeStringToSecondsSinceMidnight(todayJamaat);
+        if (jamaatSeconds === null) {
+            return false;
+        }
+
+        return nowSeconds >= jamaatSeconds;
+    }
+
+    function shouldRollSpecialTime(key, nowSeconds) {
+        const linkedPrayer = SPECIAL_TIME_ROLLOVER_PRAYERS[key];
+        if (linkedPrayer) {
+            return hasJamaatPassed(linkedPrayer, nowSeconds);
+        }
+
+        const todayValue = todaySpecialTimesData[key];
+        const valueSeconds = timeStringToSecondsSinceMidnight(todayValue);
+        if (valueSeconds === null) {
+            return false;
+        }
+
+        return nowSeconds >= valueSeconds;
+    }
+
+    function resolveDisplayedPrayerRow(prayerName, nowSeconds) {
+        const useTomorrow = hasJamaatPassed(prayerName, nowSeconds) && tomorrowPrayerTimesData[prayerName];
+
+        return {
+            beginning: formatTimeForDisplay(useTomorrow ? tomorrowBeginningTimes[prayerName] : todayBeginningTimes[prayerName]),
+            jamaat: formatTimeForDisplay(useTomorrow ? tomorrowPrayerTimesData[prayerName] : prayerTimesData[prayerName]),
+            adhan: formatTimeForDisplay(
+                useTomorrow
+                    ? (tomorrowAdhanTimesData[`${prayerName}_adhan`] || tomorrowBeginningTimes[prayerName])
+                    : (adhanTimesData[`${prayerName}_adhan`] || todayBeginningTimes[prayerName])
+            ),
+        };
+    }
+
+    function resolveDisplayedSpecialTimes(nowSeconds) {
+        const keys = ['sehri_ends', 'sun_rise', 'noon', 'jumah_1', 'jumah_2', 'eid_prayer_1', 'eid_prayer_2'];
+        const displayed = {};
+
+        keys.forEach((key) => {
+            const useTomorrow = shouldRollSpecialTime(key, nowSeconds) && tomorrowSpecialTimesData[key];
+            const value = useTomorrow ? tomorrowSpecialTimesData[key] : todaySpecialTimesData[key];
+            displayed[key] = formatTimeForDisplay(value);
+        });
+
+        return displayed;
+    }
+
+    function updatePrayerTimesDisplay() {
+        const nowSeconds = clockToSecondsSinceMidnight(getAppClockParts());
+
+        PRAYER_NAMES.forEach((prayerName) => {
+            const row = resolveDisplayedPrayerRow(prayerName, nowSeconds);
+            const prayerRow = document.querySelector(`[data-prayer-name="${prayerName}"]`);
+            if (!prayerRow) {
+                return;
+            }
+
+            const beginningElement = prayerRow.querySelector('[data-time-type="beginning"]');
+            const jamaatElement = prayerRow.querySelector('[data-time-type="jamaat"]');
+
+            if (beginningElement && beginningElement.textContent !== row.beginning) {
+                beginningElement.textContent = row.beginning;
+            }
+
+            if (jamaatElement && jamaatElement.textContent !== row.jamaat) {
+                jamaatElement.textContent = row.jamaat;
+            }
+        });
+
+        const specialTimes = resolveDisplayedSpecialTimes(nowSeconds);
+        Object.entries(specialTimes).forEach(([key, formatted]) => {
+            document.querySelectorAll(`[data-special-time="${key}"]`).forEach((element) => {
+                if (element.textContent !== formatted) {
+                    element.textContent = formatted;
+                }
+            });
+        });
+    }
+
     // Update countdown every second
-    setInterval(updateNextPrayerCountdown, 1000);
+    setInterval(() => {
+        updateNextPrayerCountdown();
+        updatePrayerTimesDisplay();
+    }, 1000);
     updateNextPrayerCountdown(); // Initial call
+    updatePrayerTimesDisplay();
     
     // ========== AUTOMATIC DATE AND TIME UPDATE ==========
     let lastKnownDate = new Date().toISOString().slice(0, 10);
@@ -1799,7 +2056,13 @@
         }
     }
 
+    // Verbose TV diagnostics only when APP_DEBUG=true (never spam production mosque displays).
+    const TV_DEBUG = @json((bool) config('app.debug'));
+
     function debugLog(scope, message, details = {}) {
+        if (!TV_DEBUG) {
+            return;
+        }
         console.log(`[tv-dashboard][${scope}] ${message}`, details);
     }
 
@@ -1853,6 +2116,41 @@
     function toPositiveInteger(value, fallback = 0) {
         const parsed = Number(value);
         return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+    }
+
+    function clampCountdownSeconds(value, maxSeconds = COUNTDOWN_POPUP_MAX_SECONDS) {
+        const parsed = toPositiveInteger(value, 0);
+        const max = toPositiveInteger(maxSeconds, COUNTDOWN_POPUP_MAX_SECONDS);
+
+        return Math.max(0, Math.min(max, parsed));
+    }
+
+    function parseCountdownTargetMs(isoString) {
+        if (!isoString) {
+            return NaN;
+        }
+
+        const direct = Date.parse(isoString);
+        if (!Number.isNaN(direct)) {
+            return direct;
+        }
+
+        const match = String(isoString).match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2})/);
+        if (!match) {
+            return NaN;
+        }
+
+        const probe = new Date(`${match[1]}T${match[2]}`);
+        if (Number.isNaN(probe.getTime())) {
+            return NaN;
+        }
+
+        const offsetMinutes = -probe.getTimezoneOffset();
+        const sign = offsetMinutes >= 0 ? '+' : '-';
+        const abs = Math.abs(offsetMinutes);
+        const offset = `${sign}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`;
+
+        return Date.parse(`${match[1]}T${match[2]}${offset}`);
     }
 
     function minutesToTime(minutesSinceMidnight) {
@@ -2576,12 +2874,20 @@
 
     function applyBoardColumnPadding(paddingValue) {
         const mainContent = document.querySelector('.board-main-content');
+        const container = document.querySelector('.unified-container');
         if (!mainContent) {
             return;
         }
 
         const padding = normalizeCssValue(paddingValue, 'px') || '15px';
         mainContent.style.setProperty('--board-column-padding', padding);
+        if (container) {
+            container.style.setProperty('--board-column-padding', padding);
+            // Keep --page-horizontal-padding on the CSS max() floor so tiny admin
+            // paddings do not collapse equal outer margins on the special-times row.
+            container.style.removeProperty('--page-horizontal-padding');
+        }
+        mainContent.style.removeProperty('--page-horizontal-padding');
 
         ['prayer-times-section', 'announcements-section'].forEach((sectionId) => {
             const section = document.getElementById(sectionId);
@@ -2746,9 +3052,11 @@
             infoBlock = document.createElement('div');
             infoBlock.className = 'next-prayer-info';
             infoBlock.innerHTML = `
-                <div class="next-prayer-text">Next prayer in:</div>
-                <div id="next-prayer-countdown" class="next-prayer-countdown">--:--:--</div>
-                <div id="next-prayer-name" class="next-prayer-name">Calculating...</div>
+                <div class="next-prayer-line">
+                    <span class="next-prayer-text">Next prayer in:</span>
+                    <span id="next-prayer-countdown" class="next-prayer-countdown">--:--:--</span>
+                    <span id="next-prayer-name" class="next-prayer-name"></span>
+                </div>
             `;
             prayerBody.appendChild(infoBlock);
         }
@@ -2773,7 +3081,6 @@
             || infoBlock.querySelector('.next-prayer-name');
 
         if (label) {
-            label.style.setProperty('margin-bottom', '8px', 'important');
             label.style.setProperty('font-weight', 'bold', 'important');
             label.style.setProperty(
                 'font-size',
@@ -2799,7 +3106,6 @@
                 normalizeBladeRemFontSize(styling.next_prayer_name_font_size, '0.9rem'),
                 'important'
             );
-            prayerName.style.setProperty('margin-top', '5px', 'important');
             prayerName.style.setProperty('opacity', '0.8', 'important');
             prayerName.style.setProperty('color', styling.next_prayer_name_color || '#666666', 'important');
         }
@@ -2839,11 +3145,21 @@
                 }
                 setStyleValue(header, 'border-radius', styling.border_radius);
                 document.querySelectorAll('#current-time').forEach((node) => {
-                    node.style.fontSize = normalizeBladeRemFontSize(styling.time_font_size, '3rem');
+                    node.style.removeProperty('font-size');
                 });
                 document.querySelectorAll('#gregorian-date, #islamic-date').forEach((node) => {
-                    node.style.fontSize = normalizeBladeRemFontSize(styling.date_font_size, '2.75rem');
+                    node.style.removeProperty('font-size');
                 });
+                if (header) {
+                    header.style.setProperty(
+                        '--header-time-font-size',
+                        normalizeBladeRemFontSize(styling.time_font_size, '3rem')
+                    );
+                    header.style.setProperty(
+                        '--header-date-font-size',
+                        normalizeBladeRemFontSize(styling.date_font_size, '2.75rem')
+                    );
+                }
             }
 
             if (boxType === 'prayer_times_box') {
@@ -3005,7 +3321,9 @@
                 if (section && Array.isArray(layout.column_widths) && layout.column_widths.length > 0) {
                     const grid = section.querySelector('.additional-times');
                     if (grid) {
-                        grid.style.gridTemplateColumns = layout.column_widths.join(' ');
+                        // Equal-width columns with gap-aware fr tracks (avoids % + gap overflow asymmetry)
+                        const count = Math.max(layout.column_widths.length, 7);
+                        grid.style.gridTemplateColumns = `repeat(${count}, minmax(0, 1fr))`;
                     }
                 }
             }
@@ -3124,20 +3442,23 @@
             adhanScreen.style.flexDirection = 'column';
             adhanScreen.style.alignItems = 'center';
             adhanScreen.style.justifyContent = 'center';
-            adhanScreen.style.height = '100vh';
+            adhanScreen.style.width = '100%';
+            adhanScreen.style.height = '100%';
             adhanScreen.style.background = '#000';
             adhanScreen.style.color = '#fff';
 
             const adhanTitle = document.createElement('div');
             adhanTitle.textContent = 'ADHAN';
-            adhanTitle.style.fontSize = '5rem';
+            adhanTitle.style.fontSize = 'clamp(2.5rem, 6vh, 5rem)';
             adhanTitle.style.fontWeight = 'bold';
             adhanTitle.style.letterSpacing = '0.2rem';
 
             const adhanSubtitle = document.createElement('div');
             adhanSubtitle.textContent = 'Prayer time has started';
-            adhanSubtitle.style.fontSize = '1.6rem';
+            adhanSubtitle.style.fontSize = 'clamp(1rem, 2.2vh, 1.6rem)';
             adhanSubtitle.style.marginTop = '1rem';
+            adhanSubtitle.style.textAlign = 'center';
+            adhanSubtitle.style.padding = '0 1rem';
 
             adhanScreen.appendChild(adhanTitle);
             adhanScreen.appendChild(adhanSubtitle);
@@ -3147,7 +3468,7 @@
 
         if (!mediaDom.image) {
             const image = document.createElement('img');
-            image.style.cssText = 'display: none; width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 1;';
+            image.style.cssText = 'display: none; width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1;';
             image.alt = '';
             mediaContent.appendChild(image);
             mediaDom.image = image;
@@ -3155,7 +3476,7 @@
 
         if (!mediaDom.video) {
             const video = document.createElement('video');
-            video.style.cssText = 'display: none; width: 100%; height: 100%; object-fit: contain;';
+            video.style.cssText = 'display: none; width: 100%; height: 100%; object-fit: cover;';
             video.autoplay = true;
             video.loop = true;
             video.muted = true;
@@ -3330,7 +3651,10 @@
         countdownVerification.phase = phase;
         countdownVerification.countdownStart = countdown.countdown_start || null;
         countdownVerification.countdownEnd = countdownEnd;
-        countdownVerification.serverSecondsAtStart = toPositiveInteger(countdown.seconds_remaining, 30);
+        countdownVerification.serverSecondsAtStart = clampCountdownSeconds(
+            countdown.seconds_remaining,
+            toPositiveInteger(countdown.countdown_duration, COUNTDOWN_POPUP_MAX_SECONDS)
+        );
 
         logCountdownDebug('start', {
             sessionKey,
@@ -3350,7 +3674,8 @@
             popupPrayer.textContent = prayerName;
         }
         if (popupTimer) {
-            const initialSeconds = toPositiveInteger(countdown.seconds_remaining, 30);
+            const maxDuration = toPositiveInteger(countdown.countdown_duration, COUNTDOWN_POPUP_MAX_SECONDS);
+            const initialSeconds = clampCountdownSeconds(countdown.seconds_remaining, maxDuration);
             popupTimer.textContent = String(initialSeconds).padStart(2, '0');
         }
 
@@ -3359,7 +3684,7 @@
         countdownPopup.style.top = '50%';
         countdownPopup.style.left = '50%';
         countdownPopup.style.transform = 'translate(-50%, -50%)';
-        startCountdownTimer(countdownEnd, phase);
+        startCountdownTimer(countdownEnd, phase, toPositiveInteger(countdown.countdown_duration, COUNTDOWN_POPUP_MAX_SECONDS));
     }
 
     function renderAdhanState() {
@@ -3377,6 +3702,26 @@
         overlay.style.display = 'flex';
     }
 
+    function scheduleMediaDurationRefresh(media, posterType) {
+        clearTimeout(mediaDisplayTimer);
+        mediaDisplayTimer = null;
+
+        const durationSec = toPositiveInteger(media && media.display_duration, 10);
+        const refreshDelayMs = Math.max(1000, durationSec * 1000 + 250);
+
+        mediaDisplayTimer = setTimeout(() => {
+            mediaDisplayTimer = null;
+            markUpdateSource('media-duration-expired', {
+                posterType,
+                mediaId: media && media.id ? media.id : null,
+                durationSec,
+                refreshDelayMs
+            });
+            requestMediaSync();
+            ensureMediaPollingTimer();
+        }, refreshDelayMs);
+    }
+
     function renderMediaState(media, posterType, mediaVersionToken = null) {
         const normalizedMedia = normalizeMediaPayload(media);
         const overlay = document.getElementById('media-overlay');
@@ -3391,17 +3736,24 @@
             && normalizedMedia
             && currentMediaData.id === normalizedMedia.id
             && currentMediaData.file_url === normalizedMedia.file_url
+            && currentMediaData.display_duration === normalizedMedia.display_duration
             && currentScreenState === 'MEDIA'
             && currentPosterType === posterType
             && currentMediaVersionToken === mediaVersionToken;
 
         if (isSameMedia) {
             overlay.style.display = 'flex';
+            // Single full-time posters loop forever with the same id — must keep the
+            // duration timer alive or the poster never advances / never re-syncs.
+            if (!mediaDisplayTimer) {
+                scheduleMediaDurationRefresh(normalizedMedia, posterType);
+            }
             return;
         }
 
         clearInterval(countdownTimer);
         clearTimeout(mediaDisplayTimer);
+        mediaDisplayTimer = null;
 
         currentMedia = normalizedMedia;
         currentMediaData = normalizedMedia;
@@ -3444,20 +3796,11 @@
         markRenderCause('render-media-state', {
             posterType,
             mediaId: normalizedMedia.id,
-            mediaType: normalizedMedia.type
+            mediaType: normalizedMedia.type,
+            displayDuration: normalizedMedia.display_duration
         });
         overlay.style.display = 'flex';
-
-        const refreshDelayMs = Math.max(1000, toPositiveInteger(normalizedMedia.display_duration, 3) * 1000 + 250);
-        mediaDisplayTimer = setTimeout(() => {
-            markUpdateSource('media-duration-expired', {
-                posterType,
-                mediaId: normalizedMedia.id,
-                refreshDelayMs
-            });
-            requestMediaSync();
-            ensureMediaPollingTimer();
-        }, refreshDelayMs);
+        scheduleMediaDurationRefresh(normalizedMedia, posterType);
     }
 
     function renderTimetableState() {
@@ -3482,8 +3825,8 @@
         ensureMediaPollingTimer();
     }
 
-    function startCountdownTimer(countdownEnd, phase) {
-        const targetTime = new Date(countdownEnd).getTime();
+    function startCountdownTimer(countdownEnd, phase, maxDurationSec = COUNTDOWN_POPUP_MAX_SECONDS) {
+        const targetTime = parseCountdownTargetMs(countdownEnd);
         if (Number.isNaN(targetTime)) {
             return;
         }
@@ -3492,14 +3835,15 @@
         let hasScheduledFinalize = false;
         let lastLoggedSecond = null;
         const startedAtMs = Date.now();
-        const expectedDurationSec = 30;
+        const expectedDurationSec = toPositiveInteger(maxDurationSec, COUNTDOWN_POPUP_MAX_SECONDS);
 
         function tick() {
             const now = Date.now();
             const distance = targetTime - now;
-            const secondsRemaining = distance > 0
+            const rawSeconds = distance > 0
                 ? Math.ceil(distance / 1000)
                 : 0;
+            const secondsRemaining = clampCountdownSeconds(rawSeconds, expectedDurationSec);
 
             const popupTimer = document.getElementById('countdown-popup-timer');
             if (popupTimer) {
@@ -3628,7 +3972,6 @@
 
         currentScreenState = nextState;
         currentPosterType = nextPosterType;
-        console.log('State updated:', nextState);
         debugLog('state', 'State updated', {
             state: nextState,
             posterType: nextPosterType,
@@ -3830,10 +4173,6 @@
         const tomorrowData = payload.tomorrow || {};
         const prayers = ['fajr', 'zohar', 'asr', 'maghrib', 'isha'];
 
-        todaySpecialTimesData = deriveSpecialTimes(todayData);
-        tomorrowSpecialTimesData = deriveSpecialTimes(tomorrowData);
-        originalTodaySpecialTimesData = { ...todaySpecialTimesData };
-
         prayers.forEach(prayerName => {
             const todayBeginning = todayData[prayerName] || null;
             const todayJamaat = computeJamaatTime(todayBeginning, todayData[`${prayerName}_jamaat`] || null, jamaatOffsets[prayerName]);
@@ -3847,27 +4186,14 @@
             originalTodayTimes.beginning[prayerName] = todayBeginning;
             originalTodayTimes.jamaat[prayerName] = todayJamaat;
             adhanTimesData[`${prayerName}_adhan`] = todayData[`${prayerName}_adhan`] || todayBeginning;
-
-            const prayerRow = document.querySelector(`[data-prayer-name="${prayerName}"]`);
-            if (!prayerRow) {
-                return;
-            }
-
-            const beginningElement = prayerRow.querySelector('[data-time-type="beginning"]');
-            const jamaatElement = prayerRow.querySelector('[data-time-type="jamaat"]');
-            const formattedBeginning = formatTimeForDisplay(todayBeginning);
-            const formattedJamaat = formatTimeForDisplay(todayJamaat);
-
-            if (beginningElement && beginningElement.textContent !== formattedBeginning) {
-                beginningElement.textContent = formattedBeginning;
-            }
-
-            if (jamaatElement && jamaatElement.textContent !== formattedJamaat) {
-                jamaatElement.textContent = formattedJamaat;
-            }
+            tomorrowAdhanTimesData[`${prayerName}_adhan`] = tomorrowData[`${prayerName}_adhan`] || tomorrowBeginning;
         });
 
-        updateSpecialTimesDisplay(todayData);
+        todaySpecialTimesData = deriveSpecialTimes(todayData);
+        tomorrowSpecialTimesData = deriveSpecialTimes(tomorrowData);
+        originalTodaySpecialTimesData = { ...todaySpecialTimesData };
+
+        updatePrayerTimesDisplay();
 
         if (payload.islamic_date) {
             updateIslamicDateDisplay(payload.islamic_date);

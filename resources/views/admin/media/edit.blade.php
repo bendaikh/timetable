@@ -51,6 +51,14 @@
                                     <div class="form-text">
                                         Leave empty to keep current file. Supported formats: JPG, PNG, GIF, MP4, AVI, MOV. Max size: 100MB
                                     </div>
+                                    <div class="alert alert-info mt-2 mb-0 py-2">
+                                        @php $posterSize = \App\Support\AnnouncementBoxGeometry::recommendation(); @endphp
+                                        Recommended poster size (announcement box only, object-fit: {{ $posterSize['object_fit'] }}):
+                                        <strong>{{ $posterSize['uhd_4k']['width'] }} × {{ $posterSize['uhd_4k']['height'] }} px</strong> on 4K (3840×2160),
+                                        <strong>{{ $posterSize['full_hd']['width'] }} × {{ $posterSize['full_hd']['height'] }} px</strong> on Full HD (1920×1080),
+                                        aspect ≈ <strong>{{ $posterSize['aspect_label'] }}</strong> portrait.
+                                        Keep important content inside a <strong>{{ $posterSize['safe_margin_pct'] }}% safe margin</strong> (cover may crop edges).
+                                    </div>
                                     @error('file')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
