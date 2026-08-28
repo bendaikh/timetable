@@ -12,6 +12,7 @@ use App\Support\PrayerJamaatTime;
 use App\Support\ScheduledMediaWindow;
 use App\Support\AnnouncementBoxGeometry;
 use App\Support\MediaScheduleDuration;
+use App\Support\ScheduleDaysOfWeek;
 use Carbon\Carbon;
 
 class MediaDisplayService
@@ -573,18 +574,6 @@ class MediaDisplayService
 
     private function isPivotMediaActiveForToday($media, Carbon $now): bool
     {
-        if (!$media->pivot->days_of_week) {
-            return true;
-        }
-
-        $daysOfWeek = is_string($media->pivot->days_of_week)
-            ? json_decode($media->pivot->days_of_week, true)
-            : $media->pivot->days_of_week;
-
-        if (empty($daysOfWeek)) {
-            return true;
-        }
-
-        return in_array($now->dayOfWeekIso, $daysOfWeek, true);
+        return ScheduleDaysOfWeek::isActiveToday($media->pivot->days_of_week, $now);
     }
 }

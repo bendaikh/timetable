@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\PrayerJamaatTime;
+use App\Support\ScheduleDaysOfWeek;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -54,12 +55,7 @@ class MediaSchedule extends Model
             return false;
         }
 
-        if (!$this->days_of_week) {
-            return true; // Active every day if no specific days set
-        }
-
-        $today = PrayerJamaatTime::now($now)->dayOfWeekIso; // 1-7 (Monday-Sunday)
-        return in_array($today, $this->days_of_week);
+        return ScheduleDaysOfWeek::isActiveToday($this->days_of_week, PrayerJamaatTime::now($now));
     }
 
     public function isActiveForPrayer(string $prayerName): bool

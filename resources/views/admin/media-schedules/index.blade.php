@@ -160,13 +160,7 @@
                                         </td>
                                         <td>
                                             @if($schedule->days_of_week)
-                                                @php
-                                                    $dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                                                    $selectedDays = collect($schedule->days_of_week)->map(function($day) use ($dayNames) {
-                                                        return $dayNames[$day - 1] ?? $day;
-                                                    })->join(', ');
-                                                @endphp
-                                                <small>{{ $selectedDays }}</small>
+                                                <small>{{ \App\Support\ScheduleDaysOfWeek::formatLabels($schedule->days_of_week) }}</small>
                                             @else
                                                 <span class="text-muted">All Days</span>
                                             @endif

@@ -110,13 +110,7 @@
                                     <td><strong>Days:</strong></td>
                                     <td>
                                         @if($mediaSchedule->days_of_week)
-                                            @php
-                                                $dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-                                                $selectedDays = collect($mediaSchedule->days_of_week)->map(function($day) use ($dayNames) {
-                                                    return $dayNames[$day - 1] ?? $day;
-                                                })->join(', ');
-                                            @endphp
-                                            {{ $selectedDays }}
+                                            {{ \App\Support\ScheduleDaysOfWeek::formatLabels($mediaSchedule->days_of_week) }}
                                         @else
                                             <span class="text-muted">All Days</span>
                                         @endif

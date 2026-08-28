@@ -74,6 +74,13 @@
                                     @enderror
                                 </div>
 
+                                @include('admin.media-schedules.partials.days-of-week-checkboxes', [
+                                    'selected' => old('days_of_week', []),
+                                    'label' => 'Schedule Active Days',
+                                    'help' => 'When this whole schedule runs. Example: tick Sun only for a Sunday poster. This is what the schedule list shows.',
+                                    'idPrefix' => 'schedule_days',
+                                ])
+
                             </div>
 
                             <div class="col-md-6">
@@ -173,6 +180,43 @@
 let selectedMedia = [];
 let checkOverlapTimeout = null;
 
+function normalizeDaysList(days) {
+    if (!Array.isArray(days)) {
+        if (typeof days === 'string') {
+            try {
+                days = JSON.parse(days);
+            } catch (error) {
+                return [];
+            }
+        } else {
+            return [];
+        }
+    }
+
+    return days
+        .map((day) => parseInt(day, 10))
+        .filter((day) => Number.isInteger(day) && day >= 1 && day <= 7);
+}
+
+function captureMediaDaysFromDom() {
+    const captured = {};
+    document.querySelectorAll('input[name^="media_days_of_week"]:checked').forEach((input) => {
+        const match = input.name.match(/media_days_of_week\[(\d+)\]/);
+        if (!match) {
+            return;
+        }
+        const index = match[1];
+        captured[index] = captured[index] || [];
+        captured[index].push(parseInt(input.value, 10));
+    });
+
+    return captured;
+}
+
+function dayIsSelected(days, dayNumber) {
+    return normalizeDaysList(days).includes(dayNumber);
+}
+
 function toggleFields() {
     const type = document.getElementById('schedule_type').value;
     const prayerField = document.getElementById('field_prayer');
@@ -220,6 +264,8 @@ function updateMediaConfig() {
     const configSection = document.getElementById('selected_media_config');
     const scheduleType = document.getElementById('schedule_type').value;
     const isFullTimePoster = scheduleType === 'full_time_poster';
+    const capturedMediaDays = captureMediaDaysFromDom();
+    const oldDaysOfWeek = @json(old('media_days_of_week', []));
     
     selectedMedia = [];
     document.querySelectorAll('.media-checkbox:checked').forEach(checkbox => {
@@ -241,6 +287,13 @@ function updateMediaConfig() {
             const oldStartDates = {{ json_encode(old('media_start_dates', [])) }};
             const oldStartTimes = {{ json_encode(old('media_start_times', [])) }};
             const oldGapDurations = {{ json_encode(old('media_gap_durations', [])) }};
+
+            let mediaDaysOfWeek = [];
+            if (capturedMediaDays[index]?.length) {
+                mediaDaysOfWeek = capturedMediaDays[index];
+            } else if (oldDaysOfWeek[index]) {
+                mediaDaysOfWeek = normalizeDaysList(oldDaysOfWeek[index]);
+            }
             
             html += `
                 <div class="card mb-3 media-config-card">
@@ -305,47 +358,47 @@ function updateMediaConfig() {
                         
                         <div class="row mt-2">
                             <div class="col-12">
-                                <label class="form-label small">Days of Week for this Media <span class="text-muted">(leave unchecked for all days)</span></label>
+                                <label class="form-label small">Days of Week for this Media <span class="text-muted">(optional override — usually use Schedule Active Days above)</span></label>
                                 <div class="row">
                                     <div class="col-6 col-md-4">
                                         <div class="form-check form-check-sm">
-                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="1" id="media_${index}_day_1">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="1" id="media_${index}_day_1" ${dayIsSelected(mediaDaysOfWeek, 1) ? 'checked' : ''}>
                                             <label class="form-check-label small" for="media_${index}_day_1">Mon</label>
                                         </div>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <div class="form-check form-check-sm">
-                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="2" id="media_${index}_day_2">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="2" id="media_${index}_day_2" ${dayIsSelected(mediaDaysOfWeek, 2) ? 'checked' : ''}>
                                             <label class="form-check-label small" for="media_${index}_day_2">Tue</label>
                                         </div>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <div class="form-check form-check-sm">
-                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="3" id="media_${index}_day_3">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="3" id="media_${index}_day_3" ${dayIsSelected(mediaDaysOfWeek, 3) ? 'checked' : ''}>
                                             <label class="form-check-label small" for="media_${index}_day_3">Wed</label>
                                         </div>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <div class="form-check form-check-sm">
-                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="4" id="media_${index}_day_4">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="4" id="media_${index}_day_4" ${dayIsSelected(mediaDaysOfWeek, 4) ? 'checked' : ''}>
                                             <label class="form-check-label small" for="media_${index}_day_4">Thu</label>
                                         </div>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <div class="form-check form-check-sm">
-                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="5" id="media_${index}_day_5">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="5" id="media_${index}_day_5" ${dayIsSelected(mediaDaysOfWeek, 5) ? 'checked' : ''}>
                                             <label class="form-check-label small" for="media_${index}_day_5">Fri</label>
                                         </div>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <div class="form-check form-check-sm">
-                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="6" id="media_${index}_day_6">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="6" id="media_${index}_day_6" ${dayIsSelected(mediaDaysOfWeek, 6) ? 'checked' : ''}>
                                             <label class="form-check-label small" for="media_${index}_day_6">Sat</label>
                                         </div>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <div class="form-check form-check-sm">
-                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="7" id="media_${index}_day_7">
+                                            <input class="form-check-input" type="checkbox" name="media_days_of_week[${index}][]" value="7" id="media_${index}_day_7" ${dayIsSelected(mediaDaysOfWeek, 7) ? 'checked' : ''}>
                                             <label class="form-check-label small" for="media_${index}_day_7">Sun</label>
                                         </div>
                                     </div>

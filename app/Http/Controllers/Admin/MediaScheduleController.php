@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Support\PrayerJamaatTime;
 use App\Support\ScheduledMediaWindow;
 use App\Support\MediaScheduleDuration;
+use App\Support\ScheduleDaysOfWeek;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -79,11 +80,19 @@ class MediaScheduleController extends Controller
             Setting::get('timezone', 'Europe/London')
         );
 
+        ScheduledMediaWindow::validateRequestWindows(
+            $request->media_ids,
+            $request->media_start_dates,
+            $request->media_start_times,
+            $request->media_expiry_dates,
+            $request->media_expiry_times,
+            Setting::get('timezone', 'Europe/London')
+        );
+
         $data = [
             'schedule_type' => $request->schedule_type,
             'prayer_name' => $request->prayer_name,
-            'days_of_week' => $request->days_of_week,
-            'is_active' => $request->has('is_active')
+            'is_active' => $request->has('is_active'),
         ];
 
         if ($request->schedule_type === 'minutes_before_prayer') {
@@ -97,11 +106,9 @@ class MediaScheduleController extends Controller
             $data['minutes_after_prayer'] = null;
         }
 
-        $schedule = MediaSchedule::create($data);
-
-        // Attach media items — form and pivot both use integer seconds.
         $pivotData = [];
         foreach ($request->media_ids as $index => $mediaId) {
+            $mediaDays = ScheduleDaysOfWeek::normalizeFromRequest($request->media_days_of_week[$index] ?? null);
             $pivotData[$mediaId] = [
                 'duration' => MediaScheduleDuration::secondsForStorage(
                     $request->media_durations[$index] ?? MediaScheduleDuration::DEFAULT_SECONDS
@@ -112,12 +119,17 @@ class MediaScheduleController extends Controller
                 'expiry_date' => filled($request->media_expiry_dates[$index] ?? null) ? $request->media_expiry_dates[$index] : null,
                 'expiry_time' => filled($request->media_expiry_times[$index] ?? null) ? $request->media_expiry_times[$index] : null,
                 'gap_duration' => $request->media_gap_durations[$index] ?? 0,
-                'days_of_week' => isset($request->media_days_of_week[$index]) && !empty($request->media_days_of_week[$index])
-                    ? json_encode($request->media_days_of_week[$index]) 
-                    : null
+                'days_of_week' => $mediaDays !== null ? json_encode($mediaDays) : null,
             ];
         }
-        
+
+        $scheduleDays = ScheduleDaysOfWeek::normalizeFromRequest($request->days_of_week);
+        if ($scheduleDays === null) {
+            $scheduleDays = $this->deriveScheduleDaysFromPivot($pivotData);
+        }
+        $data['days_of_week'] = $scheduleDays;
+
+        $schedule = MediaSchedule::create($data);
         $schedule->mediaItems()->attach($pivotData);
 
         return redirect()->route('admin.media-schedules.index')
@@ -191,8 +203,7 @@ class MediaScheduleController extends Controller
         $data = [
             'schedule_type' => $request->schedule_type,
             'prayer_name' => $request->prayer_name,
-            'days_of_week' => $request->days_of_week,
-            'is_active' => $request->has('is_active')
+            'is_active' => $request->has('is_active'),
         ];
 
         if ($request->schedule_type === 'minutes_before_prayer') {
@@ -206,11 +217,9 @@ class MediaScheduleController extends Controller
             $data['minutes_after_prayer'] = null;
         }
 
-        $mediaSchedule->update($data);
-
-        // Sync media items — form and pivot both use integer seconds.
         $pivotData = [];
         foreach ($request->media_ids as $index => $mediaId) {
+            $mediaDays = ScheduleDaysOfWeek::normalizeFromRequest($request->media_days_of_week[$index] ?? null);
             $pivotData[$mediaId] = [
                 'duration' => MediaScheduleDuration::secondsForStorage(
                     $request->media_durations[$index] ?? MediaScheduleDuration::DEFAULT_SECONDS
@@ -221,12 +230,17 @@ class MediaScheduleController extends Controller
                 'expiry_date' => filled($request->media_expiry_dates[$index] ?? null) ? $request->media_expiry_dates[$index] : null,
                 'expiry_time' => filled($request->media_expiry_times[$index] ?? null) ? $request->media_expiry_times[$index] : null,
                 'gap_duration' => $request->media_gap_durations[$index] ?? 0,
-                'days_of_week' => isset($request->media_days_of_week[$index]) && !empty($request->media_days_of_week[$index])
-                    ? json_encode($request->media_days_of_week[$index]) 
-                    : null
+                'days_of_week' => $mediaDays !== null ? json_encode($mediaDays) : null,
             ];
         }
-        
+
+        $scheduleDays = ScheduleDaysOfWeek::normalizeFromRequest($request->days_of_week);
+        if ($scheduleDays === null) {
+            $scheduleDays = $this->deriveScheduleDaysFromPivot($pivotData);
+        }
+        $data['days_of_week'] = $scheduleDays;
+
+        $mediaSchedule->update($data);
         $mediaSchedule->mediaItems()->sync($pivotData);
 
         return redirect()->route('admin.media-schedules.index')
@@ -374,5 +388,25 @@ class MediaScheduleController extends Controller
             'available_priorities' => $availablePriorities,
             'used_priorities' => $usedPrioritiesInOverlap
         ]);
+    }
+
+    /**
+     * When schedule-level days are not set, copy from per-media day limits (single poster use case).
+     *
+     * @param  array<int|string, array<string, mixed>>  $pivotData
+     * @return list<int>|null
+     */
+    private function deriveScheduleDaysFromPivot(array $pivotData): ?array
+    {
+        $combined = [];
+
+        foreach ($pivotData as $row) {
+            $days = ScheduleDaysOfWeek::normalize($row['days_of_week'] ?? null);
+            if ($days !== null) {
+                $combined = array_merge($combined, $days);
+            }
+        }
+
+        return ScheduleDaysOfWeek::normalize($combined);
     }
 }
