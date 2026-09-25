@@ -105,6 +105,18 @@
                                             <td>{{ $mediaSchedule->minutes_after_prayer }} minutes</td>
                                         </tr>
                                     @endif
+                                    <tr>
+                                        <td><strong>Display Duration:</strong></td>
+                                        <td>
+                                            @if($mediaSchedule->relative_duration)
+                                                {{ $mediaSchedule->relative_duration }} minutes
+                                            @elseif($mediaSchedule->schedule_type === 'minutes_before_prayer')
+                                                Until Jamaat (default)
+                                            @else
+                                                {{ \App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES }} minutes (default)
+                                            @endif
+                                        </td>
+                                    </tr>
                                 @endif
                                 <tr>
                                     <td><strong>Days:</strong></td>
@@ -181,10 +193,16 @@
                                     <ul class="list-unstyled">
                                         @if($mediaSchedule->schedule_type === 'minutes_before_prayer')
                                             <li><i class="bi bi-check-circle text-success me-2"></i>Starts {{ $mediaSchedule->minutes_before_prayer }} minutes before <strong>Jamaat</strong> (congregation time), not Adhan</li>
-                                            <li><i class="bi bi-info-circle text-info me-2"></i>Runs until Jamaat (countdown windows briefly override near iqamah)</li>
+                                            <li><i class="bi bi-info-circle text-info me-2"></i>
+                                                @if($mediaSchedule->relative_duration)
+                                                    Stays on screen for {{ $mediaSchedule->relative_duration }} minutes (capped at Jamaat); countdown windows briefly override near iqamah
+                                                @else
+                                                    Runs until Jamaat (countdown windows briefly override near iqamah)
+                                                @endif
+                                            </li>
                                         @elseif($mediaSchedule->schedule_type === 'minutes_after_prayer')
                                             <li><i class="bi bi-check-circle text-success me-2"></i>Starts {{ $mediaSchedule->minutes_after_prayer }} minutes after <strong>Jamaat</strong></li>
-                                            <li><i class="bi bi-info-circle text-info me-2"></i>Stays active for {{ \App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES }} minutes from that start</li>
+                                            <li><i class="bi bi-info-circle text-info me-2"></i>Stays active for {{ $mediaSchedule->relative_duration ?: \App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES }} minutes from that start</li>
                                         @elseif($mediaSchedule->schedule_type === 'full_time_poster')
                                             <li><i class="bi bi-check-circle text-success me-2"></i>Media will cycle continuously throughout the day</li>
                                         @endif

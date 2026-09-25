@@ -78,7 +78,8 @@ class PrayerCountdownWindows
             $targetField = 'adhan';
         }
 
-        $secondsRemaining = max(0, (int) $now->diffInSeconds($countdownEnd, false));
+        $rawSeconds = $now->diffInSeconds($countdownEnd, false);
+        $secondsRemaining = max(0, (int) ceil((float) $rawSeconds));
 
         return [
             'phase' => $phase,

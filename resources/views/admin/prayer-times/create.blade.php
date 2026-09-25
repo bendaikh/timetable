@@ -274,7 +274,7 @@
                                            class="form-control @error('isha_adhan') is-invalid @enderror" 
                                            id="isha_adhan" 
                                            name="isha_adhan" 
-                                           value="{{ old('isha_adhan', '21:45') }}">
+                                           value="{{ old('isha_adhan', '21:50') }}">
                                     @error('isha_adhan')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

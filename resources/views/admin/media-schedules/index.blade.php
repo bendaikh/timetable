@@ -151,9 +151,21 @@
                                         </td>
                                         <td>
                                             @if($schedule->schedule_type === 'minutes_before_prayer')
-                                                <small>{{ $schedule->minutes_before_prayer }} min before {{ $schedule->getPrayerNameLabel() }}</small>
+                                                <small>
+                                                    {{ $schedule->minutes_before_prayer }} min before {{ $schedule->getPrayerNameLabel() }}
+                                                    @if($schedule->relative_duration)
+                                                        , {{ $schedule->relative_duration }} min duration
+                                                    @endif
+                                                </small>
                                             @elseif($schedule->schedule_type === 'minutes_after_prayer')
-                                                <small>{{ $schedule->minutes_after_prayer }} min after {{ $schedule->getPrayerNameLabel() }}</small>
+                                                <small>
+                                                    {{ $schedule->minutes_after_prayer }} min after {{ $schedule->getPrayerNameLabel() }}
+                                                    @if($schedule->relative_duration)
+                                                        , {{ $schedule->relative_duration }} min duration
+                                                    @else
+                                                        , {{ \App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES }} min duration
+                                                    @endif
+                                                </small>
                                             @elseif($schedule->schedule_type === 'full_time_poster')
                                                 <small class="text-muted">All day</small>
                                             @endif

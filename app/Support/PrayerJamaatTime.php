@@ -15,10 +15,25 @@ use DateTimeInterface;
 class PrayerJamaatTime
 {
     /**
-     * Fixed playback length for after-prayer posters (minutes after the start offset).
+     * Default playback length for after-prayer posters when display duration is not set.
      * "10 minutes after jamaat" → start at jamaat+10, remain active for this many minutes.
      */
     public const AFTER_POSTER_WINDOW_MINUTES = 10;
+
+    /**
+     * Optional how-long-to-show setting stored in media_schedules.relative_duration (minutes).
+     * Null / < 1 keeps legacy behaviour (before: until Jamaat, after: AFTER_POSTER_WINDOW_MINUTES).
+     */
+    public static function resolvePosterDisplayDurationMinutes(MediaSchedule $schedule): ?int
+    {
+        if ($schedule->relative_duration === null) {
+            return null;
+        }
+
+        $minutes = (int) $schedule->relative_duration;
+
+        return $minutes >= 1 ? $minutes : null;
+    }
 
     public static function appTimezone(): string
     {
@@ -66,7 +81,7 @@ class PrayerJamaatTime
     /**
      * Before-prayer poster window anchored to JAMAAT:
      *   start = jamaat − minutes_before
-     *   end   = jamaat
+     *   end   = start + display_duration (capped at jamaat), or jamaat when duration unset
      *
      * Always a positive-length interval when minutes_before >= 1.
      * Countdown windows may still override display inside this range.
@@ -92,7 +107,20 @@ class PrayerJamaatTime
 
         $minutesBefore = (int) $schedule->minutes_before_prayer;
         $start = $jamaat->copy()->subMinutes($minutesBefore);
-        $end = $jamaat->copy();
+        $durationMinutes = self::resolvePosterDisplayDurationMinutes($schedule);
+
+        if ($durationMinutes !== null) {
+            $end = $start->copy()->addMinutes($durationMinutes);
+            if ($end->gt($jamaat)) {
+                $end = $jamaat->copy();
+            }
+        } else {
+            $end = $jamaat->copy();
+        }
+
+        if ($end->lte($start)) {
+            return null;
+        }
 
         return [
             'jamaat' => $jamaat->copy(),
@@ -105,7 +133,7 @@ class PrayerJamaatTime
     /**
      * After-prayer poster window anchored to JAMAAT:
      *   start = jamaat + minutes_after
-     *   end   = start + AFTER_POSTER_WINDOW_MINUTES
+     *   end   = start + display_duration (default AFTER_POSTER_WINDOW_MINUTES)
      *
      * @return array{jamaat: Carbon, start: Carbon, end: Carbon, reference: string}|null
      */
@@ -128,7 +156,9 @@ class PrayerJamaatTime
 
         $minutesAfter = (int) $schedule->minutes_after_prayer;
         $start = $jamaat->copy()->addMinutes($minutesAfter);
-        $end = $start->copy()->addMinutes(self::AFTER_POSTER_WINDOW_MINUTES);
+        $durationMinutes = self::resolvePosterDisplayDurationMinutes($schedule)
+            ?? self::AFTER_POSTER_WINDOW_MINUTES;
+        $end = $start->copy()->addMinutes($durationMinutes);
 
         return [
             'jamaat' => $jamaat->copy(),

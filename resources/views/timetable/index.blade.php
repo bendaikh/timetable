@@ -2119,10 +2119,13 @@ HTML;
     }
 
     function clampCountdownSeconds(value, maxSeconds = COUNTDOWN_POPUP_MAX_SECONDS) {
-        const parsed = toPositiveInteger(value, 0);
+        const parsed = Number(value);
         const max = toPositiveInteger(maxSeconds, COUNTDOWN_POPUP_MAX_SECONDS);
+        if (!Number.isFinite(parsed)) {
+            return 0;
+        }
 
-        return Math.max(0, Math.min(max, parsed));
+        return Math.max(0, Math.min(max, Math.ceil(parsed)));
     }
 
     function parseCountdownTargetMs(isoString) {
@@ -3912,7 +3915,13 @@ HTML;
     }
 
     function shouldDeferCountdownClear(screenStateData) {
-        if (!screenStateData || screenStateData.state !== 'TIMETABLE' || currentScreenState !== 'COUNTDOWN') {
+        if (!screenStateData || currentScreenState !== 'COUNTDOWN') {
+            return false;
+        }
+
+        // Never leave an in-progress countdown for any other state until the client
+        // timer reaches 00 — otherwise Zuhr/Isha Adhan popups can be cut short.
+        if (normalizeScreenStateValue(screenStateData.state) === 'COUNTDOWN') {
             return false;
         }
 
@@ -4079,7 +4088,19 @@ HTML;
                     : null;
                 const serverSecondsAtZero = Number.isFinite(serverSecondsRaw) && serverSecondsRaw <= 0;
 
-                if (serverState === 'TIMETABLE' || isPosterScreenState(serverState) || serverSecondsAtZero) {
+                if (serverState === 'COUNTDOWN' && Number.isFinite(serverSecondsRaw) && serverSecondsRaw > 0) {
+                    // Client clock jumped ahead — restart from the server end time so the
+                    // popup finishes the full Adhan/Iqamah countdown instead of sticking on 00.
+                    logCountdownDebug('resync-ahead-client-clock', {
+                        serverSecondsRaw,
+                        countdownEnd: screenStateData.countdown?.countdown_end || null,
+                    });
+                    clearInterval(countdownTimer);
+                    countdownTimer = null;
+                    countdownVerification.sessionKey = null;
+                    lastAppliedScreenSignature = nextScreenSignature;
+                    applyScreenState(screenStateData);
+                } else if (serverState === 'TIMETABLE' || isPosterScreenState(serverState) || serverSecondsAtZero) {
                     finalizeCountdownCompletion(
                         (serverState === 'TIMETABLE' || isPosterScreenState(serverState))
                             ? screenStateData
@@ -4129,9 +4150,86 @@ HTML;
         });
     }
 
+    let countdownWakeupTimers = [];
+
+    function clearCountdownWakeups() {
+        countdownWakeupTimers.forEach((timerId) => clearTimeout(timerId));
+        countdownWakeupTimers = [];
+    }
+
+    function secondsUntilClockToday(time24) {
+        const targetSeconds = timeStringToSecondsSinceMidnight(time24);
+        if (targetSeconds === null) {
+            return null;
+        }
+
+        const nowSeconds = clockToSecondsSinceMidnight(getAppClockParts());
+        let delta = targetSeconds - nowSeconds;
+        if (delta < 0) {
+            delta += 24 * 3600;
+        }
+
+        return delta;
+    }
+
+    function scheduleSingleCountdownWakeup(label, time24, leadSeconds) {
+        const secondsUntilTarget = secondsUntilClockToday(time24);
+        if (secondsUntilTarget === null) {
+            return;
+        }
+
+        const secondsUntilWindow = secondsUntilTarget - leadSeconds;
+        // Skip windows that already ended; fire immediately if we are inside the window.
+        if (secondsUntilWindow < -leadSeconds) {
+            return;
+        }
+
+        const delayMs = Math.max(0, secondsUntilWindow * 1000);
+        // Ignore events more than ~18 hours out to avoid huge timeout values.
+        if (delayMs > 18 * 3600 * 1000) {
+            return;
+        }
+
+        const timerId = setTimeout(() => {
+            logCountdownDebug('wakeup-poll', { label, time24, leadSeconds });
+            requestMediaSync();
+            // Re-check a few times across the 30s window in case the first poll was early.
+            [2000, 8000, 16000, 25000].forEach((extraDelay) => {
+                const followUpId = setTimeout(() => requestMediaSync(), extraDelay);
+                countdownWakeupTimers.push(followUpId);
+            });
+        }, delayMs);
+
+        countdownWakeupTimers.push(timerId);
+    }
+
+    /**
+     * Precisely wake screen-state polling before each Adhan/Iqamah popup so short
+     * 30-second windows (especially Isha) are not missed by a busy/throttled tab.
+     */
+    function schedulePrayerCountdownWakeups() {
+        clearCountdownWakeups();
+
+        const lead = COUNTDOWN_POPUP_MAX_SECONDS;
+
+        PRAYER_NAMES.forEach((prayerName) => {
+            const jamaat = prayerTimesData[prayerName];
+            const adhan = adhanTimesData[`${prayerName}_adhan`] || todayBeginningTimes[prayerName];
+
+            if (adhan && jamaat && adhan !== jamaat) {
+                scheduleSingleCountdownWakeup(`${prayerName}-adhan`, adhan, lead);
+            }
+
+            if (jamaat) {
+                scheduleSingleCountdownWakeup(`${prayerName}-iqamah`, jamaat, lead);
+            }
+        });
+    }
+
     function initMediaDisplay() {
         requestMediaSync();
         ensureMediaPollingTimer();
+        schedulePrayerCountdownWakeups();
     }
 
     function updateSpecialTimesDisplay(todayData) {
@@ -4192,6 +4290,8 @@ HTML;
         todaySpecialTimesData = deriveSpecialTimes(todayData);
         tomorrowSpecialTimesData = deriveSpecialTimes(tomorrowData);
         originalTodaySpecialTimesData = { ...todaySpecialTimesData };
+
+        schedulePrayerCountdownWakeups();
 
         updatePrayerTimesDisplay();
 

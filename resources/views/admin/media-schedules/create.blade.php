@@ -56,7 +56,7 @@
                                     <input type="number" class="form-control @error('minutes_before_prayer') is-invalid @enderror" 
                                            id="minutes_before_prayer" name="minutes_before_prayer" value="{{ old('minutes_before_prayer') }}" 
                                            min="1" max="480">
-                                    <div class="form-text">Minutes before <strong>Jamaat</strong> (congregation time) to start — not Adhan. Displays until Jamaat.</div>
+                                    <div class="form-text">Minutes before <strong>Jamaat</strong> (congregation time) to start — not Adhan.</div>
                                     @error('minutes_before_prayer')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -68,8 +68,24 @@
                                     <input type="number" class="form-control @error('minutes_after_prayer') is-invalid @enderror" 
                                            id="minutes_after_prayer" name="minutes_after_prayer" value="{{ old('minutes_after_prayer') }}" 
                                            min="1" max="480">
-                                    <div class="form-text">Minutes after <strong>Jamaat</strong> to start — then plays for {{ \App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES }} minutes (1-480 offset).</div>
+                                    <div class="form-text">Minutes after <strong>Jamaat</strong> to start the poster (1–480).</div>
                                     @error('minutes_after_prayer')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <!-- How long the poster stays on screen -->
+                                <div class="mb-3" id="field_display_duration" style="display:none;">
+                                    <label for="relative_duration" class="form-label">Display Duration (minutes)</label>
+                                    <input type="number" class="form-control @error('relative_duration') is-invalid @enderror"
+                                           id="relative_duration" name="relative_duration"
+                                           value="{{ old('relative_duration') }}"
+                                           min="1" max="480" placeholder="Optional">
+                                    <div class="form-text" id="display_duration_help">
+                                        How long the poster stays on screen after it starts.
+                                        Leave empty for defaults: until Jamaat (before) or {{ \App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES }} minutes (after).
+                                    </div>
+                                    @error('relative_duration')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -222,37 +238,50 @@ function toggleFields() {
     const prayerField = document.getElementById('field_prayer');
     const beforeField = document.getElementById('field_minutes_before');
     const afterField = document.getElementById('field_minutes_after');
+    const durationField = document.getElementById('field_display_duration');
     const beforeInput = document.getElementById('minutes_before_prayer');
     const afterInput = document.getElementById('minutes_after_prayer');
+    const durationInput = document.getElementById('relative_duration');
     const prayerInput = document.getElementById('prayer_name');
+    const durationHelp = document.getElementById('display_duration_help');
 
     if (type === 'full_time_poster') {
         // Full time poster - hide prayer and minutes fields
         prayerField.style.display = 'none';
         beforeField.style.display = 'none';
         afterField.style.display = 'none';
+        durationField.style.display = 'none';
         prayerInput.required = false;
         beforeInput.required = false;
         afterInput.required = false;
         prayerInput.value = '';
         beforeInput.value = '';
         afterInput.value = '';
+        durationInput.value = '';
     } else if (type === 'minutes_before_prayer') {
         prayerField.style.display = '';
         beforeField.style.display = '';
         afterField.style.display = 'none';
+        durationField.style.display = '';
         prayerInput.required = true;
         beforeInput.required = true;
         afterInput.required = false;
         afterInput.value = '';
+        if (durationHelp) {
+            durationHelp.textContent = 'How long the poster stays on screen after it starts. Leave empty to show until Jamaat. Duration is capped at Jamaat.';
+        }
     } else if (type === 'minutes_after_prayer') {
         prayerField.style.display = '';
         beforeField.style.display = 'none';
         afterField.style.display = '';
+        durationField.style.display = '';
         prayerInput.required = true;
         beforeInput.required = false;
         afterInput.required = true;
         beforeInput.value = '';
+        if (durationHelp) {
+            durationHelp.textContent = 'How long the poster stays on screen after it starts. Leave empty for the default of {{ \App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES }} minutes.';
+        }
     }
     
     // Check display time when schedule type changes
@@ -463,6 +492,7 @@ function checkDisplayTime() {
     const prayerName = document.getElementById('prayer_name').value;
     const minutesBeforePrayer = document.getElementById('minutes_before_prayer').value;
     const minutesAfterPrayer = document.getElementById('minutes_after_prayer').value;
+    const relativeDuration = document.getElementById('relative_duration').value;
     
     const displayContent = document.getElementById('display_time_content');
     
@@ -499,6 +529,7 @@ function checkDisplayTime() {
                 schedule_type: scheduleType,
                 prayer_name: prayerName,
                 minutes: minutes,
+                relative_duration: relativeDuration || null,
                 media_id: null // We have multiple media now, so pass null
             })
         })
@@ -551,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Add event listeners for time calculation
-    ['prayer_name', 'minutes_before_prayer', 'minutes_after_prayer'].forEach(fieldName => {
+    ['prayer_name', 'minutes_before_prayer', 'minutes_after_prayer', 'relative_duration'].forEach(fieldName => {
         const element = document.getElementById(fieldName);
         if (element) {
             element.addEventListener('change', checkDisplayTime);

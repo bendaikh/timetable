@@ -65,6 +65,7 @@ class PrayerPosterTimingTest extends TestCase
             $table->string('prayer_name')->nullable();
             $table->integer('minutes_before_prayer')->nullable();
             $table->integer('minutes_after_prayer')->nullable();
+            $table->integer('relative_duration')->nullable();
             $table->json('days_of_week')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
@@ -95,6 +96,100 @@ class PrayerPosterTimingTest extends TestCase
     {
         Carbon::setTestNow();
         parent::tearDown();
+    }
+
+    public function test_before_prayer_custom_display_duration_ends_before_jamaat(): void
+    {
+        PrayerTime::query()->create([
+            'date' => $this->date,
+            'zohar' => '12:30:00',
+            'zohar_jamaat' => '13:15:00',
+        ]);
+
+        $schedule = MediaSchedule::query()->create([
+            'schedule_type' => 'minutes_before_prayer',
+            'prayer_name' => 'zohar',
+            'minutes_before_prayer' => 20,
+            'relative_duration' => 5,
+            'is_active' => true,
+        ]);
+
+        $media = Media::query()->create([
+            'title' => 'Duration Poster',
+            'file_path' => 'media/test.png',
+            'type' => 'image',
+            'is_active' => true,
+            'display_duration' => 1,
+        ]);
+
+        $schedule->mediaItems()->attach($media->id, [
+            'duration' => 1,
+            'priority' => 1,
+            'is_active' => true,
+            'gap_duration' => 0,
+        ]);
+
+        $window = PrayerJamaatTime::beforePrayerPosterWindow(
+            $schedule,
+            PrayerTime::query()->first(),
+            Carbon::parse($this->date . ' 12:00:00', self::TZ)
+        );
+
+        $this->assertSame('12:55:00', $window['start']->format('H:i:s'));
+        $this->assertSame('13:00:00', $window['end']->format('H:i:s'));
+
+        Carbon::setTestNow(Carbon::parse($this->date . ' 12:57:00', self::TZ));
+        $this->assertNotNull($this->service->getCurrentMedia());
+
+        Carbon::setTestNow(Carbon::parse($this->date . ' 13:00:01', self::TZ));
+        $this->assertNull($this->service->getCurrentMedia(), 'Custom 5-minute duration must end before Jamaat');
+    }
+
+    public function test_after_prayer_custom_display_duration_overrides_default_ten(): void
+    {
+        PrayerTime::query()->create([
+            'date' => $this->date,
+            'zohar' => '12:30:00',
+            'zohar_jamaat' => '13:15:00',
+        ]);
+
+        $schedule = MediaSchedule::query()->create([
+            'schedule_type' => 'minutes_after_prayer',
+            'prayer_name' => 'zohar',
+            'minutes_after_prayer' => 5,
+            'relative_duration' => 3,
+            'is_active' => true,
+        ]);
+
+        $media = Media::query()->create([
+            'title' => 'After Duration Poster',
+            'file_path' => 'media/after.png',
+            'type' => 'image',
+            'is_active' => true,
+            'display_duration' => 1,
+        ]);
+
+        $schedule->mediaItems()->attach($media->id, [
+            'duration' => 1,
+            'priority' => 1,
+            'is_active' => true,
+            'gap_duration' => 0,
+        ]);
+
+        $window = PrayerJamaatTime::afterPrayerPosterWindow(
+            $schedule,
+            PrayerTime::query()->first(),
+            Carbon::parse($this->date . ' 12:00:00', self::TZ)
+        );
+
+        $this->assertSame('13:20:00', $window['start']->format('H:i:s'));
+        $this->assertSame('13:23:00', $window['end']->format('H:i:s'));
+
+        Carbon::setTestNow(Carbon::parse($this->date . ' 13:22:00', self::TZ));
+        $this->assertNotNull($this->service->getCurrentMedia());
+
+        Carbon::setTestNow(Carbon::parse($this->date . ' 13:23:01', self::TZ));
+        $this->assertNull($this->service->getCurrentMedia());
     }
 
     public function test_twenty_minutes_before_poster_starts_exactly_at_iqamah_minus_twenty(): void

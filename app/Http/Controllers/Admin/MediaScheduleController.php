@@ -50,6 +50,7 @@ class MediaScheduleController extends Controller
             'prayer_name' => 'required_unless:schedule_type,full_time_poster|nullable|in:fajr,zohar,asr,maghrib,isha',
             'minutes_before_prayer' => 'required_if:schedule_type,minutes_before_prayer|nullable|integer|min:1|max:480',
             'minutes_after_prayer' => 'required_if:schedule_type,minutes_after_prayer|nullable|integer|min:1|max:480',
+            'relative_duration' => 'nullable|integer|min:1|max:480',
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
             'media_durations' => 'required|array',
@@ -80,15 +81,6 @@ class MediaScheduleController extends Controller
             Setting::get('timezone', 'Europe/London')
         );
 
-        ScheduledMediaWindow::validateRequestWindows(
-            $request->media_ids,
-            $request->media_start_dates,
-            $request->media_start_times,
-            $request->media_expiry_dates,
-            $request->media_expiry_times,
-            Setting::get('timezone', 'Europe/London')
-        );
-
         $data = [
             'schedule_type' => $request->schedule_type,
             'prayer_name' => $request->prayer_name,
@@ -98,12 +90,15 @@ class MediaScheduleController extends Controller
         if ($request->schedule_type === 'minutes_before_prayer') {
             $data['minutes_before_prayer'] = $request->minutes_before_prayer;
             $data['minutes_after_prayer'] = null;
+            $data['relative_duration'] = $request->filled('relative_duration') ? (int) $request->relative_duration : null;
         } elseif ($request->schedule_type === 'minutes_after_prayer') {
             $data['minutes_before_prayer'] = null;
             $data['minutes_after_prayer'] = $request->minutes_after_prayer;
+            $data['relative_duration'] = $request->filled('relative_duration') ? (int) $request->relative_duration : null;
         } else {
             $data['minutes_before_prayer'] = null;
             $data['minutes_after_prayer'] = null;
+            $data['relative_duration'] = null;
         }
 
         $pivotData = [];
@@ -170,6 +165,7 @@ class MediaScheduleController extends Controller
             'prayer_name' => 'required_unless:schedule_type,full_time_poster|nullable|in:fajr,zohar,asr,maghrib,isha',
             'minutes_before_prayer' => 'required_if:schedule_type,minutes_before_prayer|nullable|integer|min:1|max:480',
             'minutes_after_prayer' => 'required_if:schedule_type,minutes_after_prayer|nullable|integer|min:1|max:480',
+            'relative_duration' => 'nullable|integer|min:1|max:480',
             'days_of_week' => 'nullable|array',
             'days_of_week.*' => 'integer|between:1,7',
             'media_durations' => 'required|array',
@@ -209,12 +205,15 @@ class MediaScheduleController extends Controller
         if ($request->schedule_type === 'minutes_before_prayer') {
             $data['minutes_before_prayer'] = $request->minutes_before_prayer;
             $data['minutes_after_prayer'] = null;
+            $data['relative_duration'] = $request->filled('relative_duration') ? (int) $request->relative_duration : null;
         } elseif ($request->schedule_type === 'minutes_after_prayer') {
             $data['minutes_before_prayer'] = null;
             $data['minutes_after_prayer'] = $request->minutes_after_prayer;
+            $data['relative_duration'] = $request->filled('relative_duration') ? (int) $request->relative_duration : null;
         } else {
             $data['minutes_before_prayer'] = null;
             $data['minutes_after_prayer'] = null;
+            $data['relative_duration'] = null;
         }
 
         $pivotData = [];
@@ -310,12 +309,25 @@ class MediaScheduleController extends Controller
             ]);
         }
         
+        $durationMinutes = $request->filled('relative_duration') ? (int) $request->relative_duration : null;
+
         if ($scheduleType === 'minutes_before_prayer') {
             $displayStart = $jamaatTime->copy()->subMinutes((int) $minutes);
-            $displayEnd = $jamaatTime->copy(); // until jamaat (same rule as PrayerJamaatTime)
+            if ($durationMinutes !== null && $durationMinutes >= 1) {
+                $displayEnd = $displayStart->copy()->addMinutes($durationMinutes);
+                if ($displayEnd->gt($jamaatTime)) {
+                    $displayEnd = $jamaatTime->copy();
+                }
+            } else {
+                $displayEnd = $jamaatTime->copy();
+            }
         } else { // minutes_after_prayer
             $displayStart = $jamaatTime->copy()->addMinutes((int) $minutes);
-            $displayEnd = $displayStart->copy()->addMinutes(\App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES);
+            $displayEnd = $displayStart->copy()->addMinutes(
+                ($durationMinutes !== null && $durationMinutes >= 1)
+                    ? $durationMinutes
+                    : \App\Support\PrayerJamaatTime::AFTER_POSTER_WINDOW_MINUTES
+            );
         }
         
         // Find all active schedules

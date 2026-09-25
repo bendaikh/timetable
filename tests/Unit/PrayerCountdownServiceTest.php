@@ -237,4 +237,39 @@ class PrayerCountdownServiceTest extends TestCase
         $this->assertSame('iqamah', $info['phase']);
         $this->assertSame('Isha', $info['prayer_name']);
     }
+
+    public function test_isha_adhan_countdown_appears_when_adhan_differs_from_jamaat(): void
+    {
+        PrayerTime::query()->whereDate('date', $this->date)->update([
+            'isha' => '20:30:00',
+            'isha_adhan' => '20:35:00',
+            'isha_jamaat' => '20:45:00',
+        ]);
+
+        $this->assertNull($this->at('20:34:29'));
+
+        $info = $this->at('20:34:30');
+        $this->assertNotNull($info, 'Isha Adhan countdown must appear 30s before Isha Adhan');
+        $this->assertSame('adhan', $info['phase']);
+        $this->assertSame('Isha', $info['prayer_name']);
+        $this->assertSame(30, $info['seconds_remaining']);
+
+        $nearEnd = $this->at('20:34:59');
+        $this->assertNotNull($nearEnd);
+        $this->assertSame('adhan', $nearEnd['phase']);
+        $this->assertSame(1, $nearEnd['seconds_remaining']);
+
+        $this->assertNull($this->at('20:35:00'));
+    }
+
+    public function test_zohar_adhan_countdown_reaches_one_second(): void
+    {
+        $info = $this->at('12:36:59');
+
+        $this->assertNotNull($info);
+        $this->assertSame('adhan', $info['phase']);
+        $this->assertSame('Zohar', $info['prayer_name']);
+        $this->assertSame(1, $info['seconds_remaining']);
+        $this->assertNull($this->at('12:37:00'));
+    }
 }

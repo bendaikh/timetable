@@ -497,6 +497,7 @@ class MediaDisplayService
                 'prayer_name' => $schedule->prayer_name,
                 'minutes_before_prayer' => $schedule->minutes_before_prayer,
                 'minutes_after_prayer' => $schedule->minutes_after_prayer,
+                'display_duration_minutes' => $schedule->relative_duration,
                 'is_active' => $schedule->is_active,
                 'active_for_today' => $activeForToday,
                 'jamaat_time' => isset($window['jamaat']) ? $window['jamaat']->toIso8601String() : null,
